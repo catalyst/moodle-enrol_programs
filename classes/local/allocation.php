@@ -188,7 +188,7 @@ final class allocation {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/group/lib.php');
 
-        if (!PHPUNIT_TEST && $DB->is_transaction_started()) {
+        if (!PHPUNIT_TEST && $DB->is_transaction_started() && !defined('TOTARA_PROGRAM_MIGRATION')) {
             debugging('allocation::fix_enrol_instances() is not supposed to be used in transactions', DEBUG_DEVELOPER);
         }
 
@@ -365,7 +365,7 @@ final class allocation {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/group/lib.php');
 
-        if (!PHPUNIT_TEST && !$userid && $DB->is_transaction_started()) {
+        if (!PHPUNIT_TEST && !$userid && $DB->is_transaction_started() && !defined('TOTARA_PROGRAM_MIGRATION')) {
             debugging('allocation::fix_user_enrolments() is not supposed to be used in transactions without userid', DEBUG_DEVELOPER);
         }
 
