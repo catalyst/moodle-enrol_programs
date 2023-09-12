@@ -187,8 +187,8 @@ final class certify extends base {
     public static function sync_certifications(?int $certificationid, ?int $userid): void {
         global $DB;
 
-        if (!PHPUNIT_TEST && !$userid && $DB->is_transaction_started()) {
-            debugging('assignment::fix_program_allocations() is not supposed to be used in transactions without userid', DEBUG_DEVELOPER);
+        if (!PHPUNIT_TEST && !$userid && $DB->is_transaction_started() && !defined('TOTARA_PROGRAM_MIGRATION')) {
+            debugging('assignment::sync_certifications() is not supposed to be used in transactions without userid', DEBUG_DEVELOPER);
         }
 
         $coursceclasses = \enrol_programs\local\allocation::get_source_classes();
