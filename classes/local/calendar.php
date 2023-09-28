@@ -49,6 +49,11 @@ final class calendar {
             throw new \coding_exception('Invalid parameter mix');
         }
 
+        if (defined('TOTARA_PROGRAM_MIGRATION') && TOTARA_PROGRAM_MIGRATION) {
+            // Calendar sync will be done via cron later for performance reasons.
+            return;
+        }
+
         $types = [self::EVENTTYPE_START, self::EVENTTYPE_DUE, self::EVENTTYPE_END];
 
         $user = $DB->get_record('user', ['id' => $allocation->userid, 'deleted' => 0, 'confirmed' => 1]);

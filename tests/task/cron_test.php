@@ -83,6 +83,8 @@ final class cron_test extends \advanced_testcase {
         // Just make sure there are no obvious errors.
         $this->setAdminUser();
         $task = new \enrol_programs\task\cron();
+        ob_start();
         $task->execute();
+        ob_end_clean();
     }
 }

@@ -188,7 +188,12 @@ final class allocation {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/group/lib.php');
 
-        if (!PHPUNIT_TEST && $DB->is_transaction_started() && !defined('TOTARA_PROGRAM_MIGRATION')) {
+        if (defined('TOTARA_PROGRAM_MIGRATION') && TOTARA_PROGRAM_MIGRATION) {
+            // Enrolment sync will be done via cron later for performance reasons.
+            return;
+        }
+
+        if (!PHPUNIT_TEST && $DB->is_transaction_started()) {
             debugging('allocation::fix_enrol_instances() is not supposed to be used in transactions', DEBUG_DEVELOPER);
         }
 
@@ -365,7 +370,12 @@ final class allocation {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/group/lib.php');
 
-        if (!PHPUNIT_TEST && !$userid && $DB->is_transaction_started() && !defined('TOTARA_PROGRAM_MIGRATION')) {
+        if (defined('TOTARA_PROGRAM_MIGRATION') && TOTARA_PROGRAM_MIGRATION) {
+            // Enrolment sync will be done via cron later for performance reasons.
+            return;
+        }
+
+        if (!PHPUNIT_TEST && !$userid && $DB->is_transaction_started()) {
             debugging('allocation::fix_user_enrolments() is not supposed to be used in transactions without userid', DEBUG_DEVELOPER);
         }
 
@@ -1060,6 +1070,11 @@ final class allocation {
         if (!$allocation) {
             // Must have been just deleted.
             return null;
+        }
+
+        if (defined('TOTARA_PROGRAM_MIGRATION') && TOTARA_PROGRAM_MIGRATION) {
+            // No need for snapshots during migration.
+            return $allocation;
         }
 
         $data = new \stdClass();
