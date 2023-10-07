@@ -52,10 +52,10 @@ class cron extends \core\task\scheduled_task {
         \enrol_programs\local\allocation::fix_enrol_instances(null);
 
         $trace->output('allocation::fix_user_enrolments');
-        \enrol_programs\local\allocation::fix_user_enrolments(null, null);
+        \enrol_programs\local\allocation::fix_user_enrolments(null, null, $trace);
 
         $trace->output('calendar::fix_program_events');
-        \enrol_programs\local\calendar::fix_program_events(null);
+        \enrol_programs\local\calendar::fix_program_events(null, $trace);
 
         $trace->output('notification_manager::trigger_notifications');
         \enrol_programs\local\notification_manager::trigger_notifications(null, null);

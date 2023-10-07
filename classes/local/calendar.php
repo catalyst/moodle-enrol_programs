@@ -167,14 +167,18 @@ final class calendar {
      * Check and fix all program/allocation calendar events.
      *
      * @param stdClass|null $program
+     * @param \progress_trace|null $trace
      * @return void
      */
-    public static function fix_program_events(?stdClass $program): void {
+    public static function fix_program_events(?stdClass $program, \progress_trace $trace = null): void {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/calendar/lib.php');
 
         // Delete calendar events with no matching allocations, archived or when program completed;
         // skip missing check if looking at one program only.
+        if ($trace) {
+            $trace->output('deleting events', 1);
+        }
         $params = [];
         $programselect = "";
         if ($program) {
@@ -183,9 +187,11 @@ final class calendar {
         }
         $sql = "SELECT e.*
                   FROM {event} e
-             LEFT JOIN {enrol_programs_allocations} pa ON pa.id = e.instance AND e.component = 'enrol_programs'
+                  JOIN {user} u ON u.id = e.userid AND u.deleted = 0    
+             LEFT JOIN {enrol_programs_allocations} pa ON pa.id = e.instance
              LEFT JOIN {enrol_programs_programs} p ON p.id = pa.programid
-                 WHERE (pa.id IS NULL OR pa.archived = 1 OR p.archived = 1 OR pa.timecompleted IS NOT NULL)
+                 WHERE e.component = 'enrol_programs'
+                       AND (pa.id IS NULL OR pa.archived = 1 OR p.archived = 1 OR pa.timecompleted IS NOT NULL)
                        $programselect
              ORDER BY e.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
@@ -201,6 +207,9 @@ final class calendar {
         }
 
         // Add and update calendar events.
+        if ($trace) {
+            $trace->output('adding and updating events', 1);
+        }
         $params = [
             'pstart' => self::EVENTTYPE_START,
             'pdue' => self::EVENTTYPE_DUE,
@@ -214,6 +223,7 @@ final class calendar {
         $sql = "SELECT pa.*
                   FROM {enrol_programs_programs} p
                   JOIN {enrol_programs_allocations} pa ON pa.programid = p.id
+                  JOIN {user} u ON u.id = pa.userid AND u.deleted = 0
              LEFT JOIN {event} es ON es.instance = pa.id AND es.component = 'enrol_programs' AND es.eventtype = :pstart
              LEFT JOIN {event} ed ON ed.instance = pa.id AND ed.component = 'enrol_programs' AND ed.eventtype = :pdue
              LEFT JOIN {event} ee ON ee.instance = pa.id AND ee.component = 'enrol_programs' AND ee.eventtype = :pend

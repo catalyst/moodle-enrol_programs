@@ -293,5 +293,22 @@ function xmldb_enrol_programs_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023081200, 'enrol', 'programs');
     }
 
+    if ($oldversion < 2023100700) {
+        $table = new xmldb_table('enrol_programs_programs');
+        $index = new xmldb_index('archived', XMLDB_INDEX_NOTUNIQUE, ['archived']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('enrol_programs_items');
+        $index = new xmldb_index('programid-courseid', XMLDB_INDEX_NOTUNIQUE, ['programid', 'courseid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Programs savepoint reached.
+        upgrade_plugin_savepoint(true, 2023100700, 'enrol', 'programs');
+    }
+
     return true;
 }

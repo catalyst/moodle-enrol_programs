@@ -213,7 +213,7 @@ final class certify extends base {
         } else {
             $certificationselect = '';
         }
-        $sql = "SELECT pa.*
+        $sql = "SELECT pa.id, pa.programid, pa.userid
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
              LEFT JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
@@ -255,7 +255,7 @@ final class certify extends base {
         } else {
             $certificationselect = '';
         }
-        $sql = "SELECT pa.*
+        $sql = "SELECT pa.id, pa.programid, pa.userid
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
@@ -300,7 +300,7 @@ final class certify extends base {
         } else {
             $certificationselect = '';
         }
-        $sql = "SELECT pa.*
+        $sql = "SELECT pa.id, pa.programid, pa.userid
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id

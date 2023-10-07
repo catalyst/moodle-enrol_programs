@@ -364,9 +364,10 @@ final class allocation {
      *
      * @param int|null $programid
      * @param int|null $userid
+     * @param \progress_trace|null $trace
      * @return void
      */
-    public static function fix_user_enrolments(?int $programid, ?int $userid): void {
+    public static function fix_user_enrolments(?int $programid, ?int $userid, \progress_trace $trace = null): void {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/group/lib.php');
 
@@ -381,8 +382,13 @@ final class allocation {
 
         $plugin = enrol_get_plugin('programs');
         $roleid = get_config('enrol_programs', 'roleid');
+        $enrol = null; // Cached last used enrol instance.
+        $program = null;  // Cached last used program instance.
 
         // Delete enrolments if user is not allocated.
+        if ($trace) {
+            $trace->output('deleting enrolments for users not allocated', 1);
+        }
         $params = [];
         $programselect = '';
         if ($programid) {
@@ -394,7 +400,7 @@ final class allocation {
             $userselect = "AND ue.userid = :userid";
             $params['userid'] = $userid;
         }
-        $sql = "SELECT e.*, ue.userid, gm.groupid
+        $sql = "SELECT e.id, ue.userid, gm.groupid
                   FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.id = ue.enrolid AND e.enrol = 'programs'
                   JOIN {enrol_programs_items} pi ON pi.courseid = e.courseid AND pi.programid = e.customint1
@@ -405,15 +411,14 @@ final class allocation {
                        $programselect $userselect
               ORDER BY e.id ASC, ue.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
-        foreach ($rs as $enrol) {
-            $puserid = $enrol->userid;
-            unset($enrol->userid);
-            $groupid = $enrol->groupid;
-            unset($enrol->groupid);
-            if ($groupid) {
-                groups_remove_member($groupid, $puserid);
+        foreach ($rs as $e) {
+            if (!$enrol || $enrol->id != $e->id) {
+                $enrol = $DB->get_record('enrol', ['id' => $e->id], '*', MUST_EXIST);
             }
-            $plugin->unenrol_user($enrol, $puserid);
+            if ($e->groupid) {
+                groups_remove_member($e->groupid, $e->userid);
+            }
+            $plugin->unenrol_user($enrol, $e->userid);
             $context = \context_course::instance($enrol->courseid);
             role_unassign_all([
                 'contextid' => $context->id,
@@ -425,6 +430,9 @@ final class allocation {
 
         // Add enrolments for all users as soon as they are allocated,
         // we want teachers to see all future course users (ignore archived programs and allocations).
+        if ($trace) {
+            $trace->output('adding user enrolments', 1);
+        }
         $params = [];
         $programselect = '';
         if ($programid) {
@@ -436,7 +444,7 @@ final class allocation {
             $userselect = "AND pa.userid = :userid";
             $params['userid'] = $userid;
         }
-        $sql = "SELECT e.*, pa.userid
+        $sql = "SELECT e.id, pa.userid
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {enrol_programs_items} pi ON pi.programid = pa.programid
@@ -447,16 +455,20 @@ final class allocation {
                        $programselect $userselect
               ORDER BY e.id ASC, pa.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
-        foreach ($rs as $enrol) {
-            $puserid = $enrol->userid;
-            unset($enrol->userid);
+        foreach ($rs as $e) {
+            if (!$enrol || $enrol->id != $e->id) {
+                $enrol = $DB->get_record('enrol', ['id' => $e->id], '*', MUST_EXIST);
+            }
             // Do NOT restore grades, that would be a wrong thing to do here for programs
             // and especially certifications later.
-            $plugin->enrol_user($enrol, $puserid, null, 0, 0, ENROL_USER_SUSPENDED, false);
+            $plugin->enrol_user($enrol, $e->userid, null, 0, 0, ENROL_USER_SUSPENDED, false);
         }
         $rs->close();
 
         // Disable all enrolments (and remove roles) for archived, future and past allocations that are active.
+        if ($trace) {
+            $trace->output('suspending user enrolments', 1);
+        }
         $params = ['active' => ENROL_USER_ACTIVE];
         $programselect = '';
         if ($programid) {
@@ -471,7 +483,7 @@ final class allocation {
         $now = time();
         $params['now1'] = $now;
         $params['now2'] = $now;
-        $sql = "SELECT e.*, ue.userid
+        $sql = "SELECT e.id, ue.userid
                   FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.id = ue.enrolid AND e.enrol = 'programs'
                   JOIN {enrol_programs_items} pi ON pi.courseid = e.courseid AND pi.programid = e.customint1
@@ -481,10 +493,11 @@ final class allocation {
                        $programselect $userselect
               ORDER BY e.id ASC, ue.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
-        foreach ($rs as $enrol) {
-            $puserid = $enrol->userid;
-            unset($enrol->userid);
-            $plugin->update_user_enrol($enrol, $puserid, ENROL_USER_SUSPENDED);
+        foreach ($rs as $e) {
+            if (!$enrol || $enrol->id != $e->id) {
+                $enrol = $DB->get_record('enrol', ['id' => $e->id], '*', MUST_EXIST);
+            }
+            $plugin->update_user_enrol($enrol, $e->userid, ENROL_USER_SUSPENDED);
             $context = \context_course::instance($enrol->courseid);
             role_unassign_all([
                 'contextid' => $context->id,
@@ -495,6 +508,9 @@ final class allocation {
         $rs->close();
 
         // Copy completion date from other evidences if item not completed yet.
+        if ($trace) {
+            $trace->output('copying evidence completion dates', 1);
+        }
         $params = [];
         $programselect = '';
         if ($programid) {
@@ -512,7 +528,7 @@ final class allocation {
         $params['now3'] = $now;
         $sql = "INSERT INTO {enrol_programs_completions} (itemid, allocationid, timecompleted)
 
-                SELECT pi.id, pa.id, :now3
+                SELECT pi.id AS itemid, pa.id AS allocationid, :now3 AS timecompleted
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {enrol_programs_items} pi ON pi.programid = pa.programid
@@ -527,6 +543,9 @@ final class allocation {
 
         // Copy completion info from course completion to program item completion,
         // do not remove program item completion if completion gets reset in course later.
+        if ($trace) {
+            $trace->output('copying course completion dates', 1);
+        }
         $params = [];
         $programselect = '';
         $userselect = '';
@@ -544,7 +563,7 @@ final class allocation {
         $params['now3'] = $now;
         $sql = "INSERT INTO {enrol_programs_completions} (itemid, allocationid, timecompleted)
 
-                SELECT pi.id, pa.id, (:now3 + pi.completiondelay)
+                SELECT pi.id AS itemid, pa.id AS allocationid, (:now3 + pi.completiondelay) AS timecompleted
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {enrol_programs_items} pi ON pi.programid = pa.programid
@@ -559,6 +578,9 @@ final class allocation {
 
         // Calculate set completions ignoring course items,
         // do max 100 dependencies to prevent infinite loop.
+        if ($trace) {
+            $trace->output('calculating item completions', 1);
+        }
         $params = [];
         $programselect = '';
         if ($programid) {
@@ -579,6 +601,9 @@ final class allocation {
         $minpointsfound = $DB->record_exists_sql($sql, $params);
 
         for ($i = 0; $i < 100; $i++) {
+            if ($trace) {
+                $trace->output('level ' . $i, 2);
+            }
             $count = 0;
             $now = time();
             $params['now1'] = $now;
@@ -654,6 +679,9 @@ final class allocation {
         }
 
         // Unsuspend enrolments where previous item was completed or there is no previous item specified.
+        if ($trace) {
+            $trace->output('activating user enrolments', 1);
+        }
         $params = ['suspended' => ENROL_USER_SUSPENDED];
         $programselect = '';
         if ($programid) {
@@ -669,7 +697,7 @@ final class allocation {
         $params['now1'] = $now;
         $params['now2'] = $now;
         $params['now3'] = $now;
-        $sql = "SELECT e.*, pa.userid
+        $sql = "SELECT e.id, pa.userid
                   FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.enrol = 'programs' AND e.id = ue.enrolid
                   JOIN {enrol_programs_items} pi ON pi.programid = e.customint1 AND pi.courseid = e.courseid
@@ -685,14 +713,18 @@ final class allocation {
                        $programselect $userselect
               ORDER BY e.id ASC, pa.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
-        foreach ($rs as $enrol) {
-            $puserid = $enrol->userid;
-            unset($enrol->userid);
-            $plugin->update_user_enrol($enrol, $puserid, ENROL_USER_ACTIVE);
+        foreach ($rs as $e) {
+            if (!$enrol || $enrol->id != $e->id) {
+                $enrol = $DB->get_record('enrol', ['id' => $e->id], '*', MUST_EXIST);
+            }
+            $plugin->update_user_enrol($enrol, $e->userid, ENROL_USER_ACTIVE);
         }
         $rs->close();
 
         // Remove role for all non-active enrolments.
+        if ($trace) {
+            $trace->output('unassigning roles', 1);
+        }
         $params = ['suspended' => ENROL_USER_SUSPENDED, 'disabled' => ENROL_INSTANCE_DISABLED, 'roleid' => $roleid];
         $programselect = '';
         if ($programid) {
@@ -704,25 +736,28 @@ final class allocation {
             $userselect = "AND ue.userid = :userid";
             $params['userid'] = $userid;
         }
-        $sql = "SELECT ra.*
+        $sql = "SELECT ra.roleid, ra.userid, ra.contextid, ra.itemid
                   FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.enrol = 'programs' AND e.id = ue.enrolid
                   JOIN {enrol_programs_items} pi ON pi.programid = e.customint1 AND pi.courseid = e.courseid
-                  JOIN {enrol_programs_allocations} pa ON pa.userid = ue.userid AND pa.programid = pi.programid
-                  JOIN {enrol_programs_programs} p ON p.id = pa.programid
+             LEFT JOIN {enrol_programs_allocations} pa ON pa.userid = ue.userid AND pa.programid = pi.programid AND pa.archived = 0
+             LEFT JOIN {enrol_programs_programs} p ON p.id = pa.programid AND p.archived = 0
                   JOIN {context} c ON c.instanceid = e.courseid AND c.contextlevel = 50
                   JOIN {role_assignments} ra ON ra.contextid = c.id AND ra.component = 'enrol_programs' AND ra.userid = ue.userid AND ra.itemid = e.id
-                 WHERE (ue.status = :suspended OR e.status = :disabled OR p.archived = 1 OR pa.archived = 1
+                 WHERE (ue.status = :suspended OR e.status = :disabled OR p.id IS NULL OR pa.id IS NULL
                         OR ra.roleid <> :roleid)
                        $programselect $userselect
               ORDER BY ra.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
         foreach ($rs as $ra) {
-            role_unassign($ra->roleid, $ra->userid, $ra->contextid, $ra->component, $ra->itemid);
+            role_unassign($ra->roleid, $ra->userid, $ra->contextid, 'enrol_programs', $ra->itemid);
         }
         $rs->close();
 
         // Add all wanted roles.
+        if ($trace) {
+            $trace->output('assigning roles', 1);
+        }
         $params = ['active' => ENROL_USER_ACTIVE, 'enabled' => ENROL_INSTANCE_ENABLED];
         $programselect = '';
         if ($programid) {
@@ -738,13 +773,12 @@ final class allocation {
                   FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.enrol = 'programs' AND e.id = ue.enrolid
                   JOIN {enrol_programs_items} pi ON pi.programid = e.customint1 AND pi.courseid = e.courseid
-                  JOIN {enrol_programs_allocations} pa ON pa.userid = ue.userid AND pa.programid = pi.programid
-                  JOIN {enrol_programs_programs} p ON p.id = pa.programid
+                  JOIN {enrol_programs_allocations} pa ON pa.programid = pi.programid AND pa.userid = ue.userid AND pa.archived = 0
+                  JOIN {enrol_programs_programs} p ON p.id = pa.programid AND p.archived = 0
                   JOIN {context} c ON c.instanceid = e.courseid AND c.contextlevel = 50
              LEFT JOIN {role_assignments} ra ON ra.contextid = c.id AND ra.component = 'enrol_programs' AND ra.userid = ue.userid AND ra.itemid = e.id
                  WHERE ra.id IS NULL
                        AND ue.status = :active AND e.status = :enabled
-                       AND p.archived = 0 AND pa.archived = 0
                        $programselect $userselect
               ORDER BY e.id ASC, pa.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
@@ -755,6 +789,9 @@ final class allocation {
 
         // Finally, if top program item is completed, copy the completion time to program allocation,
         // we do this in a loop one by one in order to trigger the program_completed event.
+        if ($trace) {
+            $trace->output('completing programs', 1);
+        }
         $params = [];
         $params['now'] = time();
         $programselect = '';
@@ -767,7 +804,7 @@ final class allocation {
             $userselect = "AND pa.userid = :userid";
             $params['userid'] = $userid;
         }
-        $sql = "SELECT p.*, pc.timecompleted, pa.id AS allocationid
+        $sql = "SELECT p.id, pc.timecompleted, pa.id AS allocationid
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {enrol_programs_items} pi ON pi.programid = pa.programid AND pi.topitem = 1
@@ -777,18 +814,17 @@ final class allocation {
                        $programselect $userselect
               ORDER BY pa.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
-        foreach ($rs as $program) {
-            $ptimecompleted = $program->timecompleted;
-            unset($program->timecompleted);
-            $allocation = $DB->get_record('enrol_programs_allocations', ['id' => $program->allocationid]);
-            unset($program->allocationid);
-            $allocation->timecompleted = (string)$ptimecompleted;
-            $DB->set_field('enrol_programs_allocations', 'timecompleted', $ptimecompleted, ['id' => $allocation->id]);
+        foreach ($rs as $p) {
+            if (!$program || $program->id != $p->id) {
+                $program = $DB->get_record('enrol_programs_programs', ['id' => $p->id], '*', MUST_EXIST);
+            }
+            $allocation = $DB->get_record('enrol_programs_allocations', ['id' => $p->allocationid]);
+            $allocation->timecompleted = (string)$p->timecompleted;
+            $DB->set_field('enrol_programs_allocations', 'timecompleted', $p->timecompleted, ['id' => $allocation->id]);
             $source = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid]);
             $user = $DB->get_record('user', ['id' => $allocation->userid]);
 
             self::make_snapshot($allocation->id, 'completion');
-            calendar::fix_program_events($allocation);
             $event = \enrol_programs\event\program_completed::create_from_allocation($allocation, $program);
             $event->trigger();
             notification\completion::notify_now($user, $program, $source, $allocation);
@@ -798,6 +834,9 @@ final class allocation {
 
         // Add program group members,
         // the membership is then kept until unenrolment or group disposal.
+        if ($trace) {
+            $trace->output('adding group members', 1);
+        }
         $params = [];
         $programselect = '';
         if ($programid) {

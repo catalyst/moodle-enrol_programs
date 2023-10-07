@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="enrol/programs/db" VERSION="20230811" COMMENT="XMLDB file for Open LMS enrol/programs"
+<XMLDB PATH="enrol/programs/db" VERSION="20231007" COMMENT="XMLDB file for Open LMS enrol/programs"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -29,6 +29,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="idnumber" UNIQUE="true" FIELDS="idnumber" COMMENT="Enforce unique idnumber for all programs"/>
+        <INDEX NAME="archived" UNIQUE="false" FIELDS="archived"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="enrol_programs_items" COMMENT="Structure of programs - items representing courses and course-sets with their ordering and completion rules.">
@@ -55,6 +56,7 @@
         <INDEX NAME="minprerequisites" UNIQUE="false" FIELDS="minprerequisites"/>
         <INDEX NAME="points" UNIQUE="false" FIELDS="points"/>
         <INDEX NAME="minpoints" UNIQUE="false" FIELDS="minpoints"/>
+        <INDEX NAME="programid-courseid" UNIQUE="false" FIELDS="programid, courseid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="enrol_programs_groups" COMMENT="Course groups that were created for course items">
