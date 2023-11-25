@@ -37,6 +37,11 @@ use local_commerce\local\benefit;
 final class ecommerce_test extends \advanced_testcase {
     public function setUp(): void {
         $this->resetAfterTest();
+
+        if (!\enrol_programs\local\source\ecommerce::is_commerce_available()) {
+            $this->markTestSkipped('Commerce not available');
+        }
+
         \local_commerce\local\util::enable_commerce();
     }
 

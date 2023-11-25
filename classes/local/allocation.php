@@ -53,7 +53,7 @@ final class allocation {
             cohort::get_type() => cohort::class,
         ];
 
-        if (get_config('local_commerce', 'enablecommerce')) {
+        if (ecommerce::is_commerce_enabled()) {
             $types[ecommerce::get_type()] = ecommerce::class;
         }
 

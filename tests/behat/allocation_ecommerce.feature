@@ -1,8 +1,9 @@
 @enrol @enrol_programs @openlms @opensourcelearning @local_commerce
-Feature: Program selfallocation tests
+Feature: Program commerce allocation tests
 
   Background:
-    Given the following config values are set as admin:
+    Given I skip tests if "local_commerce" is not installed
+    And the following config values are set as admin:
       | config                    | value        | plugin         |
       | defaultpaymentprovider    | nullprovider | local_commerce |
       | source_ecommerce_allownew | 1            | enrol_programs |
@@ -51,15 +52,15 @@ Feature: Program selfallocation tests
     And I log out
 
   @javascript
-  Scenario: Student may purchase access from the products screen
+  Scenario: Student may purchase program access from the products screen
     When I log in as "student1"
-    And I browse products
+    And I visit "/local/commerce/browseproducts.php"
     When I click on "Checkout" "button"
     Then I should see "Program 001"
     And I should see "Your purchase of A product name has been successful."
 
   @javascript
-  Scenario: Student may purchase access from the program catalog
+  Scenario: Student may purchase program access from the Program catalog
     When I log in as "student1"
     And I am on Program catalogue page
     And I follow "Program 001"

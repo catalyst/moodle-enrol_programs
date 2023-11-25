@@ -35,6 +35,31 @@ use stdClass;
  */
 final class ecommerce extends base {
     /**
+     * Is commerce plugin installed and available.
+     * @return bool
+     */
+    public static function is_commerce_available(): bool {
+        if (!get_config('local_commerce', 'version')) {
+            return false;
+        }
+        if (!class_exists(\local_commerce\local\util::class)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Is commerce plugin installed and available.
+     * @return bool
+     */
+    public static function is_commerce_enabled(): bool {
+        if (!self::is_commerce_available()) {
+            return false;
+        }
+        return (bool)get_config('local_commerce', 'enablecommerce');
+    }
+
+    /**
      * Return short type name of source, it is used in database to identify this source.
      *
      * NOTE: this must be unique and ite cannot be changed later
@@ -55,7 +80,7 @@ final class ecommerce extends base {
      * @return bool
      */
     public static function is_new_allowed(\stdClass $program): bool {
-        if (!get_config('local_commerce', 'enablecommerce')) {
+        if (!self::is_commerce_enabled()) {
             return false;
         }
 

@@ -74,7 +74,7 @@ if ($ADMIN->fulltree) {
         new lang_string('source_selfallocation_allownew', 'enrol_programs'),
         new lang_string('source_selfallocation_allownew_desc', 'enrol_programs'), 1));
 
-    if (get_config('local_commerce', 'enablecommerce')) {
+    if (\enrol_programs\local\source\ecommerce::is_commerce_enabled()) {
         $settings->add(new admin_setting_configcheckbox('enrol_programs/source_ecommerce_allownew',
             new lang_string('source_ecommerce_allownew', 'enrol_programs'),
             new lang_string('source_ecommerce_allownew_desc', 'enrol_programs'), 0));

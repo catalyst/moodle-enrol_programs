@@ -49,6 +49,10 @@ class benefithandler_test extends advanced_testcase {
         $CFG->enablecompletion = true;
         $this->resetAfterTest();
 
+        if (!\enrol_programs\local\source\ecommerce::is_commerce_available()) {
+            $this->markTestSkipped('Commerce not available');
+        }
+
         \local_commerce\local\util::enable_commerce();
     }
 
