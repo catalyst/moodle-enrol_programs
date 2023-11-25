@@ -336,7 +336,7 @@
       <KEYS>
         <KEY NAME="id" TYPE="primary" FIELDS="id" COMMENT="primary key"/>
         <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="programid" TYPE="foreign" FIELDS="id" REFTABLE="enrol_programs_programs" REFFIELDS="id"/>
+        <KEY NAME="programid" TYPE="foreign" FIELDS="programid" REFTABLE="enrol_programs_programs" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="holdkey" UNIQUE="false" FIELDS="holdkey" COMMENT="index instead of key because commerce is optional"/>

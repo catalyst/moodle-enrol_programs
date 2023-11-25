@@ -324,7 +324,7 @@ function xmldb_enrol_programs_upgrade($oldversion) {
         // Adding keys to table enrol_programs_src_commholds.
         $table->add_key('id', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
-        $table->add_key('programid', XMLDB_KEY_FOREIGN, ['id'], 'enrol_programs_programs', ['id']);
+        $table->add_key('programid', XMLDB_KEY_FOREIGN, ['programid'], 'enrol_programs_programs', ['id']);
 
         // Adding indexes to table enrol_programs_src_commholds.
         $table->add_index('holdkey', XMLDB_INDEX_NOTUNIQUE, ['holdkey']);
