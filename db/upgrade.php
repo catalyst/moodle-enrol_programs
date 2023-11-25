@@ -310,5 +310,29 @@ function xmldb_enrol_programs_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023100700, 'enrol', 'programs');
     }
 
+    if ($oldversion < 2018051403) {
+        // Define table message_popup_notifications to be created.
+        $table = new xmldb_table('enrol_programs_src_commholds');
+
+        // Adding fields to table message_popup_notifications.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('quantity', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('holdkey', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('programid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_key('holdkey', XMLDB_KEY_FOREIGN, ['holdkey'], 'local_commerce_holdkeys', ['id']);
+        $table->add_key('programid', XMLDB_KEY_FOREIGN, ['programid'], 'enrol_programs_programs', ['id']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Popup savepoint reached.
+        upgrade_plugin_savepoint(true, 2023100701, 'enrol', 'programs');
+    }
+
     return true;
 }

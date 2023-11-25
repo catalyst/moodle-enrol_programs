@@ -19,6 +19,7 @@ namespace enrol_programs\local;
 use enrol_programs\local\source\approval;
 use enrol_programs\local\source\base;
 use enrol_programs\local\source\cohort;
+use enrol_programs\local\source\ecommerce;
 use enrol_programs\local\source\manual;
 use enrol_programs\local\source\selfallocation;
 use enrol_programs\local\source\udplans;
@@ -51,6 +52,10 @@ final class allocation {
             approval::get_type() => approval::class,
             cohort::get_type() => cohort::class,
         ];
+
+        if (get_config('local_commerce', 'enablecommerce')) {
+            $types[ecommerce::get_type()] = ecommerce::class;
+        }
 
         if (file_exists(__DIR__ . '/../../../../admin/tool/udplans/version.php')) {
             $types[udplans::get_type()] = udplans::class;
@@ -1149,10 +1154,10 @@ final class allocation {
      * Returns list of programs with allocation data that user can see.
      * @return array
      */
-    public static function get_my_allocations(): array {
+    public static function get_my_allocations($userid = null): array {
         global $USER, $DB;
 
-        $params = ['userid' => $USER->id];
+        $params = ['userid' => $userid ?? $USER->id];
 
         $tenantjoin = "";
         if (\enrol_programs\local\tenant::is_active()) {
