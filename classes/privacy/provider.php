@@ -139,6 +139,16 @@ class provider implements
             'privacy:metadata:table:enrol_programs_usr_snapshots'
         );
 
+        $collection->add_database_table(
+            'enrol_programs_src_commholds',
+            [
+                'userid' => 'privacy:metadata:field:userid',
+                'quantity' => 'privacy:metadata:field:quantity',
+                'programid' => 'privacy:metadata:field:programid',
+            ],
+            'privacy:metadata:table:enrol_programs_src_commholds'
+        );
+
         return $collection;
     }
 

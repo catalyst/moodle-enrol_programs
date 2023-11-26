@@ -231,6 +231,9 @@ $string['privacy:metadata:field:explanation'] = 'Explanation';
 $string['privacy:metadata:field:completionsjson'] = 'Information about completion';
 $string['privacy:metadata:field:evidencesjson'] = 'Information about completion evidence';
 
+$string['privacy:metadata:table:enrol_programs_src_commholds'] = 'Commerce allocation reservations';
+$string['privacy:metadata:field:quantity'] = 'Quantity';
+
 $string['program'] = 'Program';
 $string['programautofix'] = 'Auto repair program';
 $string['programdue'] = 'Program due';
