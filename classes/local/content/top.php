@@ -375,11 +375,6 @@ final class top extends set {
                 throw new \coding_exception('invalid sequence type');
             }
             $set->sequencetype = $sequencetype;
-            if ($sequencetype === set::SEQUENCE_TYPE_ALLINORDER) {
-                $set->inorder = true;
-            } else {
-                $set->inorder = false;
-            }
             if ($sequencetype === set::SEQUENCE_TYPE_MINPOINTS) {
                 if (!isset($data['minpoints']) || $data['minpoints'] <= 0) {
                     throw new \coding_exception('Minimum points number is required');

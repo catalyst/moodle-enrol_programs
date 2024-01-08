@@ -29,9 +29,9 @@ final class program_allocation_import extends \local_openlms\dialog_form {
         $mform = $this->_form;
         $customdata = $this->_customdata;
 
-        $this->arguments = ['programid' => $customdata['id']];
+        $arguments = ['programid' => $customdata['id']];
         \enrol_programs\external\form_program_allocation_import_fromprogram::add_form_element(
-            $mform, $this->arguments, 'fromprogram', get_string('importselectprogram', 'enrol_programs'));
+            $mform, $arguments, 'fromprogram', get_string('importselectprogram', 'enrol_programs'));
         $mform->addRule('fromprogram', null, 'required', null, 'client');
 
         $mform->addElement('hidden', 'id');

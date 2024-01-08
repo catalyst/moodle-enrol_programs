@@ -26,6 +26,6 @@
 $callbacks = [
     [
         'hook' => \local_navmenu\hook\item_classes::class,
-        'callback' => '\\enrol_programs\callback\local_navmenu::item_classes',
+        'callback' => 'enrol_programs\\callback\\local_navmenu::item_classes',
     ],
 ];
