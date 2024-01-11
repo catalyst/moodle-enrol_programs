@@ -226,7 +226,7 @@ final class cohort extends base {
         $sql = "SELECT DISTINCT p.id, cm.userid, s.id AS sourceid, pa.id AS allocationid
                   FROM {cohort_members} cm
                   JOIN {enrol_programs_src_cohorts} psc ON psc.cohortid = cm.cohortid
-                  JOIN {enrol_programs_sources} s ON s.id = psc.sourceid
+                  JOIN {enrol_programs_sources} s ON s.id = psc.sourceid AND s.type = 'cohort'
                   JOIN {enrol_programs_programs} p ON p.id = s.programid
              LEFT JOIN {enrol_programs_allocations} pa ON pa.programid = p.id AND pa.userid = cm.userid
                  WHERE (pa.id IS NULL OR (pa.archived = 1 AND pa.sourceid = s.id))
