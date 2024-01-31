@@ -355,6 +355,11 @@ foreach ($sourceclasses as $sourceclass) {
     $buttons = array_merge_recursive($buttons,  $sourceclass::get_management_program_users_buttons($program, $sourcerecord));
 }
 
+if (!empty($allocations) && !$program->archived) {
+    $url = new \moodle_url('/enrol/programs/management/evidence_upload.php', ['programid' => $id]);
+    $button = new \local_openlms\output\dialog_form\button($url, get_string('uploadotherevidence', 'enrol_programs'));
+    $buttons[] = $dialogformoutput->render($button);
+}
 if ($buttons) {
     $buttons = implode(' ', $buttons);
     echo $OUTPUT->box($buttons, 'buttons');
