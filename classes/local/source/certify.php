@@ -219,7 +219,7 @@ final class certify extends base {
              LEFT JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
              LEFT JOIN {tool_certify_assignments} ca ON ca.certificationid = cp.certificationid AND ca.userid = cp.userid
              LEFT JOIN {tool_certify_certifications} c ON c.id = cp.certificationid
-                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify'
+                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify' AND ps.id = pa.sourceid
                  WHERE pa.archived = 0
                        AND (
                             cp.id IS NULL
@@ -261,7 +261,7 @@ final class certify extends base {
                   JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
                   JOIN {tool_certify_assignments} ca ON ca.certificationid = cp.certificationid AND ca.userid = cp.userid
                   JOIN {tool_certify_certifications} c ON c.id = cp.certificationid
-                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify'
+                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify' AND ps.id = pa.sourceid
                  WHERE pa.archived = 1
                        AND cp.timerevoked IS NULL AND ca.archived = 0 AND c.archived = 0 AND p.archived = 0
                        AND (cp.timewindowend IS NULL OR cp.timewindowend > :now1)
@@ -306,7 +306,7 @@ final class certify extends base {
                   JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
                   JOIN {tool_certify_assignments} ca ON ca.certificationid = cp.certificationid AND ca.userid = cp.userid
                   JOIN {tool_certify_certifications} c ON c.id = cp.certificationid
-                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify'
+                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify' AND ps.id = pa.sourceid
                  WHERE pa.archived = 0 AND p.archived = 0
                        AND (
                            (pa.timestart <> cp.timewindowstart)
@@ -473,7 +473,7 @@ final class certify extends base {
                   JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
                   JOIN {tool_certify_assignments} ca ON ca.certificationid = cp.certificationid AND ca.userid = cp.userid
                   JOIN {tool_certify_certifications} c ON c.id = cp.certificationid
-                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify'
+                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify' AND ps.id = pa.sourceid
                  WHERE pa.archived = 0 AND ca.archived = 0 AND c.archived = 0 AND p.archived = 0
                        AND pa.timecompleted IS NOT NULL
                        AND cp.timecertified IS NULL AND cp.timerevoked IS NULL

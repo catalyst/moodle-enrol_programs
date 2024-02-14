@@ -355,8 +355,9 @@ final class certify_test extends \advanced_testcase {
         /** @var \enrol_programs_generator $programgenerator */
         $programgenerator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
 
-        $program1 = $programgenerator->create_program(['sources' => 'certify', 'archived' => 0]);
+        $program1 = $programgenerator->create_program(['sources' => ['certify' => [], 'manual' => []], 'archived' => 0]);
         $program1source = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'certify']);
+        $program1sourcemanual = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'manual']);
         $top1 = program::load_content($program1->id);
         $program2 = $programgenerator->create_program(['sources' => 'certify', 'archived' => 0]);
         $program2source = $DB->get_record('enrol_programs_sources', ['programid' => $program2->id, 'type' => 'certify']);
@@ -419,6 +420,12 @@ final class certify_test extends \advanced_testcase {
             'timewindowdue' => null,
             'timewindowend' => null,
         ]);
+        \enrol_programs\local\source\manual::allocate_users($program1->id, $program1sourcemanual->id, [$user7->id]);
+        manual::assign_users($certification1->id, $source1->id, [$user7->id], [
+            'timewindowstart' => $now + DAYSECS,
+            'timewindowdue' => null,
+            'timewindowend' => null,
+        ]);
         $allocation1 = $DB->get_record('enrol_programs_allocations', [
             'sourceid' => $program1source->id, 'userid' => $user1->id], '*', MUST_EXIST);
         $period1 = $DB->get_record('tool_certify_periods',
@@ -447,6 +454,9 @@ final class certify_test extends \advanced_testcase {
             ['userid' => $user6->id, 'certificationid' => $certification1->id], '*', MUST_EXIST);
         $this->assertCount(6, $DB->get_records('enrol_programs_allocations',
             ['sourceid' => $program1source->id, 'archived' => 0]));
+        $allocation7 = $DB->get_record('enrol_programs_allocations', [
+            'sourceid' => $program1sourcemanual->id, 'userid' => $user7->id], '*', MUST_EXIST);
+        $this->assertSame('0', $allocation7->archived);
 
         $period2->timewindowend = (string)($now - 10);
         $DB->update_record('tool_certify_periods', $period2);
