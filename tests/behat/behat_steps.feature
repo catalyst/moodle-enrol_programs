@@ -17,21 +17,25 @@ Feature: Programs navigation behat steps test
       | username | firstname | lastname | email                |
       | manager1 | Manager   | 1        | manager1@example.com |
       | manager2 | Manager   | 2        | manager2@example.com |
+      | admin1   | Admin     | 1        | admin1@example.com   |
       | viewer1  | Viewer    | 1        | viewer1@example.com  |
       | viewer2  | Viewer    | 2        | viewer2@example.com  |
       | student1 | Student   | 1        | student1@example.com |
     And the following "roles" exist:
-      | name           | shortname |
-      | Program viewer | pviewer   |
+      | name           | shortname     |
+      | Program viewer | pviewer       |
+      | Program admin  | padmin        |
     And the following "permission overrides" exist:
-      | capability                     | permission | role    | contextlevel | reference |
-      | enrol/programs:view            | Allow      | pviewer | System       |           |
-#      | moodle/category:viewcourselist | Allow      | pviewer | System       |           |
-#      | moodle/category:viewcourselist | Allow      | manager | System       |           |
+      | capability                     | permission | role         | contextlevel | reference |
+      | enrol/programs:view            | Allow      | pviewer      | System       |           |
+      | moodle/site:configview         | Allow      | pviewer      | System       |           |
+      | enrol/programs:admin           | Allow      | padmin       | System       |           |
+      | moodle/site:configview         | Allow      | padmin       | System       |           |
     And the following "role assigns" exist:
       | user     | role          | contextlevel | reference |
       | manager1 | manager       | System       |           |
       | manager2 | manager       | Category     | CAT1      |
+      | admin1   | padmin        | System       |           |
       | viewer1  | pviewer       | System       |           |
       | viewer2  | pviewer       | Category     | CAT1      |
     And the following "enrol_programs > programs" exist:
@@ -123,7 +127,7 @@ Feature: Programs navigation behat steps test
 
   @javascript
   Scenario: Full manager navigates to programs the normal way
-    Given I log in as "admin"
+    Given I log in as "manager1"
 
     When I navigate to "Programs > Program management" in site administration
     Then I should see "Program management"
@@ -168,7 +172,7 @@ Feature: Programs navigation behat steps test
     And I should not see "Program 003"
 
   @javascript
-  Scenario: Category manager navigates to programs the normal way
+  Scenario: Category manager navigates to programs via navmenu
     Given I skip tests if "local_navmenu" is not installed
     And the following "local_navmenu > items" exist:
       | itemtype                  |
@@ -185,7 +189,10 @@ Feature: Programs navigation behat steps test
     And I should not see "Program 003"
 
   Scenario: Full viewer navigates to programs via behat step
-    Given I log in as "viewer1"
+    Given the following "permission overrides" exist:
+      | capability                     | permission | role         | contextlevel | reference |
+      | moodle/site:configview         | Prohibit   | pviewer      | System       |           |
+    And I log in as "viewer1"
 
     When I am on all programs management page
     Then I should see "Program management"
@@ -210,11 +217,50 @@ Feature: Programs navigation behat steps test
 
   @javascript
   Scenario: Full viewer navigates to programs the normal way
+    Given I log in as "viewer1"
+
+    When I navigate to "Programs > Program management" in site administration
+    Then I should see "Program management"
+    And I should see "Program 000"
+    And I should see "Program 001"
+    And I should see "Program 002"
+    And I should not see "Program 003"
+    And I should not see "Program 003"
+
+    When I select "System (2)" from the "Select category" singleselect
+    Then I should see "Program management"
+    And I should see "Program 000"
+    And I should not see "Program 001"
+    And I should not see "Program 002"
+    And I should not see "Program 003"
+    And I should not see "Program 003"
+
+    When I select "Cat 1 (1)" from the "Select category" singleselect
+    Then I should see "Program management"
+    And I should not see "Program 000"
+    And I should see "Program 001"
+    And I should not see "Program 002"
+    And I should not see "Program 003"
+    And I should not see "Program 003"
+
+    When I select "All programs (4)" from the "Select category" singleselect
+    Then I should see "Program management"
+    And I should see "Program 000"
+    And I should see "Program 001"
+    And I should see "Program 002"
+    And I should not see "Program 003"
+    And I should not see "Program 003"
+
+  @javascript
+  Scenario: Full viewer navigates to programs via navmenu
     Given I skip tests if "local_navmenu" is not installed
     And the following "local_navmenu > items" exist:
       | itemtype                  |
       | enrol_programs_catalogue  |
       | enrol_programs_myprograms |
+    And the following "permission overrides" exist:
+      | capability                     | permission | role         | contextlevel | reference |
+      | moodle/site:configview         | Prohibit   | pviewer      | System       |           |
     And I log in as "viewer1"
 
     When I select "Program catalogue" from primary navigation
@@ -258,7 +304,7 @@ Feature: Programs navigation behat steps test
     And I should not see "Program 003"
 
   @javascript
-  Scenario: Category viewer navigates to programs the normal way
+  Scenario: Category viewer navigates to programs via navmenu
     Given I skip tests if "local_navmenu" is not installed
     And the following "local_navmenu > items" exist:
       | itemtype                  |
@@ -285,7 +331,7 @@ Feature: Programs navigation behat steps test
     And I should not see "Program 003"
 
   @javascript
-  Scenario: Student navigates to Program catalogue the normal way
+  Scenario: Student navigates to Program catalogue via navmenu
     Given I skip tests if "local_navmenu" is not installed
     And the following "local_navmenu > items" exist:
       | itemtype                  |
@@ -308,7 +354,7 @@ Feature: Programs navigation behat steps test
     And I should see "You are not allocated to any programs."
 
   @javascript
-  Scenario: Student navigates to My programs the normal way
+  Scenario: Student navigates to My programs via navmenu
     Given I skip tests if "local_navmenu" is not installed
     And the following "local_navmenu > items" exist:
       | itemtype                  |
@@ -319,3 +365,23 @@ Feature: Programs navigation behat steps test
     When I select "My programs" from primary navigation
     Then I should see "My programs"
     And I should see "You are not allocated to any programs."
+
+  Scenario: Program admin or site config capabilities are needed to see program settings
+    Given the following "permission overrides" exist:
+      | capability                    | permission | role         | contextlevel | reference |
+      | moodle/site:config            | Allow      | manager      | System       |           |
+
+    When I log in as "admin"
+    And I navigate to "Programs > Program settings" in site administration
+    Then I should see "Allow cohort allocation"
+    And I log out
+
+    When I log in as "manager1"
+    And I navigate to "Programs > Program settings" in site administration
+    Then I should see "Allow cohort allocation"
+    And I log out
+
+    When I log in as "admin1"
+    And I navigate to "Programs > Program settings" in site administration
+    Then I should see "Allow cohort allocation"
+    And I log out

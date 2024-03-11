@@ -39,7 +39,9 @@ $ADMIN->add('programs', new admin_externalpage('programsmanagement',
     new moodle_url("/enrol/programs/management/index.php"),
     'enrol/programs:view', !$programsenabled));
 
-$settings = new admin_settingpage('programssettings', new lang_string('settings', 'enrol_programs'), 'moodle/site:config');
+$settings = new admin_settingpage('programssettings',
+    new lang_string('settings', 'enrol_programs'),
+    ['moodle/site:config', 'enrol/programs:admin']);
 $ADMIN->add('programs', $settings);
 if ($ADMIN->fulltree) {
     if (!$programsenabled) {
