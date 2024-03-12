@@ -533,7 +533,7 @@ final class allocation {
         $params['now3'] = $now;
         $sql = "INSERT INTO {enrol_programs_completions} (itemid, allocationid, timecompleted)
 
-                SELECT pi.id AS itemid, pa.id AS allocationid, :now3 AS timecompleted
+                SELECT pi.id AS itemid, pa.id AS allocationid, pe.timecompleted
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {enrol_programs_items} pi ON pi.programid = pa.programid
@@ -944,13 +944,13 @@ final class allocation {
     }
 
     /**
-     * Manually update item completion data.
+     * Manually update item completion time.
      *
      * @param stdClass $data
      * @return void
      */
     public static function update_item_completion(stdClass $data): void {
-        global $DB, $USER;
+        global $DB;
 
         $trans = $DB->start_delegated_transaction();
 
@@ -958,7 +958,6 @@ final class allocation {
         $program = $DB->get_record('enrol_programs_programs', ['id' => $allocation->programid], '*', MUST_EXIST);
         $item = $DB->get_record('enrol_programs_items', ['id' => $data->itemid, 'programid' => $allocation->programid], '*', MUST_EXIST);
         $completion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item->id]);
-        $evidence = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item->id]);
 
         self::make_snapshot($allocation->id, 'completion_edit_before');
 
@@ -978,12 +977,40 @@ final class allocation {
             }
         }
 
+        self::make_snapshot($allocation->id, 'completion_edit');
+
+        $trans->allow_commit();
+
+        self::fix_user_enrolments($allocation->programid, $allocation->userid);
+        calendar::fix_allocation_events($allocation, $program);
+    }
+
+    /**
+     * Manually update item completion evidence.
+     *
+     * @param stdClass $data
+     * @return void
+     */
+    public static function update_item_evidence(stdClass $data): void {
+        global $DB, $USER;
+
+        $trans = $DB->start_delegated_transaction();
+
+        $allocation = $DB->get_record('enrol_programs_allocations', ['id' => $data->allocationid], '*', MUST_EXIST);
+        $program = $DB->get_record('enrol_programs_programs', ['id' => $allocation->programid], '*', MUST_EXIST);
+        $item = $DB->get_record('enrol_programs_items', ['id' => $data->itemid, 'programid' => $allocation->programid], '*', MUST_EXIST);
+        $completion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item->id]);
+        $evidence = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item->id]);
+
+        self::make_snapshot($allocation->id, 'evidence_edit_before');
+
         if ($data->evidencetimecompleted) {
-            $evidencejson = util::json_encode(['details' => $data->evidencedetails]);
+            $evidencejson = util::json_encode(['details' => $data->evidencedetails ?? '']);
             if ($evidence) {
                 $evidence->timecompleted = $data->evidencetimecompleted;
                 $evidence->evidencejson = $evidencejson;
                 $DB->update_record('enrol_programs_evidences', $evidence);
+                $evidence = $DB->get_record('enrol_programs_evidences', ['id' => $evidence->id], '*', MUST_EXIST);
             } else {
                 $record = new stdClass();
                 $record->userid = $allocation->userid;
@@ -992,20 +1019,60 @@ final class allocation {
                 $record->evidencejson = $evidencejson;
                 $record->timecreated = time();
                 $record->createdby = $USER->id;
-                $DB->insert_record('enrol_programs_evidences', $record);
+                $record->id = $DB->insert_record('enrol_programs_evidences', $record);
+                $evidence = $DB->get_record('enrol_programs_evidences', ['id' => $record->id], '*', MUST_EXIST);
             }
         } else {
             if ($evidence) {
                 $DB->delete_records('enrol_programs_evidences', ['id' => $evidence->id]);
+                $evidence = false;
             }
         }
 
-        self::make_snapshot($allocation->id, 'completion_edit');
+        if (!empty($data->itemrecalculate)) {
+            if ($evidence) {
+                if ($completion) {
+                    if ($evidence->timecompleted != $completion->timecompleted) {
+                        $DB->set_field('enrol_programs_completions',
+                            'timecompleted', $evidence->timecompleted,
+                            ['id' => $completion->id]);
+                    }
+                } else {
+                    $record = new stdClass();
+                    $record->allocationid = $allocation->id;
+                    $record->itemid = $item->id;
+                    $record->timecompleted = $evidence->timecompleted;
+                    $record->id = $DB->insert_record('enrol_programs_completions', $record);
+                }
+            } else {
+                if ($completion) {
+                    $DB->delete_records('enrol_programs_completions', ['id' => $completion->id]);
+                }
+            }
+        }
+
+        self::make_snapshot($allocation->id, 'evidence_edit');
 
         $trans->allow_commit();
 
         self::fix_user_enrolments($allocation->programid, $allocation->userid);
         calendar::fix_allocation_events($allocation, $program);
+
+        // Recalculate program completions if top item only,
+        // note future program completions are ignored here because they are invalid.
+        if ($item->topitem && !empty($data->itemrecalculate)) {
+            $allocation = $DB->get_record('enrol_programs_allocations', ['id' => $data->allocationid], '*', MUST_EXIST);
+            $completion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item->id]);
+            if ($allocation->timecompleted && !$completion) {
+                $allocation->timecompleted = null;
+                self::update_user($allocation);
+            } else if ($completion && $completion->timecompleted <= time()) {
+                if ($allocation->timecompleted != $completion->timecompleted) {
+                    $allocation->timecompleted = $completion->timecompleted;
+                    self::update_user($allocation);
+                }
+            }
+        }
     }
 
     /**
@@ -1253,20 +1320,15 @@ final class allocation {
         $data = [
             'itemid' => $item->id,
             'allocationid' => $allocation->id,
-            'timecompleted' => $timecompleted,
             'evidencetimecompleted' => $timecompleted,
+            'itemrecalculate' => 1,
         ];
         if (trim($evidence) !== '') {
             $data['evidencedetails'] = clean_text($evidence);
         } else {
-            $data['evidencedetails'] = '';
+            $data['evidencedetails'] = get_string('source_manual_uploadusers', 'enrol_programs');
         }
-        self::update_item_completion((object)$data);
-        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program->id, 'userid' => $user->id], '*', MUST_EXIST);
-        if ($allocation->timecompleted != $timecompleted) {
-            $allocation->timecompleted = $timecompleted;
-            self::update_user($allocation);
-        }
+        self::update_item_evidence((object)$data);
         $upt->track('enrolments', get_string('userupload_completion_updated', 'enrol_programs', $programname), 'info');
     }
 }

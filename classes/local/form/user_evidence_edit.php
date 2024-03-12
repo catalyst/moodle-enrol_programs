@@ -17,14 +17,14 @@
 namespace enrol_programs\local\form;
 
 /**
- * Edit item completion data.
+ * Edit item completion evidence data.
  *
  * @package    enrol_programs
- * @copyright  2022 Open LMS (https://www.openlms.net/)
+ * @copyright  2024 Open LMS (https://www.openlms.net/)
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class user_completion_edit extends \local_openlms\dialog_form {
+final class user_evidence_edit extends \local_openlms\dialog_form {
     protected function definition() {
         $mform = $this->_form;
         $context = $this->_customdata['context'];
@@ -36,21 +36,31 @@ final class user_completion_edit extends \local_openlms\dialog_form {
         $mform->addElement('static', 'staticitem', get_string('item', 'enrol_programs'),
             format_string($item->fullname));
 
-        if ($allocation->timecompleted) {
-            $mform->addElement('static', 'staticprogramcompletion',
-                get_string('programcompletion', 'enrol_programs'),
-                userdate($allocation->timecompleted));
-        }
-
-        if ($evidence) {
-            $mform->addElement('static', 'staticevidencedate',
-                get_string('evidencedate', 'enrol_programs'),
-                userdate($evidence->timecompleted));
-        }
-
-        $mform->addElement('date_time_selector', 'timecompleted', get_string('completiondate', 'enrol_programs'), ['optional' => true]);
         if ($completion && $completion->timecompleted) {
-            $mform->setDefault('timecompleted', $completion->timecompleted);
+            $strcompleted = userdate($completion->timecompleted);
+        } else {
+            $strcompleted = get_string('notset', 'enrol_programs');
+        }
+        $mform->addElement('static', 'statictimecompleted', get_string('completiondate', 'enrol_programs'), $strcompleted);
+
+        $mform->addElement('date_time_selector', 'evidencetimecompleted', get_string('evidencedate', 'enrol_programs'), ['optional' => true]);
+        if ($evidence && $evidence->timecompleted) {
+            $mform->setDefault('evidencetimecompleted', $evidence->timecompleted);
+        }
+
+        $mform->addElement('textarea', 'evidencedetails', get_string('evidence_details' , 'enrol_programs'));
+        $mform->setType('evidencedetails', PARAM_TEXT);
+        if ($evidence && $evidence->evidencejson) {
+            $data = (object)json_decode($evidence->evidencejson);
+            if ($data->details) {
+                $mform->setDefault('evidencedetails', $data->details);
+            }
+        }
+        $mform->hideIf('evidencedetails', 'evidencetimecompleted[enabled]', 'notchecked');
+
+        $mform->addElement('advcheckbox', 'itemrecalculate', get_string('itemrecalculate' , 'enrol_programs'));
+        if (!$item->topitem && $evidence && $completion && $evidence->timecompleted == $completion->timecompleted) {
+            $mform->setDefault('itemrecalculate', 1);
         }
 
         $mform->addElement('hidden', 'allocationid');
@@ -66,6 +76,12 @@ final class user_completion_edit extends \local_openlms\dialog_form {
 
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
+
+        if ($data['evidencetimecompleted']) {
+            if (trim($data['evidencedetails']) === '') {
+                $errors['evidencedetails'] = get_string('required');
+            }
+        }
 
         return $errors;
     }

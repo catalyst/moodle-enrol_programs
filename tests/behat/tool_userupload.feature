@@ -135,13 +135,13 @@ Feature: Program allocation via tool_userupload
     And I follow "Program 001"
     And I click on "Users" "link" in the "#region-main" "css_element"
     And I follow "Student 1"
-    Then I should see "20 October 2023, 12:00" in the "Completion date:" definition list item
+    Then I should see "20 October 2023, 12:00" in the "Program completion date:" definition list item
 
     When I am on all programs management page
     And I follow "Program 002"
     And I click on "Users" "link" in the "#region-main" "css_element"
     And I follow "Student 2"
-    Then I should see "21 November 2023, 12:00" in the "Completion date:" definition list item
+    Then I should see "21 November 2023, 12:00" in the "Program completion date:" definition list item
 
   @javascript @_file_upload
   Scenario: Set program allocation dates via tool_uploaduser

@@ -559,50 +559,222 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation->id,
             'timecompleted' => (string)($now - 60 * 60 * 1),
             'itemid' => $item1->get_id(),
-            'evidencetimecompleted' => null,
         ];
         allocation::update_item_completion($data);
         $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
         $this->assertSame($data->timecompleted, $itemcompletion->timecompleted);
-        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
-        $this->assertSame(false, $evidencecompletion);
 
         $data = (object)[
             'allocationid' => $allocation->id,
             'timecompleted' => $itemcompletion->timecompleted,
             'itemid' => $item1->get_id(),
-            'evidencetimecompleted' => (string)($now - 60 * 60 * 2),
-            'evidencedetails' => 'hmmm',
         ];
         allocation::update_item_completion($data);
         $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
         $this->assertSame($data->timecompleted, $itemcompletion->timecompleted);
-        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
-        $this->assertSame($data->evidencetimecompleted, $evidencecompletion->timecompleted);
 
         $data = (object)[
             'allocationid' => $allocation->id,
             'timecompleted' => (string)($now - 60 * 60 * 1),
             'itemid' => $item1->get_id(),
-            'evidencetimecompleted' => null,
         ];
         allocation::update_item_completion($data);
         $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
         $this->assertSame($data->timecompleted, $itemcompletion->timecompleted);
-        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
-        $this->assertSame(false, $evidencecompletion);
 
         $data = (object)[
             'allocationid' => $allocation->id,
             'timecompleted' => null,
             'itemid' => $item1->get_id(),
-            'evidencetimecompleted' => null,
         ];
         allocation::update_item_completion($data);
         $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
         $this->assertSame(false, $itemcompletion);
+    }
+
+    public function test_update_item_evidence() {
+        global $DB;
+
+        /** @var \enrol_programs_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
+
+        $user1 = $this->getDataGenerator()->create_user();
+        $course1 = $this->getDataGenerator()->create_course();
+        $context1 = \context_course::instance($course1->id);
+        $program1 = $generator->create_program(['fullname' => 'hokus', 'sources' => ['manual' => []]]);
+        $source1 = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'manual'], '*', MUST_EXIST);
+        manual::allocate_users($program1->id, $source1->id, [$user1->id]);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $top1 = program::load_content($program1->id);
+        $item1 = $top1->append_course($top1, $course1->id);
+
+        $now = time();
+        $allocation->archived = '0';
+        $allocation->timeallocated = (string)$now;
+        $allocation->timestart = (string)($now - 60 * 60 * 3);
+        $allocation->timedue = (string)($now + 60 * 60 * 10);
+        $allocation->timeend = (string)($now + 60 * 60 * 20);
+        allocation::update_user($allocation);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $this->assertSame('Open', allocation::get_completion_status_plain($program1, $allocation));
+        $this->assertNull($allocation->timecompleted);
+
+        $data1 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $item1->get_id(),
+            'evidencetimecompleted' => null,
+        ];
+        allocation::update_item_evidence($data1);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
         $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
+        $this->assertSame(false, $itemcompletion);
         $this->assertSame(false, $evidencecompletion);
+        $this->assertNull($allocation->timecompleted);
+
+        $data2 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $item1->get_id(),
+            'evidencetimecompleted' => (string)($now - 60 * 60 * 2),
+            'evidencedetails' => 'hmmm',
+        ];
+        allocation::update_item_evidence($data2);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
+        $this->assertSame($data2->evidencetimecompleted, $itemcompletion->timecompleted);
+        $this->assertSame($data2->evidencetimecompleted, $evidencecompletion->timecompleted);
+        $this->assertNotNull($allocation->timecompleted);
+
+        $data3 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $item1->get_id(),
+            'evidencetimecompleted' => null,
+        ];
+        allocation::update_item_evidence($data3);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
+        $this->assertSame($data2->evidencetimecompleted, $itemcompletion->timecompleted);
+        $this->assertSame(false, $evidencecompletion);
+
+        $data4 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $item1->get_id(),
+            'evidencetimecompleted' => (string)($now + 1000),
+            'evidencedetails' => 'hmmm',
+        ];
+        allocation::update_item_evidence($data4);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
+        $this->assertSame($data2->evidencetimecompleted, $itemcompletion->timecompleted);
+        $this->assertSame($data4->evidencetimecompleted, $evidencecompletion->timecompleted);
+
+        $data5 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $item1->get_id(),
+            'evidencetimecompleted' => (string)($now + 1000),
+            'evidencedetails' => 'hmmm',
+            'itemrecalculate' => 1,
+        ];
+        allocation::update_item_evidence($data5);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
+        $this->assertSame($data5->evidencetimecompleted, $itemcompletion->timecompleted);
+        $this->assertSame($data5->evidencetimecompleted, $evidencecompletion->timecompleted);
+
+        $data6 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $item1->get_id(),
+            'evidencetimecompleted' => null,
+            'itemrecalculate' => 1,
+        ];
+        allocation::update_item_evidence($data6);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $itemcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item1->get_id()]);
+        $this->assertFalse($itemcompletion);
+        $this->assertFalse($evidencecompletion);
+        $this->assertNotNull($allocation->timecompleted);
+
+        $data = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $top1->get_id(),
+            'timecompleted' => (string)($now - 3000),
+        ];
+        allocation::update_item_completion($data);
+        $allocation->timecompleted = (string)($now - 2000);
+        allocation::update_user($allocation);
+
+        $data7 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $top1->get_id(),
+            'evidencetimecompleted' => (string)($now - 1000),
+        ];
+        allocation::update_item_evidence($data7);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $topcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $top1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $top1->get_id()]);
+        $this->assertSame((string)($now - 3000), $topcompletion->timecompleted);
+        $this->assertSame($data7->evidencetimecompleted, $evidencecompletion->timecompleted);
+        $this->assertSame((string)($now - 2000), $allocation->timecompleted);
+
+        $data7 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $top1->get_id(),
+            'evidencetimecompleted' => (string)($now - 1000),
+            'itemrecalculate' => 1,
+        ];
+        allocation::update_item_evidence($data7);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $topcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $top1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $top1->get_id()]);
+        $this->assertSame($data7->evidencetimecompleted, $topcompletion->timecompleted);
+        $this->assertSame($data7->evidencetimecompleted, $evidencecompletion->timecompleted);
+        $this->assertSame($data7->evidencetimecompleted, $allocation->timecompleted);
+
+        $data8 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $top1->get_id(),
+            'evidencetimecompleted' => (string)($now + 1000),
+            'itemrecalculate' => 1,
+        ];
+        allocation::update_item_evidence($data8);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $topcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $top1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $top1->get_id()]);
+        $this->assertSame($data8->evidencetimecompleted, $topcompletion->timecompleted);
+        $this->assertSame($data8->evidencetimecompleted, $evidencecompletion->timecompleted);
+        $this->assertSame($data7->evidencetimecompleted, $allocation->timecompleted);
+
+        $data9 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $top1->get_id(),
+            'evidencetimecompleted' => null,
+        ];
+        allocation::update_item_evidence($data9);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $topcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $top1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $top1->get_id()]);
+        $this->assertSame($data8->evidencetimecompleted, $topcompletion->timecompleted);
+        $this->assertFalse($evidencecompletion);
+        $this->assertSame($data7->evidencetimecompleted, $allocation->timecompleted);
+
+        $data10 = (object)[
+            'allocationid' => $allocation->id,
+            'itemid' => $top1->get_id(),
+            'evidencetimecompleted' => null,
+            'itemrecalculate' => 1,
+        ];
+        allocation::update_item_evidence($data10);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $topcompletion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $top1->get_id()]);
+        $evidencecompletion = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $top1->get_id()]);
+        $this->assertFalse($topcompletion);
+        $this->assertFalse($evidencecompletion);
+        $this->assertNull($allocation->timecompleted);
     }
 
     public function test_get_completion_status_plain() {
@@ -924,7 +1096,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'timecompleted' => time(),
             'itemid' => $item1->get_id(),
-            'evidencetimecompleted' => null,
         ];
         allocation::update_item_completion($data);
 
@@ -932,7 +1103,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation2->id,
             'timecompleted' => time(),
             'itemid' => $item1->get_id(),
-            'evidencetimecompleted' => null,
         ];
         allocation::update_item_completion($data);
 
@@ -972,7 +1142,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'timecompleted' => time(),
             'itemid' => $item1->get_id(),
-            'evidencetimecompleted' => null,
         ];
         allocation::update_item_completion($data);
         $allocation1 = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
@@ -1144,18 +1313,18 @@ final class allocation_test extends \advanced_testcase {
         $data = (object)[
             'id' => $user1->id,
             'program22' => $program1->idnumber,
-            'pcompletiondate22' => '2033-10-20',
+            'pcompletiondate22' => '2023-10-20',
         ];
         allocation::tool_uploaduser_process($data, 'program22', $upt->reset());
         $this->assertSame([
             'enrolments' => ['info' => ['Program completion was updated']],
         ], $upt->result);
         $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
-        $this->assertSame(strtotime('2033-10-20'), (int)$allocation->timecompleted);
+        $this->assertSame(strtotime('2023-10-20'), (int)$allocation->timecompleted);
         $completion = $DB->get_record('enrol_programs_completions', ['itemid' => $topitem1->id, 'allocationid' => $allocation->id]);
         $this->assertSame($allocation->timecompleted, $completion->timecompleted);
         $evidence = $DB->get_record('enrol_programs_evidences', ['itemid' => $topitem1->id, 'userid' => $user1->id]);
-        $this->assertSame('{"details":""}', $evidence->evidencejson);
+        $this->assertSame('{"details":"Upload allocations"}', $evidence->evidencejson);
 
         $data = (object)[
             'id' => $user1->id,
@@ -1165,16 +1334,16 @@ final class allocation_test extends \advanced_testcase {
         allocation::tool_uploaduser_process($data, 'program22', $upt->reset());
         $this->assertSame([], $upt->result);
         $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
-        $this->assertSame(strtotime('2033-10-20'), (int)$allocation->timecompleted);
+        $this->assertSame(strtotime('2023-10-20'), (int)$allocation->timecompleted);
         $completion = $DB->get_record('enrol_programs_completions', ['itemid' => $topitem1->id, 'allocationid' => $allocation->id]);
         $this->assertSame($allocation->timecompleted, $completion->timecompleted);
         $evidence = $DB->get_record('enrol_programs_evidences', ['itemid' => $topitem1->id, 'userid' => $user1->id]);
-        $this->assertSame('{"details":""}', $evidence->evidencejson);
+        $this->assertSame('{"details":"Upload allocations"}', $evidence->evidencejson);
 
         $data = (object)[
             'id' => $user1->id,
             'program2' => $program1->idnumber,
-            'pcompletiondate2' => '2034-10-20',
+            'pcompletiondate2' => '2023-10-21',
             'pcompletionevidence2' => 'yes yes'
         ];
         allocation::tool_uploaduser_process($data, 'program2', $upt->reset());
@@ -1182,16 +1351,34 @@ final class allocation_test extends \advanced_testcase {
             'enrolments' => ['info' => ['Program completion was updated']],
         ], $upt->result);
         $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
-        $this->assertSame(strtotime('2034-10-20'), (int)$allocation->timecompleted);
+        $this->assertSame(strtotime('2023-10-21'), (int)$allocation->timecompleted);
         $completion = $DB->get_record('enrol_programs_completions', ['itemid' => $topitem1->id, 'allocationid' => $allocation->id]);
-        $this->assertSame($allocation->timecompleted, $completion->timecompleted);
+        $this->assertSame(strtotime('2023-10-21'), (int)$completion->timecompleted);
         $evidence = $DB->get_record('enrol_programs_evidences', ['itemid' => $topitem1->id, 'userid' => $user1->id]);
         $this->assertSame('{"details":"yes yes"}', $evidence->evidencejson);
 
         $data = (object)[
             'id' => $user1->id,
+            'program2' => $program1->idnumber,
+            'pcompletiondate2' => '2035-10-20',
+            'pcompletionevidence2' => 'yes yes'
+        ];
+        allocation::tool_uploaduser_process($data, 'program2', $upt->reset());
+        $this->assertSame([
+            'enrolments' => ['info' => ['Program completion was updated']],
+        ], $upt->result);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
+        $this->assertSame(strtotime('2023-10-21'), (int)$allocation->timecompleted);
+        $completion = $DB->get_record('enrol_programs_completions', ['itemid' => $topitem1->id, 'allocationid' => $allocation->id]);
+        $this->assertSame(strtotime('2035-10-20'), (int)$completion->timecompleted);
+        $evidence = $DB->get_record('enrol_programs_evidences', ['itemid' => $topitem1->id, 'userid' => $user1->id]);
+        $this->assertSame('{"details":"yes yes"}', $evidence->evidencejson);
+        $this->assertSame(strtotime('2035-10-20'), (int)$evidence->timecompleted);
+
+        $data = (object)[
+            'id' => $user1->id,
             'program2' => $program2->idnumber,
-            'pcompletiondate2' => '2034-10-20',
+            'pcompletiondate2' => '2023-10-22',
             'pcompletionevidence2' => 'yes yes'
         ];
         allocation::tool_uploaduser_process($data, 'program2', $upt->reset());
@@ -1202,7 +1389,7 @@ final class allocation_test extends \advanced_testcase {
         $data = (object)[
             'id' => $user1->id,
             'program2' => $program3->idnumber,
-            'pcompletiondate2' => '2034-10-20',
+            'pcompletiondate2' => '2023-10-23',
             'pcompletionevidence2' => 'yes yes'
         ];
         allocation::tool_uploaduser_process($data, 'program2', $upt->reset());
@@ -1220,11 +1407,12 @@ final class allocation_test extends \advanced_testcase {
             'enrolments' => ['error' => ['Invalid program completion date']],
         ], $upt->result);
         $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
-        $this->assertSame(strtotime('2034-10-20'), (int)$allocation->timecompleted);
+        $this->assertSame(strtotime('2023-10-21'), (int)$allocation->timecompleted);
         $completion = $DB->get_record('enrol_programs_completions', ['itemid' => $topitem1->id, 'allocationid' => $allocation->id]);
-        $this->assertSame($allocation->timecompleted, $completion->timecompleted);
+        $this->assertSame(strtotime('2035-10-20'), (int)$completion->timecompleted);
         $evidence = $DB->get_record('enrol_programs_evidences', ['itemid' => $topitem1->id, 'userid' => $user1->id]);
         $this->assertSame('{"details":"yes yes"}', $evidence->evidencejson);
+        $this->assertSame(strtotime('2035-10-20'), (int)$evidence->timecompleted);
 
         $this->setUser($user2);
 
@@ -1238,11 +1426,12 @@ final class allocation_test extends \advanced_testcase {
             'enrolments' => ['error' => ['Program completion cannot be updated']],
         ], $upt->result);
         $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
-        $this->assertSame(strtotime('2034-10-20'), (int)$allocation->timecompleted);
+        $this->assertSame(strtotime('2023-10-21'), (int)$allocation->timecompleted);
         $completion = $DB->get_record('enrol_programs_completions', ['itemid' => $topitem1->id, 'allocationid' => $allocation->id]);
-        $this->assertSame($allocation->timecompleted, $completion->timecompleted);
+        $this->assertSame(strtotime('2035-10-20'), (int)$completion->timecompleted);
         $evidence = $DB->get_record('enrol_programs_evidences', ['itemid' => $topitem1->id, 'userid' => $user1->id]);
         $this->assertSame('{"details":"yes yes"}', $evidence->evidencejson);
+        $this->assertSame(strtotime('2035-10-20'), (int)$evidence->timecompleted);
     }
 
     /**
@@ -1341,7 +1530,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'itemid' => $item1x1->get_id(),
             'timecompleted' => time(),
-            'evidencetimecompleted' => null,
         ]);
         $this->assertCount(5, $DB->get_records('user_enrolments', ['status' => ENROL_USER_ACTIVE, 'userid' => $user1->id]));
         $this->assertTrue(is_enrolled($context1, $user1, '', true));
@@ -1350,12 +1538,12 @@ final class allocation_test extends \advanced_testcase {
         $this->assertTrue(is_enrolled($context4, $user1, '', true));
         $this->assertTrue(is_enrolled($context5, $user1, '', true));
 
-        allocation::update_item_completion((object)[
+        allocation::update_item_evidence((object)[
             'allocationid' => $allocation1->id,
             'itemid' => $item2x1->get_id(),
-            'timecompleted' => null,
             'evidencetimecompleted' => time(),
             'evidencedetails' => '',
+            'itemrecalculate' => 1,
         ]);
         $this->assertCount(5, $DB->get_records('user_enrolments', ['status' => ENROL_USER_ACTIVE, 'userid' => $user1->id]));
         $this->assertTrue(is_enrolled($context1, $user1, '', true));
@@ -1364,12 +1552,12 @@ final class allocation_test extends \advanced_testcase {
         $this->assertTrue(is_enrolled($context4, $user1, '', true));
         $this->assertTrue(is_enrolled($context5, $user1, '', true));
 
-        allocation::update_item_completion((object)[
+        allocation::update_item_evidence((object)[
             'allocationid' => $allocation1->id,
             'itemid' => $item2x2->get_id(),
-            'timecompleted' => null,
             'evidencetimecompleted' => time(),
             'evidencedetails' => '',
+            'itemrecalculate' => 1,
         ]);
         $this->assertCount(6, $DB->get_records('user_enrolments', ['status' => ENROL_USER_ACTIVE, 'userid' => $user1->id]));
         $this->assertTrue(is_enrolled($context1, $user1, '', true));
@@ -1485,7 +1673,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'itemid' => $item1x2->get_id(),
             'timecompleted' => time(),
-            'evidencetimecompleted' => null,
         ]);
         $this->assertCount(4, $DB->get_records('user_enrolments', ['status' => ENROL_USER_ACTIVE, 'userid' => $user1->id]));
         $this->assertTrue(is_enrolled($context1, $user1, '', true));
@@ -1497,7 +1684,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'itemid' => $item1x1->get_id(),
             'timecompleted' => time(),
-            'evidencetimecompleted' => null,
         ]);
         $this->assertCount(6, $DB->get_records('user_enrolments', ['status' => ENROL_USER_ACTIVE, 'userid' => $user1->id]));
         $this->assertTrue(is_enrolled($context1, $user1, '', true));
@@ -1512,7 +1698,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation2->id,
             'itemid' => $item1x4->get_id(),
             'timecompleted' => time(),
-            'evidencetimecompleted' => null,
         ]);
         $this->assertCount(6, $DB->get_records('user_enrolments', ['status' => ENROL_USER_ACTIVE, 'userid' => $user2->id]));
         $this->assertTrue(is_enrolled($context1, $user2, '', true));
@@ -1616,7 +1801,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'itemid' => $item1x1->get_id(),
             'timecompleted' => time(),
-            'evidencetimecompleted' => null,
         ]);
         $allocation1 = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
         $this->assertNull($allocation1->timecompleted);
@@ -1657,7 +1841,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'itemid' => $item2x1->get_id(),
             'timecompleted' => time(),
-            'evidencetimecompleted' => null,
         ]);
         $allocation1 = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
         $this->assertNull($allocation1->timecompleted);
@@ -1698,7 +1881,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'itemid' => $set2->get_id(),
             'timecompleted' => time(),
-            'evidencetimecompleted' => null,
         ]);
         $allocation1 = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
         $this->assertNull($allocation1->timecompleted);
@@ -1721,7 +1903,6 @@ final class allocation_test extends \advanced_testcase {
             'allocationid' => $allocation1->id,
             'itemid' => $top->get_id(),
             'timecompleted' => time(),
-            'evidencetimecompleted' => null,
         ]);
         $allocation1 = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
         $this->assertTimeCurrent($allocation1->timecompleted);

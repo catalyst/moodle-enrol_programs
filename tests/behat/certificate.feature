@@ -22,7 +22,7 @@ Feature: Issuing of certificates for program completion
       | enrol/programs:delete          | Allow      | pmanager | System       |           |
       | enrol/programs:addcourse       | Allow      | pmanager | System       |           |
       | enrol/programs:allocate        | Allow      | pmanager | System       |           |
-      | enrol/programs:admin           | Allow      | pmanager | System       |           |
+      | enrol/programs:manageevidence  | Allow      | pmanager | System       |           |
       | tool/certificate:manage        | Allow      | pmanager | System       |           |
       | moodle/site:configview         | Allow      | pmanager | System       |           |
       | tool/certificate:issue         | Allow      | pmanager | System       |           |
@@ -131,7 +131,7 @@ Feature: Issuing of certificates for program completion
 
     And I follow "Users"
     And I follow "Student 1"
-    And I click on "Edit" "link" in the "Program 000" "table_row"
+    And I click on "Update other evidence" "link" in the "Program 000" "table_row"
     And I set the following fields to these values:
       | evidencetimecompleted[enabled] | 1        |
       | Details                        | no need! |

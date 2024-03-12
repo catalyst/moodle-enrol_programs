@@ -18,7 +18,7 @@
  * Program management interface.
  *
  * @package    enrol_programs
- * @copyright  2022 Open LMS (https://www.openlms.net/)
+ * @copyright  2024 Open LMS (https://www.openlms.net/)
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -53,15 +53,15 @@ $user = $DB->get_record('user', ['id' => $allocation->userid, 'deleted' => 0], '
 $program = $DB->get_record('enrol_programs_programs', ['id' => $allocation->programid], '*', MUST_EXIST);
 
 $context = context::instance_by_id($program->contextid);
-require_capability('enrol/programs:admin', $context);
+require_capability('enrol/programs:manageevidence', $context);
 
 $returnurl = new moodle_url('/enrol/programs/management/user_allocation.php', ['id' => $allocation->id]);
 
-$currenturl = new moodle_url('/enrol/programs/management/user_completion_edit.php', ['allocationid' => $allocation->id, 'itemid' => $item->id]);
+$currenturl = new moodle_url('/enrol/programs/management/user_evidence_edit.php', ['allocationid' => $allocation->id, 'itemid' => $item->id]);
 
 management::setup_program_page($currenturl, $context, $program);
 
-$form = new \enrol_programs\local\form\user_completion_edit(null, [
+$form = new \enrol_programs\local\form\user_evidence_edit(null, [
     'allocation' => $allocation, 'item' => $item, 'user' => $user,
     'completion' => $completion, 'evidence' => $evidence, 'context' => $context,
 ]);
@@ -71,7 +71,7 @@ if ($form->is_cancelled()) {
 }
 
 if ($data = $form->get_data()) {
-    allocation::update_item_completion($data);
+    allocation::update_item_evidence($data);
     $form->redirect_submitted($returnurl);
 }
 

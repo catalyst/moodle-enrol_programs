@@ -537,7 +537,7 @@ class renderer extends \plugin_renderer_base {
             . (isset($allocation->timedue) ? userdate($allocation->timedue) : $strnotset) . '</dd>';
         $result .= '<dt class="col-3">' . get_string('programend', 'enrol_programs') . ':</dt><dd class="col-9">'
             . (isset($allocation->timeend) ? userdate($allocation->timeend) : $strnotset) . '</dd>';
-        $result .= '<dt class="col-3">' . get_string('completiondate', 'enrol_programs') . ':</dt><dd class="col-9">'
+        $result .= '<dt class="col-3">' . get_string('programcompletion', 'enrol_programs') . ':</dt><dd class="col-9">'
             . (isset($allocation->timecompleted) ? userdate($allocation->timecompleted) : $strnotset) . '</dd>';
         $result .= '</dl>';
 
@@ -578,7 +578,8 @@ class renderer extends \plugin_renderer_base {
         global $DB;
 
         $context = \context::instance_by_id($program->contextid);
-        $canhack = (has_capability('enrol/programs:admin', $context) || has_capability('enrol/programs:manageevidence', $context));
+        $canevidence = has_capability('enrol/programs:manageevidence', $context);
+        $canadmin = has_capability('enrol/programs:admin', $context);
         $dateformat = get_string('strftimedatetimeshort');
 
         /** @var \local_openlms\output\dialog_form\renderer $dialogformoutput */
@@ -589,7 +590,7 @@ class renderer extends \plugin_renderer_base {
         $output = $this->output;
         $rows = [];
         $renderercolumns = function(item $item, $itemdepth) use(&$renderercolumns, &$rows, $allocation, &$output, &$dialogformoutput,
-            &$DB, &$context, $dateformat, $canhack): void {
+            &$DB, &$context, $dateformat, $canevidence, $canadmin): void {
             $fullname = $item->get_fullname();
             $id = $item->get_id();
             $padding = str_repeat('&nbsp;', $itemdepth * 6);
@@ -598,8 +599,6 @@ class renderer extends \plugin_renderer_base {
             if ($item instanceof set) {
                 $completiontype = $item->get_sequencetype_info();
             }
-
-            $actions = [];
 
             if ($item instanceof course) {
                 $courseid = $item->get_courseid();
@@ -641,20 +640,29 @@ class renderer extends \plugin_renderer_base {
             if ($completion) {
                 $completioninfo = userdate($completion->timecompleted, $dateformat);
             }
-            if ($canhack) {
+            if ($canadmin) {
                 $editurl = new moodle_url('/enrol/programs/management/user_completion_edit.php', ['allocationid' => $allocation->id, 'itemid' => $item->get_id()]);
-                $editaction = new \local_openlms\output\dialog_form\icon($editurl, 'i/settings', get_string('edit'));
-                $actions[] = $dialogformoutput->render($editaction);
+                $editaction = new \local_openlms\output\dialog_form\icon($editurl, 'i/settings', get_string('completionoverride', 'enrol_programs'));
+                $completioninfo .= ' ' . $dialogformoutput->render($editaction);
             }
 
             $evidenceinfo = '';
             $evidence = $DB->get_record('enrol_programs_evidences', ['itemid' => $item->get_id(), 'userid' => $allocation->userid]);
             if ($evidence) {
                 $jsondata = (object)json_decode($evidence->evidencejson);
-                $evidenceinfo .= format_text($jsondata->details);
+                $evidenceinfo .= format_text($jsondata->details, FORMAT_PLAIN, ['para' => false]);
+            }
+            if ($canevidence) {
+                $editurl = new moodle_url('/enrol/programs/management/user_evidence_edit.php', ['allocationid' => $allocation->id, 'itemid' => $item->get_id()]);
+                if ($evidence) {
+                    $editaction = new \local_openlms\output\dialog_form\icon($editurl, 'i/edit', get_string('evidenceupdate', 'enrol_programs'));
+                } else {
+                    $editaction = new \local_openlms\output\dialog_form\icon($editurl, 't/add', get_string('evidenceupdate', 'enrol_programs'));
+                }
+                $evidenceinfo .= ' ' . $dialogformoutput->render($editaction);
             }
 
-            $rows[] = [$itemname, $points, $completiontype, $completioninfo, $evidenceinfo, implode('', $actions)];
+            $rows[] = [$itemname, $points, $completiontype, $completioninfo, $evidenceinfo];
 
             foreach ($item->get_children() as $child) {
                 $renderercolumns($child, $itemdepth + 1);
@@ -669,7 +677,6 @@ class renderer extends \plugin_renderer_base {
             get_string('sequencetype', 'enrol_programs'),
             get_string('completiondate', 'enrol_programs'),
             get_string('evidence', 'enrol_programs'),
-            get_string('actions'),
         ];
         $table->id = 'program_content';
         $table->attributes['class'] = 'admintable generaltable';
