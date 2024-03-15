@@ -46,14 +46,15 @@ Feature: Visible cohorts program allocation tests
       | Program viewer  | pviewer   |
       | Program manager | pmanager  |
     And the following "permission overrides" exist:
-      | capability                     | permission | role     | contextlevel | reference |
-      | enrol/programs:view            | Allow      | pviewer  | System       |           |
-      | enrol/programs:view            | Allow      | pmanager | System       |           |
-      | enrol/programs:edit            | Allow      | pmanager | System       |           |
-      | enrol/programs:delete          | Allow      | pmanager | System       |           |
-      | enrol/programs:addcourse       | Allow      | pmanager | System       |           |
-      | enrol/programs:allocate        | Allow      | pmanager | System       |           |
-      | moodle/cohort:view             | Allow      | pmanager | System       |           |
+      | capability                      | permission | role     | contextlevel | reference |
+      | enrol/programs:view             | Allow      | pviewer  | System       |           |
+      | enrol/programs:view             | Allow      | pmanager | System       |           |
+      | enrol/programs:edit             | Allow      | pmanager | System       |           |
+      | enrol/programs:delete           | Allow      | pmanager | System       |           |
+      | enrol/programs:addcourse        | Allow      | pmanager | System       |           |
+      | enrol/programs:allocate         | Allow      | pmanager | System       |           |
+      | enrol/programs:manageallocation | Allow      | pmanager | System       |           |
+      | moodle/cohort:view              | Allow      | pmanager | System       |           |
     And the following "role assigns" exist:
       | user      | role          | contextlevel | reference |
       | manager1  | pmanager      | System       |           |

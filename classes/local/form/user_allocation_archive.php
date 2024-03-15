@@ -17,17 +17,15 @@
 namespace enrol_programs\local\form;
 
 /**
- * Edit user allocation.
+ * Archive user allocation.
  *
  * @package    enrol_programs
- * @copyright  2022 Open LMS (https://www.openlms.net/)
+ * @copyright  2024 Open LMS (https://www.openlms.net/)
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class user_allocation_edit extends \local_openlms\dialog_form {
+final class user_allocation_archive extends \local_openlms\dialog_form {
     protected function definition() {
-        global $DB;
-
         $mform = $this->_form;
         $allocation = $this->_customdata['allocation'];
         $user = $this->_customdata['user'];
@@ -35,30 +33,12 @@ final class user_allocation_edit extends \local_openlms\dialog_form {
 
         $mform->addElement('static', 'userfullname', get_string('user'), fullname($user));
 
-        $mform->addElement('date_time_selector', 'timeallocated', get_string('allocationdate', 'enrol_programs'), ['optional' => false]);
-        $mform->freeze('timeallocated');
-
-        $mform->addElement('date_time_selector', 'timestart', get_string('programstart_date', 'enrol_programs'), ['optional' => false]);
-
-        $mform->addElement('date_time_selector', 'timedue', get_string('programdue_date', 'enrol_programs'), ['optional' => true]);
-
-        $mform->addElement('date_time_selector', 'timeend', get_string('programend_date', 'enrol_programs'), ['optional' => true]);
-
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
         $mform->setDefault('id', $allocation->id);
 
-        $this->add_action_buttons(true, get_string('updateallocation', 'enrol_programs'));
+        $this->add_action_buttons(true, get_string('archive', 'enrol_programs'));
 
         $this->set_data($allocation);
-    }
-
-    public function validation($data, $files) {
-        $errors = parent::validation($data, $files);
-
-        $errors = array_merge($errors, \enrol_programs\local\allocation::validate_allocation_dates(
-            $data['timestart'], $data['timedue'], $data['timeend']));
-
-        return $errors;
     }
 }

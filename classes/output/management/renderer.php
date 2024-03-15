@@ -506,19 +506,33 @@ class renderer extends \plugin_renderer_base {
         $sourceclass = $sourceclasses[$source->type];
 
         $buttons = [];
-        if (has_capability('enrol/programs:admin', $context)) {
-            if ($sourceclass::allocation_edit_supported($program, $source, $allocation)) {
-                $updateurl = new \moodle_url('/enrol/programs/management/user_allocation_edit.php', ['id' => $allocation->id]);
-                $updatebutton = new \local_openlms\output\dialog_form\button($updateurl, get_string('updateallocation', 'enrol_programs'));
-                $buttons[] = $dialogformoutput->render($updatebutton);
+        if (has_capability('enrol/programs:manageallocation', $context)) {
+            if ($sourceclass::allocation_edit_supported($program, $source, $allocation)
+                && !$program->archived && !$allocation->archived) {
+                $url = new \moodle_url('/enrol/programs/management/user_allocation_edit.php', ['id' => $allocation->id]);
+                $button = new \local_openlms\output\dialog_form\button($url, get_string('updateallocation', 'enrol_programs'));
+                $buttons[] = $dialogformoutput->render($button);
             }
         }
-        if (has_capability('enrol/programs:allocate', $context)) {
+        if (has_capability('enrol/programs:archive', $context)) {
+            if ($sourceclass::allocation_archiving_supported($program, $source, $allocation)) {
+                if ($allocation->archived) {
+                    $url = new \moodle_url('/enrol/programs/management/user_allocation_unarchive.php', ['id' => $allocation->id]);
+                    $button = new \local_openlms\output\dialog_form\button($url, get_string('unarchive', 'enrol_programs'));
+                    $buttons[] = $dialogformoutput->render($button);
+                } else {
+                    $url = new \moodle_url('/enrol/programs/management/user_allocation_archive.php', ['id' => $allocation->id]);
+                    $button = new \local_openlms\output\dialog_form\button($url, get_string('archive', 'enrol_programs'));
+                    $buttons[] = $dialogformoutput->render($button);
+                }
+            }
+        }
+        if (has_capability('enrol/programs:manageallocation', $context)) {
             if ($sourceclass::allocation_delete_supported($program, $source, $allocation)) {
-                $deleteurl = new \moodle_url('/enrol/programs/management/user_allocation_delete.php', ['id' => $allocation->id]);
-                $deletebutton = new \local_openlms\output\dialog_form\button($deleteurl, get_string('deleteallocation', 'enrol_programs'));
-                $deletebutton->set_after_submit($deletebutton::AFTER_SUBMIT_REDIRECT);
-                $buttons[] = $dialogformoutput->render($deletebutton);
+                $url = new \moodle_url('/enrol/programs/management/user_allocation_delete.php', ['id' => $allocation->id]);
+                $button = new \local_openlms\output\dialog_form\button($url, get_string('deleteallocation', 'enrol_programs'));
+                $button->set_after_submit($button::AFTER_SUBMIT_REDIRECT);
+                $buttons[] = $dialogformoutput->render($button);
             }
         }
 
@@ -537,8 +551,16 @@ class renderer extends \plugin_renderer_base {
             . (isset($allocation->timedue) ? userdate($allocation->timedue) : $strnotset) . '</dd>';
         $result .= '<dt class="col-3">' . get_string('programend', 'enrol_programs') . ':</dt><dd class="col-9">'
             . (isset($allocation->timeend) ? userdate($allocation->timeend) : $strnotset) . '</dd>';
+
+        if (has_capability('enrol/programs:admin', $context)) {
+            $editurl = new moodle_url('/enrol/programs/management/program_completion_override.php', ['id' => $allocation->id]);
+            $editaction = new \local_openlms\output\dialog_form\icon($editurl, 'i/settings', get_string('programcompletionoverride', 'enrol_programs'));
+            $override = $dialogformoutput->render($editaction);
+        } else {
+            $override = '';
+        }
         $result .= '<dt class="col-3">' . get_string('programcompletion', 'enrol_programs') . ':</dt><dd class="col-9">'
-            . (isset($allocation->timecompleted) ? userdate($allocation->timecompleted) : $strnotset) . '</dd>';
+            . (isset($allocation->timecompleted) ? userdate($allocation->timecompleted) : $strnotset) . ' '. $override . '</dd>';
         $result .= '</dl>';
 
         if ($buttons) {
@@ -589,8 +611,10 @@ class renderer extends \plugin_renderer_base {
 
         $output = $this->output;
         $rows = [];
-        $renderercolumns = function(item $item, $itemdepth) use(&$renderercolumns, &$rows, $allocation, &$output, &$dialogformoutput,
-            &$DB, &$context, $dateformat, $canevidence, $canadmin): void {
+        $renderercolumns = function(item $item, $itemdepth) use(&$renderercolumns, &$rows, $program,
+            $allocation, &$output, &$dialogformoutput, &$DB, &$context, $dateformat,
+            $canevidence, $canadmin): void {
+
             $fullname = $item->get_fullname();
             $id = $item->get_id();
             $padding = str_repeat('&nbsp;', $itemdepth * 6);
@@ -641,7 +665,7 @@ class renderer extends \plugin_renderer_base {
                 $completioninfo = userdate($completion->timecompleted, $dateformat);
             }
             if ($canadmin) {
-                $editurl = new moodle_url('/enrol/programs/management/user_completion_edit.php', ['allocationid' => $allocation->id, 'itemid' => $item->get_id()]);
+                $editurl = new moodle_url('/enrol/programs/management/item_completion_override.php', ['allocationid' => $allocation->id, 'itemid' => $item->get_id()]);
                 $editaction = new \local_openlms\output\dialog_form\icon($editurl, 'i/settings', get_string('completionoverride', 'enrol_programs'));
                 $completioninfo .= ' ' . $dialogformoutput->render($editaction);
             }
@@ -652,8 +676,8 @@ class renderer extends \plugin_renderer_base {
                 $jsondata = (object)json_decode($evidence->evidencejson);
                 $evidenceinfo .= format_text($jsondata->details, FORMAT_PLAIN, ['para' => false]);
             }
-            if ($canevidence) {
-                $editurl = new moodle_url('/enrol/programs/management/user_evidence_edit.php', ['allocationid' => $allocation->id, 'itemid' => $item->get_id()]);
+            if ($canevidence && !$program->archived && !$allocation->archived) {
+                $editurl = new moodle_url('/enrol/programs/management/item_evidence_edit.php', ['allocationid' => $allocation->id, 'itemid' => $item->get_id()]);
                 if ($evidence) {
                     $editaction = new \local_openlms\output\dialog_form\icon($editurl, 'i/edit', get_string('evidenceupdate', 'enrol_programs'));
                 } else {

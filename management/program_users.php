@@ -240,14 +240,14 @@ foreach ($allocations as $allocation) {
 
     $cell = $sourceclass::render_allocation_source($program, $source, $allocation);
     $actions = [];
-    if (has_capability('enrol/programs:admin', $context)) {
-        if ($sourceclass::allocation_edit_supported($program, $source, $allocation)) {
+    if (has_capability('enrol/programs:manageallocation', $context)) {
+        if ($sourceclass::allocation_edit_supported($program, $source, $allocation)
+            && !$program->archived && !$allocation->archived) {
+
             $editformurl = new moodle_url('/enrol/programs/management/user_allocation_edit.php', ['id' => $allocation->id]);
             $editaction = new \local_openlms\output\dialog_form\icon($editformurl, 'i/settings', get_string('updateallocation', 'enrol_programs'));
             $actions[] = $dialogformoutput->render($editaction);
         }
-    }
-    if (has_capability('enrol/programs:allocate', $context)) {
         if ($sourceclass::allocation_delete_supported($program, $source, $allocation)) {
             $deleteformurl = new moodle_url('/enrol/programs/management/user_allocation_delete.php', ['id' => $allocation->id]);
             $deleteaction = new \local_openlms\output\dialog_form\icon($deleteformurl, 'i/delete', get_string('deleteallocation', 'enrol_programs'));

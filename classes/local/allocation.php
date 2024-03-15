@@ -898,8 +898,18 @@ final class allocation {
     public static function update_user(stdClass $allocation): stdClass {
         global $DB;
 
+        $allocation = (object)(array)$allocation;
+
         $record = $DB->get_record('enrol_programs_allocations', ['id' => $allocation->id], '*', MUST_EXIST);
         $program = $DB->get_record('enrol_programs_programs', ['id' => $record->programid], '*', MUST_EXIST);
+
+        unset($allocation->userid);
+        unset($allocation->sourceid);
+        foreach ((array)$record as $k => $v) {
+            if (!property_exists($allocation, $k)) {
+                $allocation->$k = $v;
+            }
+        }
 
         $trans = $DB->start_delegated_transaction();
 

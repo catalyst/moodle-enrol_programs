@@ -46,16 +46,18 @@ Feature: Program approval allocations tests
       | Program manager   | pmanager  |
       | Program allocator | allocator |
     And the following "permission overrides" exist:
-      | capability                     | permission | role      | contextlevel | reference |
-      | enrol/programs:view            | Allow      | pviewer   | System       |           |
-      | enrol/programs:view            | Allow      | pmanager  | System       |           |
-      | enrol/programs:edit            | Allow      | pmanager  | System       |           |
-      | enrol/programs:delete          | Allow      | pmanager  | System       |           |
-      | enrol/programs:addcourse       | Allow      | pmanager  | System       |           |
-      | enrol/programs:allocate        | Allow      | pmanager  | System       |           |
-      | moodle/cohort:view             | Allow      | pmanager  | System       |           |
-      | enrol/programs:view            | Allow      | allocator | System       |           |
-      | enrol/programs:allocate        | Allow      | allocator | System       |           |
+      | capability                      | permission | role      | contextlevel | reference |
+      | enrol/programs:view             | Allow      | pviewer   | System       |           |
+      | enrol/programs:view             | Allow      | pmanager  | System       |           |
+      | enrol/programs:edit             | Allow      | pmanager  | System       |           |
+      | enrol/programs:delete           | Allow      | pmanager  | System       |           |
+      | enrol/programs:addcourse        | Allow      | pmanager  | System       |           |
+      | enrol/programs:allocate         | Allow      | pmanager  | System       |           |
+      | enrol/programs:manageallocation | Allow      | pmanager  | System       |           |
+      | moodle/cohort:view              | Allow      | pmanager  | System       |           |
+      | enrol/programs:view             | Allow      | allocator | System       |           |
+      | enrol/programs:allocate         | Allow      | allocator | System       |           |
+      | enrol/programs:manageallocation | Allow      | allocator | System       |           |
     And the following "role assigns" exist:
       | user      | role          | contextlevel | reference |
       | manager1  | pmanager      | System       |           |

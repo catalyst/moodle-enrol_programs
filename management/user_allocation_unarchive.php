@@ -18,7 +18,7 @@
  * Program management interface.
  *
  * @package    enrol_programs
- * @copyright  2022 Open LMS (https://www.openlms.net/)
+ * @copyright  2024 Open LMS (https://www.openlms.net/)
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -48,9 +48,15 @@ $program = $DB->get_record('enrol_programs_programs', ['id' => $allocation->prog
 $source = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid], '*', MUST_EXIST);
 
 $context = context::instance_by_id($program->contextid);
-require_capability('enrol/programs:manageallocation', $context);
+require_capability('enrol/programs:archive', $context);
 
 $returnurl = new moodle_url('/enrol/programs/management/user_allocation.php', ['id' => $allocation->id]);
+
+/** @var \enrol_programs\local\source\base $coursceclass */
+$coursceclass = allocation::get_source_classes()[$source->type];
+if (!$coursceclass::allocation_archiving_supported($program, $source, $allocation) || !$allocation->archived) {
+    redirect($returnurl);
+}
 
 $user = $DB->get_record('user', ['id' => $allocation->userid], '*', MUST_EXIST);
 
@@ -60,22 +66,19 @@ if (!$coursceclass::allocation_edit_supported($program, $source, $allocation)) {
     redirect($returnurl);
 }
 
-if ($program->archived || $allocation->archived) {
-    redirect($returnurl);
-}
-
-$currenturl = new moodle_url('/enrol/programs/management/user_allocation_edit.php', ['id' => $allocation->id]);
+$currenturl = new moodle_url('/enrol/programs/management/user_allocation_unarchive.php', ['id' => $allocation->id]);
 
 management::setup_program_page($currenturl, $context, $program);
 
-$form = new \enrol_programs\local\form\user_allocation_edit(null, ['allocation' => $allocation, 'user' => $user, 'context' => $context]);
+$form = new \enrol_programs\local\form\user_allocation_unarchive(null, ['allocation' => $allocation, 'user' => $user, 'context' => $context]);
 
 if ($form->is_cancelled()) {
     redirect($returnurl);
 }
 
 if ($data = $form->get_data()) {
-    allocation::update_user($data);
+    $allocation->archived = 0;
+    allocation::update_user($allocation);
     $form->redirect_submitted($returnurl);
 }
 

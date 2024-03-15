@@ -39,43 +39,39 @@ if (!empty($_SERVER['HTTP_X_LEGACY_DIALOG_FORM_REQUEST'])) {
 require('../../../config.php');
 require_once($CFG->dirroot . '/lib/formslib.php');
 
-$id = required_param('id', PARAM_INT);
+$allocationid = required_param('allocationid', PARAM_INT);
+$itemid = required_param('itemid', PARAM_INT);
 
 require_login();
 
-$allocation = $DB->get_record('enrol_programs_allocations', ['id' => $id], '*', MUST_EXIST);
+$allocation = $DB->get_record('enrol_programs_allocations', ['id' => $allocationid], '*', MUST_EXIST);
+$item = $DB->get_record('enrol_programs_items', ['id' => $itemid, 'programid' => $allocation->programid], '*', MUST_EXIST);
+$completion = $DB->get_record('enrol_programs_completions', ['allocationid' => $allocation->id, 'itemid' => $item->id]);
+$evidence = $DB->get_record('enrol_programs_evidences', ['userid' => $allocation->userid, 'itemid' => $item->id]);
+
+$user = $DB->get_record('user', ['id' => $allocation->userid, 'deleted' => 0], '*', MUST_EXIST);
 $program = $DB->get_record('enrol_programs_programs', ['id' => $allocation->programid], '*', MUST_EXIST);
-$source = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid], '*', MUST_EXIST);
 
 $context = context::instance_by_id($program->contextid);
-require_capability('enrol/programs:manageallocation', $context);
+require_capability('enrol/programs:admin', $context);
 
 $returnurl = new moodle_url('/enrol/programs/management/user_allocation.php', ['id' => $allocation->id]);
 
-$user = $DB->get_record('user', ['id' => $allocation->userid], '*', MUST_EXIST);
-
-/** @var \enrol_programs\local\source\base $coursceclass */
-$coursceclass = allocation::get_source_classes()[$source->type];
-if (!$coursceclass::allocation_edit_supported($program, $source, $allocation)) {
-    redirect($returnurl);
-}
-
-if ($program->archived || $allocation->archived) {
-    redirect($returnurl);
-}
-
-$currenturl = new moodle_url('/enrol/programs/management/user_allocation_edit.php', ['id' => $allocation->id]);
+$currenturl = new moodle_url('/enrol/programs/management/item_completion_override.php', ['allocationid' => $allocation->id, 'itemid' => $item->id]);
 
 management::setup_program_page($currenturl, $context, $program);
 
-$form = new \enrol_programs\local\form\user_allocation_edit(null, ['allocation' => $allocation, 'user' => $user, 'context' => $context]);
+$form = new \enrol_programs\local\form\item_completion_override(null, [
+    'allocation' => $allocation, 'item' => $item, 'user' => $user,
+    'completion' => $completion, 'evidence' => $evidence, 'context' => $context,
+]);
 
 if ($form->is_cancelled()) {
     redirect($returnurl);
 }
 
 if ($data = $form->get_data()) {
-    allocation::update_user($data);
+    allocation::update_item_completion($data);
     $form->redirect_submitted($returnurl);
 }
 
@@ -87,6 +83,7 @@ echo $OUTPUT->header();
 echo $managementoutput->render_management_program_tabs($program, 'users');
 
 echo $OUTPUT->heading(fullname($user), 3);
+echo $OUTPUT->heading(get_string('itemcompletion', 'enrol_programs'), 4);
 
 echo $form->render();
 

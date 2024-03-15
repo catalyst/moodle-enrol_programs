@@ -24,7 +24,7 @@ namespace enrol_programs\local\form;
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class user_evidence_edit extends \local_openlms\dialog_form {
+final class item_evidence_edit extends \local_openlms\dialog_form {
     protected function definition() {
         $mform = $this->_form;
         $context = $this->_customdata['context'];

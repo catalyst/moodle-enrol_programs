@@ -44,14 +44,16 @@ Feature: Manual program allocation tests
       | Program viewer  | pviewer   |
       | Program manager | pmanager  |
     And the following "permission overrides" exist:
-      | capability                     | permission | role     | contextlevel | reference |
-      | enrol/programs:view            | Allow      | pviewer  | System       |           |
-      | enrol/programs:view            | Allow      | pmanager | System       |           |
-      | enrol/programs:edit            | Allow      | pmanager | System       |           |
-      | enrol/programs:delete          | Allow      | pmanager | System       |           |
-      | enrol/programs:addcourse       | Allow      | pmanager | System       |           |
-      | enrol/programs:allocate        | Allow      | pmanager | System       |           |
-      | moodle/cohort:view             | Allow      | pmanager | System       |           |
+      | capability                      | permission | role     | contextlevel | reference |
+      | enrol/programs:view             | Allow      | pviewer  | System       |           |
+      | enrol/programs:view             | Allow      | pmanager | System       |           |
+      | enrol/programs:edit             | Allow      | pmanager | System       |           |
+      | enrol/programs:delete           | Allow      | pmanager | System       |           |
+      | enrol/programs:addcourse        | Allow      | pmanager | System       |           |
+      | enrol/programs:allocate         | Allow      | pmanager | System       |           |
+      | enrol/programs:manageallocation | Allow      | pmanager | System       |           |
+      | enrol/programs:archive          | Allow      | pmanager | System       |           |
+      | moodle/cohort:view              | Allow      | pmanager | System       |           |
     And the following "role assigns" exist:
       | user      | role          | contextlevel | reference |
       | manager   | manager       | System       |           |
@@ -300,3 +302,26 @@ Feature: Manual program allocation tests
       | Student 1           | 5/11/22, 09:00  | 22/01/23, 09:00 | 31/12/23, 09:00 | Manual allocation |
       | Student 2           | 11/10/22, 00:00 | 31/12/22, 00:00 | 31/01/23, 23:52 | Manual allocation |
       | Student 3           | 11/10/22, 00:00 | 22/01/23, 09:00 | 31/12/23, 09:00 | Manual allocation |
+
+  @javascript
+  Scenario: Program manager cannot alter dates of archived allocation
+    Given the following "enrol_programs > program_allocations" exist:
+      | program     | user     |
+      | Program 000 | student1 |
+    And I log in as "manager1"
+    And I am on all programs management page
+    And I follow "Program 000"
+    And I follow "Users"
+    And I follow "Student 1"
+    And I should see "Update allocation"
+    And I should see "Delete program allocation"
+
+    When I press "Archive"
+    And I press dialog form button "Archive"
+    Then I should not see "Update allocation"
+    And I should see "Delete program allocation"
+
+    When I press "Restore"
+    And I press dialog form button "Restore"
+    Then I should see "Update allocation"
+    And I should see "Delete program allocation"

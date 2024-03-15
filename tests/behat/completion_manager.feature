@@ -28,17 +28,19 @@ Feature: Program completion by managers tests
       | Program manager | pmanager  |
       | Program admin   | padmin    |
     And the following "permission overrides" exist:
-      | capability                     | permission | role     | contextlevel | reference |
-      | enrol/programs:view            | Allow      | pviewer  | System       |           |
-      | enrol/programs:view            | Allow      | pmanager | System       |           |
-      | enrol/programs:edit            | Allow      | pmanager | System       |           |
-      | enrol/programs:delete          | Allow      | pmanager | System       |           |
-      | enrol/programs:manageevidence  | Allow      | pmanager | System       |           |
-      | enrol/programs:view            | Allow      | padmin   | System       |           |
-      | enrol/programs:edit            | Allow      | padmin   | System       |           |
-      | enrol/programs:delete          | Allow      | padmin   | System       |           |
-      | enrol/programs:manageevidence  | Allow      | padmin   | System       |           |
-      | enrol/programs:admin           | Allow      | padmin   | System       |           |
+      | capability                       | permission | role     | contextlevel | reference |
+      | enrol/programs:view              | Allow      | pviewer  | System       |           |
+      | enrol/programs:view              | Allow      | pmanager | System       |           |
+      | enrol/programs:edit              | Allow      | pmanager | System       |           |
+      | enrol/programs:delete            | Allow      | pmanager | System       |           |
+      | enrol/programs:manageevidence    | Allow      | pmanager | System       |           |
+      | enrol/programs:view              | Allow      | padmin   | System       |           |
+      | enrol/programs:edit              | Allow      | padmin   | System       |           |
+      | enrol/programs:delete            | Allow      | padmin   | System       |           |
+      | enrol/programs:manageevidence    | Allow      | padmin   | System       |           |
+      | enrol/programs:manageallocation  | Allow      | pmanager | System       |           |
+      | enrol/programs:archive           | Allow      | pmanager | System       |           |
+      | enrol/programs:admin             | Allow      | padmin   | System       |           |
     And the following "role assigns" exist:
       | user      | role          | contextlevel | reference |
       | admin1    | padmin        | System       |           |
@@ -124,10 +126,10 @@ Feature: Program completion by managers tests
     And I follow "Program 000"
     And I follow "Users"
     And I follow "Student 1"
-    And I press "Update allocation"
+    And I click on "Override program completion" "link"
     And I set the following fields to these values:
       | timecompleted[enabled] | 1    |
-    And I press dialog form button "Update allocation"
+    And I press dialog form button "Update"
     Then I should see "Completed" in the "Program status:" definition list item
 
     When I am on all programs management page

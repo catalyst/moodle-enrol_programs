@@ -48,7 +48,7 @@ $program = $DB->get_record('enrol_programs_programs', ['id' => $allocation->prog
 $source = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid], '*', MUST_EXIST);
 
 $context = context::instance_by_id($program->contextid);
-require_capability('enrol/programs:allocate', $context);
+require_capability('enrol/programs:manageallocation', $context);
 
 $returnurl = new moodle_url('/enrol/programs/management/program_users.php', ['id' => $program->id]);
 

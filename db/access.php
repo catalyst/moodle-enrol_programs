@@ -114,9 +114,37 @@ $capabilities = [
         ],
     ],
 
-    /* Allocate (and de-allocate] programs to users manually, used only when manual source enabled in program,
-       applies to special cases such as deallocating suspended cohort auto-allocations after not a membership removal. */
+    /* Allocate programs to users manually, used only when manual source enabled in program. */
     'enrol/programs:allocate' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+            'tenantmanager' => CAP_ALLOW,
+        ],
+    ],
+
+    /*
+     * Archive and restore allocations if source allows it.
+     */
+    'enrol/programs:archive' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+            'tenantmanager' => CAP_ALLOW,
+        ],
+
+        'clonepermissionsfrom' =>  'enrol/programs:allocate'
+    ],
+
+    /*
+     * Alter certification dates or
+     * delete allocations if source allows it.
+     */
+    'enrol/programs:manageallocation' => [
         'riskbitmask' => RISK_DATALOSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,
@@ -125,6 +153,8 @@ $capabilities = [
             'manager' => CAP_ALLOW,
             'tenantmanager' => CAP_ALLOW,
         ],
+
+        'clonepermissionsfrom' =>  'enrol/programs:allocate'
     ],
 
     /* Add, update and delete other evidence of completion */
@@ -138,7 +168,10 @@ $capabilities = [
         ],
     ],
 
-    /* All other advanced functionality not intended for regular managers */
+    /*
+     * All other advanced functionality not intended for regular managers,
+     * such as overriding of item and program completion dates.
+     */
     'enrol/programs:admin' => [
         'riskbitmask' => RISK_CONFIG | RISK_DATALOSS,
         'captype' => 'write',

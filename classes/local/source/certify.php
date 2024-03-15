@@ -60,6 +60,18 @@ final class certify extends base {
     }
 
     /**
+     * Is it possible to manually archive and unarchive user allocation?
+     *
+     * @param stdClass $program
+     * @param stdClass $source
+     * @param stdClass $allocation
+     * @return bool
+     */
+    public static function allocation_archiving_supported(stdClass $program, stdClass $source, stdClass $allocation): bool {
+        return false;
+    }
+
+    /**
      * Is it possible to manually delete user allocation?
      *
      * @param stdClass $program
