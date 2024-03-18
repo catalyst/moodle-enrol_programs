@@ -429,6 +429,7 @@ final class allocation {
                 'contextid' => $context->id,
                 'component' => 'enrol_programs',
                 'itemid' => $enrol->id,
+                'userid' => $e->userid,
             ]);
         }
         $rs->close();
@@ -508,6 +509,7 @@ final class allocation {
                 'contextid' => $context->id,
                 'component' => 'enrol_programs',
                 'itemid' => $enrol->id,
+                'userid' => $e->userid,
             ]);
         }
         $rs->close();
