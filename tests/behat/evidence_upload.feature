@@ -1,5 +1,5 @@
 @enrol @enrol_programs @openlms
-Feature: Upload other program evidence using csv
+Feature: Upload program completion evidence using csv
 
   Background:
     Given unnecessary Admin bookmarks block gets deleted
@@ -49,10 +49,8 @@ Feature: Upload other program evidence using csv
       | enrol/programs:view            | Allow      | pmanager | System       |           |
       | enrol/programs:manageevidence  | Allow      | pmanager | System       |           |
       | enrol/programs:edit            | Allow      | pmanager | System       |           |
-      | enrol/programs:delete          | Allow      | pmanager | System       |           |
-      | enrol/programs:addcourse       | Allow      | pmanager | System       |           |
       | enrol/programs:allocate        | Allow      | pmanager | System       |           |
-      | moodle/cohort:view             | Allow      | pmanager | System       |           |
+      | enrol/programs:archive         | Allow      | pmanager | System       |           |
     And the following "role assigns" exist:
       | user      | role          | contextlevel | reference |
       | manager   | manager       | System       |           |
@@ -79,10 +77,10 @@ Feature: Upload other program evidence using csv
     And I press dialog form button "Update"
     And I should see "Active" in the "Manual allocation:" definition list item
     And I click on "Users" "link" in the "#region-main" "css_element"
-    And I should not see "Upload completions"
+    And I should not see "Upload completion evidences"
 
-    When I press "Upload allocations"
-    And I upload "enrol/programs/tests/fixtures/upload1.csv" file to "CSV file" filemanager
+    And I press "Upload allocations"
+    And I upload "enrol/programs/tests/fixtures/evidence1.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ,     |
       | Encoding      | UTF-8 |
@@ -92,35 +90,16 @@ Feature: Upload other program evidence using csv
       | User mapping via           | Username |
       | First line is header       | 1        |
     And I press dialog form button "Upload allocations"
-    Then I should see "3 users were assigned to program."
-    Then I should see "Other completion evidence upload"
+    And I should see "5 users were assigned to program."
+    And I should see "Upload completion evidences"
 
-    When I press "Other completion evidence upload"
-    And I upload "enrol/programs/tests/fixtures/uploadevidence.csv" file to "CSV file" filemanager
-    And I set the following fields to these values:
-      | CSV separator | ,     |
-      | Encoding      | UTF-8 |
-    And I press dialog form button "Continue"
-    And I set the following fields to these values:
-      | User identification column | username      |
-      | User mapping via           | Username      |
-      | First line is header       | 1             |
-      | Completion date            | datecompleted |
-    And I press dialog form button "Other completion evidence upload"
-    And I should see "Evidence marked completed for 2 users"
-    And I follow "Student 1"
-    And I click on "Update other evidence" "link" in the "Program 001" "table_row"
-    Then the following fields match these values:
-      | evidencetimecompleted[day]     | 12    |
-      | evidencetimecompleted[month]   | 02    |
-      | evidencetimecompleted[year]    | 2023  |
-      | evidencedetails                |       |
-
-    And I am on all programs management page
-    And I follow "Program 001"
+    And I follow "Student 3"
+    And I press "Archive"
+    And I press dialog form button "Archive"
     And I click on "Users" "link" in the "#region-main" "css_element"
-    When I press "Other completion evidence upload"
-    And I upload "enrol/programs/tests/fixtures/uploadevidencewithdetails.csv" file to "CSV file" filemanager
+
+    When I press "Upload completion evidences"
+    And I upload "enrol/programs/tests/fixtures/evidence1.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ,     |
       | Encoding      | UTF-8 |
@@ -129,14 +108,74 @@ Feature: Upload other program evidence using csv
       | User identification column | username      |
       | User mapping via           | Username      |
       | First line is header       | 1             |
-      | Completion date            | datecompleted |
-      | Details                    | details       |
-    And I press dialog form button "Other completion evidence upload"
+      | Completion date            | completed     |
+      | Details                    | evidence      |
+      | Default details            | EvidenceX     |
+    And I press dialog form button "Upload completion evidences"
+    Then I should see "Completion evidence updated for 2 users"
+    And I should see "2 rows skipped"
+    And I should see "2 invalid rows detected"
+    And the following should exist in the "program_allocations" table:
+      | First name / Last name | Program status |
+      | Student 1              | Completed      |
+      | Student 2              | Completed      |
+      | Student 3              | Archived       |
+      | Student 4              | Open           |
+      | Student 5              | Open           |
 
     And I follow "Student 1"
-    And I click on "Update other evidence" "link" in the "Program 001" "table_row"
-    Then the following fields match these values:
-      | evidencetimecompleted[day]     | 12                      |
-      | evidencetimecompleted[month]   | 04                      |
-      | evidencetimecompleted[year]    | 2023                    |
-      | evidencedetails                | user has completed      |
+    And I should see "12 February 2023, 12:00" in the "Program completion date:" definition list item
+    And the following should exist in the "program_content" table:
+      | Completion date | Other evidence |
+      | 12/02/23, 00:00 | Evidence1      |
+    And I click on "Users" "link" in the "#region-main" "css_element"
+
+    And I follow "Student 2"
+    And I should see "12 March 2023, 12:00" in the "Program completion date:" definition list item
+    And the following should exist in the "program_content" table:
+      | Completion date | Other evidence |
+      | 12/03/23, 00:00 | EvidenceX      |
+    And I click on "Users" "link" in the "#region-main" "css_element"
+
+    When I press "Upload completion evidences"
+    And I upload "enrol/programs/tests/fixtures/evidence2.csv" file to "CSV file" filemanager
+    And I set the following fields to these values:
+      | CSV separator | ,     |
+      | Encoding      | UTF-8 |
+    And I press dialog form button "Continue"
+    And I set the following fields to these values:
+      | User identification column | email         |
+      | User mapping via           | Email address |
+      | First line is header       | 1             |
+      | Completion date            | completed     |
+    And I press dialog form button "Upload completion evidences"
+    And I set the following fields to these values:
+      | User identification column | email         |
+      | User mapping via           | Email         |
+      | First line is header       | 1             |
+      | Completion date            | completed     |
+      | Default details            | EvidenceY     |
+    And I press dialog form button "Upload completion evidences"
+    Then I should see "Completion evidence updated for 2 users"
+    And I should see "1 rows skipped"
+
+    And I follow "Student 1"
+    And I should see "12 July 2023, 12:00" in the "Program completion date:" definition list item
+    And the following should exist in the "program_content" table:
+      | Completion date | Other evidence |
+      | 12/07/23, 00:00 | EvidenceY      |
+    And I click on "Users" "link" in the "#region-main" "css_element"
+
+    And I follow "Student 2"
+    And I should see "12 March 2023, 12:00" in the "Program completion date:" definition list item
+    And the following should exist in the "program_content" table:
+      | Completion date | Other evidence |
+      | 12/03/23, 00:00 | EvidenceX      |
+    And I click on "Users" "link" in the "#region-main" "css_element"
+
+    And I follow "Student 4"
+    And I should see "Not set" in the "Program completion date:" definition list item
+    And the following should exist in the "program_content" table:
+      | Completion date | Other evidence |
+      | 11/04/35, 00:00 | EvidenceY      |
+    And I click on "Users" "link" in the "#region-main" "css_element"

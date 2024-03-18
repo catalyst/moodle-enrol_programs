@@ -185,76 +185,6 @@ final class manual_test extends \advanced_testcase {
         $this->assertCount(1, $DB->get_records('local_openlms_user_notified', ['userid' => $user2->id]));
     }
 
-    public function test_store_uploaded_data() {
-        global $CFG;
-        require_once("$CFG->libdir/filelib.php");
-
-        $admin = get_admin();
-        $this->setUser($admin);
-        $draftid = file_get_unused_draft_itemid();
-        $fs = get_file_storage();
-        $context = \context_user::instance($admin->id);
-        $record = [
-            'contextid' => $context->id,
-            'component' => 'user',
-            'filearea' => 'draft',
-            'itemid' => $draftid,
-            'filepath' => '/',
-            'filename' => 'somefile.csv',
-        ];
-        $fs->create_file_from_string($record, 'content is irrelevant');
-
-        $csvdata = [
-            ['username', 'firstname', 'lastname'],
-            ['user1', 'First', 'User'],
-            ['user2', 'Second', 'User'],
-        ];
-        manual::store_uploaded_data($draftid, $csvdata);
-
-        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
-        $this->assertCount(1, $files);
-        $file = reset($files);
-        $this->assertSame('/', $file->get_filepath());
-        $this->assertSame('data.json', $file->get_filename());
-        $this->assertEquals($csvdata, json_decode($file->get_content()));
-    }
-
-    public function test_get_uploaded_data() {
-        global $CFG;
-        require_once("$CFG->libdir/filelib.php");
-
-        $admin = get_admin();
-        $this->setUser($admin);
-        $draftid = file_get_unused_draft_itemid();
-
-        $this->assertNull(manual::get_uploaded_data($draftid));
-        $this->assertNull(manual::get_uploaded_data(-1));
-        $this->assertNull(manual::get_uploaded_data(0));
-
-        $fs = get_file_storage();
-        $context = \context_user::instance($admin->id);
-        $record = [
-            'contextid' => $context->id,
-            'component' => 'user',
-            'filearea' => 'draft',
-            'itemid' => $draftid,
-            'filepath' => '/',
-            'filename' => 'somefile.csv',
-        ];
-        $fs->create_file_from_string($record, 'content is irrelevant');
-
-        $this->assertNull(manual::get_uploaded_data($draftid));
-
-        $csvdata = [
-            ['username', 'firstname', 'lastname'],
-            ['user1', 'First', 'User'],
-            ['user2', 'Second', 'User'],
-        ];
-        manual::store_uploaded_data($draftid, $csvdata);
-
-        $this->assertEquals($csvdata, manual::get_uploaded_data($draftid));
-    }
-
     public function test_process_uploaded_data() {
         global $CFG, $DB;
         require_once("$CFG->libdir/filelib.php");
@@ -425,41 +355,6 @@ final class manual_test extends \advanced_testcase {
         $this->assertEquals($pdata->programstart_date, $allocation3->timestart);
         $this->assertEquals($timedue3->getTimestamp(), $allocation3->timedue);
         $this->assertEquals($timeend3->getTimestamp(), $allocation3->timeend);
-    }
-
-    public function test_cleanup_uploaded_data() {
-        global $CFG, $DB;
-        require_once("$CFG->libdir/filelib.php");
-
-        $admin = get_admin();
-        $this->setUser($admin);
-        $draftid = file_get_unused_draft_itemid();
-        $fs = get_file_storage();
-        $context = \context_user::instance($admin->id);
-        $csvdata = [
-            ['username', 'firstname', 'lastname'],
-            ['user1', 'First', 'User'],
-            ['user2', 'Second', 'User'],
-        ];
-        manual::store_uploaded_data($draftid, $csvdata);
-        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
-        $this->assertCount(1, $files);
-
-        manual::cleanup_uploaded_data();
-        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
-        $this->assertCount(1, $files);
-
-        $old = time() - 60*60*24*1;
-        $DB->set_field('files', 'timecreated', $old, ['component' => 'enrol_programs']);
-        manual::cleanup_uploaded_data();
-        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
-        $this->assertCount(1, $files);
-
-        $old = time() - 60*60*24*2 - 10;
-        $DB->set_field('files', 'timecreated', $old, ['component' => 'enrol_programs']);
-        manual::cleanup_uploaded_data();
-        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
-        $this->assertCount(0, $files);
     }
 
     public function test_tool_uploaduser_process() {

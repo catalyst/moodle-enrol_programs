@@ -121,7 +121,7 @@ final class source_manual_upload_file extends \local_openlms\dialog_form {
 
         $cir->cleanup(true);
 
-        manual::store_uploaded_data($data['csvfile'], $filedata);
+        \enrol_programs\local\util::store_uploaded_data($data['csvfile'], $filedata);
 
         return $errors;
     }

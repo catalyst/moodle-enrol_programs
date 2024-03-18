@@ -20,7 +20,6 @@ use enrol_programs\local\content\course;
 use enrol_programs\local\content\item;
 use enrol_programs\local\content\set;
 use enrol_programs\local\content\top;
-use enrol_programs\local\source\base;
 use moodle_url, stdClass;
 
 /**
@@ -278,96 +277,5 @@ final class management {
         $PAGE->navbar->add(format_string($program->fullname));
 
         $PAGE->set_docs_path("$CFG->wwwroot/enrol/programs/documentation.php/management.md");
-    }
-
-    /**
-     * Returns preprocessed program evidence upload file contents.
-     *
-     * NOTE: data.json file is deleted.
-     *
-     * @param stdClass $data form submission data
-     * @param array $filedata decoded data.json file
-     * @return array with keys 'markedascompleted', 'skipped' and 'errors'
-     */
-    public static function process_evidence_uploaded_data(stdClass $data, array $filedata): array {
-        global $DB, $USER;
-
-        if ($data->usermapping !== 'username'
-            && $data->usermapping !== 'email'
-            && $data->usermapping !== 'idnumber'
-        ) {
-            // We need to prevent SQL injections in get_record later!
-            throw new \coding_exception('Invalid usermapping value');
-        }
-
-        $result = [
-            'markedascompleted' => 0,
-            'skipped' => 0,
-            'errors' => 0,
-        ];
-
-        $program = $DB->get_record('enrol_programs_programs', ['id' => $data->programid], '*', MUST_EXIST);
-
-        if ($data->hasheaders) {
-            unset($filedata[0]);
-        }
-
-        $userids = [];
-        foreach ($filedata as $i => $row) {
-            $userident = $row[$data->usercolumn];
-            $dateevidencecompleted = strtotime($row[$data->completiondatecolumn]);
-            if (!$userident) {
-                $result['errors']++;
-                continue;
-            }
-            $users = $DB->get_records('user', [$data->usermapping => $userident, 'deleted' => 0, 'confirmed' => 1]);
-            if (count($users) !== 1) {
-                $result['errors']++;
-                continue;
-            }
-            $user = reset($users);
-            if (isguestuser($user->id)) {
-                $result['errors']++;
-                continue;
-            }
-
-            if (!$dateevidencecompleted) {
-                // If date is not set, we skip the row.
-                $result['errors']++;
-                continue;
-            }
-
-            // Should we take the top item only or do we need to read the item somehow from the csv?
-            $item = $DB->get_record('enrol_programs_items', ['topitem' => 1, 'programid' => $program->id]);
-            $allocationid = $DB->get_field('enrol_programs_allocations', 'id', ['userid' => $user->id, 'programid' => $program->id, 'archived' => 0]);
-            if (!$allocationid) {
-                $result['skipped']++;
-                continue;
-            }
-
-            $completiondata = [
-                'itemid' => $item->id,
-                'allocationid' => $allocationid,
-                'timecompleted' => $dateevidencecompleted,
-                'evidencetimecompleted' => $dateevidencecompleted,
-            ];
-
-            if (isset($data->evidencedetails) && isset($row[$data->evidencedetails])) {
-                $completiondata['evidencedetails'] = $row[$data->evidencedetails];
-            }
-            \enrol_programs\local\allocation::update_item_evidence((object)$completiondata);
-            $userids[] = $user->id;
-        }
-
-        $result['markedascompleted'] = count($userids);
-
-        if (!empty($data->csvfile)) {
-            $fs = get_file_storage();
-            $context = \context_user::instance($USER->id);
-            $fs->delete_area_files($context->id, 'user', 'draft', $data->csvfile);
-            $fs->delete_area_files($context->id, 'enrol_programs', 'upload', $data->csvfile);
-        }
-
-        return $result;
     }
 }

@@ -35,7 +35,7 @@ final class program_evidence_upload_file extends \local_openlms\dialog_form {
         $program = $this->_customdata['program'];
         $context = $this->_customdata['context'];
 
-        $mform->addElement('filepicker', 'csvfile', get_string('uploadotherevidence_csvfile', 'enrol_programs'));
+        $mform->addElement('filepicker', 'csvfile', get_string('evidenceupload_csvfile', 'enrol_programs'));
         $mform->addRule('csvfile', null, 'required');
 
         $choices = \csv_import_reader::get_delimiter_list();
@@ -120,7 +120,7 @@ final class program_evidence_upload_file extends \local_openlms\dialog_form {
 
         $cir->cleanup(true);
 
-        manual::store_uploaded_data($data['csvfile'], $filedata);
+        \enrol_programs\local\util::store_uploaded_data($data['csvfile'], $filedata);
 
         return $errors;
     }

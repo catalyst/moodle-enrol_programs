@@ -49,7 +49,7 @@ final class item_evidence_edit extends \local_openlms\dialog_form {
         }
 
         $mform->addElement('textarea', 'evidencedetails', get_string('evidence_details' , 'enrol_programs'));
-        $mform->setType('evidencedetails', PARAM_TEXT);
+        $mform->setType('evidencedetails', PARAM_RAW); // Plain text only.
         if ($evidence && $evidence->evidencejson) {
             $data = (object)json_decode($evidence->evidencejson);
             if ($data->details) {

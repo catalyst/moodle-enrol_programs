@@ -356,8 +356,8 @@ foreach ($sourceclasses as $sourceclass) {
 }
 
 if (!empty($allocations) && !$program->archived) {
-    $url = new \moodle_url('/enrol/programs/management/evidence_upload.php', ['programid' => $id]);
-    $button = new \local_openlms\output\dialog_form\button($url, get_string('uploadotherevidence', 'enrol_programs'));
+    $url = new \moodle_url('/enrol/programs/management/program_evidence_upload.php', ['programid' => $id]);
+    $button = new \local_openlms\output\dialog_form\button($url, get_string('evidenceupload', 'enrol_programs'));
     $buttons[] = $dialogformoutput->render($button);
 }
 if ($buttons) {

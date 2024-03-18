@@ -76,4 +76,109 @@ final class util_test extends \advanced_testcase {
         $expected = 'SELECT COUNT(\'x\') FROM {user}';
         $this->assertSame($expected, util::convert_to_count_sql($sql));
     }
+
+    public function test_store_uploaded_data() {
+        global $CFG;
+        require_once("$CFG->libdir/filelib.php");
+
+        $admin = get_admin();
+        $this->setUser($admin);
+        $draftid = file_get_unused_draft_itemid();
+        $fs = get_file_storage();
+        $context = \context_user::instance($admin->id);
+        $record = [
+            'contextid' => $context->id,
+            'component' => 'user',
+            'filearea' => 'draft',
+            'itemid' => $draftid,
+            'filepath' => '/',
+            'filename' => 'somefile.csv',
+        ];
+        $fs->create_file_from_string($record, 'content is irrelevant');
+
+        $csvdata = [
+            ['username', 'firstname', 'lastname'],
+            ['user1', 'First', 'User'],
+            ['user2', 'Second', 'User'],
+        ];
+        util::store_uploaded_data($draftid, $csvdata);
+
+        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
+        $this->assertCount(1, $files);
+        $file = reset($files);
+        $this->assertSame('/', $file->get_filepath());
+        $this->assertSame('data.json', $file->get_filename());
+        $this->assertEquals($csvdata, json_decode($file->get_content()));
+    }
+
+    public function test_get_uploaded_data() {
+        global $CFG;
+        require_once("$CFG->libdir/filelib.php");
+
+        $admin = get_admin();
+        $this->setUser($admin);
+        $draftid = file_get_unused_draft_itemid();
+
+        $this->assertNull(util::get_uploaded_data($draftid));
+        $this->assertNull(util::get_uploaded_data(-1));
+        $this->assertNull(util::get_uploaded_data(0));
+
+        $fs = get_file_storage();
+        $context = \context_user::instance($admin->id);
+        $record = [
+            'contextid' => $context->id,
+            'component' => 'user',
+            'filearea' => 'draft',
+            'itemid' => $draftid,
+            'filepath' => '/',
+            'filename' => 'somefile.csv',
+        ];
+        $fs->create_file_from_string($record, 'content is irrelevant');
+
+        $this->assertNull(util::get_uploaded_data($draftid));
+
+        $csvdata = [
+            ['username', 'firstname', 'lastname'],
+            ['user1', 'First', 'User'],
+            ['user2', 'Second', 'User'],
+        ];
+        util::store_uploaded_data($draftid, $csvdata);
+
+        $this->assertEquals($csvdata, util::get_uploaded_data($draftid));
+    }
+
+    public function test_cleanup_uploaded_data() {
+        global $CFG, $DB;
+        require_once("$CFG->libdir/filelib.php");
+
+        $admin = get_admin();
+        $this->setUser($admin);
+        $draftid = file_get_unused_draft_itemid();
+        $fs = get_file_storage();
+        $context = \context_user::instance($admin->id);
+        $csvdata = [
+            ['username', 'firstname', 'lastname'],
+            ['user1', 'First', 'User'],
+            ['user2', 'Second', 'User'],
+        ];
+        util::store_uploaded_data($draftid, $csvdata);
+        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
+        $this->assertCount(1, $files);
+
+        util::cleanup_uploaded_data();
+        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
+        $this->assertCount(1, $files);
+
+        $old = time() - 60*60*24*1;
+        $DB->set_field('files', 'timecreated', $old, ['component' => 'enrol_programs']);
+        util::cleanup_uploaded_data();
+        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
+        $this->assertCount(1, $files);
+
+        $old = time() - 60*60*24*2 - 10;
+        $DB->set_field('files', 'timecreated', $old, ['component' => 'enrol_programs']);
+        util::cleanup_uploaded_data();
+        $files = $fs->get_area_files($context->id, 'enrol_programs', 'upload', $draftid, 'id ASC', false);
+        $this->assertCount(0, $files);
+    }
 }

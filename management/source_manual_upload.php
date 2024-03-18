@@ -60,7 +60,7 @@ management::setup_program_page($currenturl, $context, $program);
 
 $filedata = null;
 if ($draftitemid && confirm_sesskey()) {
-    $filedata = manual::get_uploaded_data($draftitemid);
+    $filedata = \enrol_programs\local\util::get_uploaded_data($draftitemid);
 }
 
 if (!$filedata) {
@@ -97,7 +97,7 @@ if ($data = $form->get_data()) {
         $form->redirect_submitted($returnurl);
     }
     if (!$filedata && $form instanceof \enrol_programs\local\form\source_manual_upload_file) {
-        $filedata = manual::get_uploaded_data($draftitemid);
+        $filedata = \enrol_programs\local\util::get_uploaded_data($draftitemid);
         if ($filedata) {
             $form = new \enrol_programs\local\form\source_manual_upload_options(null, ['program' => $program,
                 'source' => $source, 'context' => $context, 'csvfile' => $draftitemid, 'filedata' => $filedata]);

@@ -65,10 +65,13 @@ final class program_evidence_upload_options extends \local_openlms\dialog_form {
         }
 
         $options = [-1 => get_string('choose')] + $fileoptions;
-        $mform->addElement('select', 'completiondatecolumn', get_string('completiondate', 'enrol_programs'), $options);
-        $mform->addRule('completiondatecolumn', get_string('required'), 'required');
+        $mform->addElement('select', 'timecompletedcolumn', get_string('completiondate', 'enrol_programs'), $options);
+        $mform->addRule('timecompletedcolumn', get_string('required'), 'required');
 
-        $mform->addElement('select', 'evidencedetails', get_string('evidence_details', 'enrol_programs'), $options);
+        $mform->addElement('select', 'detailscolumn', get_string('evidence_details', 'enrol_programs'), $options);
+
+        $mform->addElement('textarea', 'details', get_string('evidence_detailsdefault' , 'enrol_programs'));
+        $mform->setType('details', PARAM_RAW);  // Plain text only.
 
         $mform->addElement('hidden', 'programid');
         $mform->setType('programid', PARAM_INT);
@@ -78,19 +81,25 @@ final class program_evidence_upload_options extends \local_openlms\dialog_form {
         $mform->setType('csvfile', PARAM_INT);
         $mform->setDefault('csvfile', $csvfile);
 
-        $this->add_action_buttons(true, get_string('uploadotherevidence', 'enrol_programs'));
+        $this->add_action_buttons(true, get_string('evidenceupload', 'enrol_programs'));
     }
 
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $usedfields = [];
 
-        $columns = ['completiondatecolumn', 'usermapping', 'evidencedetails'];
+        $columns = ['timecompletedcolumn', 'detailscolumn', 'usermapping'];
         foreach ($columns as $column) {
             if ($data[$column] != -1 && in_array($data[$column], $usedfields)) {
                 $errors[$column] = get_string('columnusedalready', 'enrol_programs');
             } else {
                 $usedfields[] = $data[$column];
+            }
+        }
+
+        if ($data['detailscolumn'] == -1) {
+            if (trim($data['details']) === '') {
+                $errors['details'] = get_string('required');
             }
         }
 

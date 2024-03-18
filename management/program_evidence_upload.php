@@ -48,14 +48,18 @@ $program = $DB->get_record('enrol_programs_programs', ['id' => $programid], '*',
 $context = context::instance_by_id($program->contextid);
 require_capability('enrol/programs:manageevidence', $context);
 
-$currenturl = new moodle_url('/enrol/programs/management/evidence_upload.php', ['programid' => $programid]);
+$currenturl = new moodle_url('/enrol/programs/management/program_evidence_upload.php', ['programid' => $programid]);
 $returnurl = new moodle_url('/enrol/programs/management/program_users.php', ['id' => $programid]);
+
+if ($program->archived) {
+    redirect($returnurl);
+}
 
 management::setup_program_page($currenturl, $context, $program);
 
 $filedata = null;
 if ($draftitemid && confirm_sesskey()) {
-    $filedata = manual::get_uploaded_data($draftitemid);
+    $filedata = \enrol_programs\local\util::get_uploaded_data($draftitemid);
 }
 
 if (!$filedata) {
@@ -71,10 +75,10 @@ if ($form->is_cancelled()) {
 
 if ($data = $form->get_data()) {
     if ($filedata && $form instanceof \enrol_programs\local\form\program_evidence_upload_options) {
-        $result = management::process_evidence_uploaded_data($data, $filedata);
+        $result = \enrol_programs\local\allocation::process_evidence_uploaded_data($data, $filedata);
 
-        if ($result['markedascompleted']) {
-            $message = get_string('evidenceupload_markedascompleted', 'enrol_programs', $result['markedascompleted']);
+        if ($result['updated']) {
+            $message = get_string('evidenceupload_updated', 'enrol_programs', $result['updated']);
             \core\notification::add($message, \core\output\notification::NOTIFY_SUCCESS);
         }
         if ($result['skipped']) {
@@ -89,8 +93,7 @@ if ($data = $form->get_data()) {
         $form->redirect_submitted($returnurl);
     }
     if (!$filedata && $form instanceof \enrol_programs\local\form\program_evidence_upload_file) {
-        //TODO - do we need to change this?
-        $filedata = manual::get_uploaded_data($draftitemid);
+        $filedata = \enrol_programs\local\util::get_uploaded_data($draftitemid);
         if ($filedata) {
             $form = new \enrol_programs\local\form\program_evidence_upload_options(null, ['program' => $program,
                 'context' => $context, 'csvfile' => $draftitemid, 'filedata' => $filedata]);
@@ -105,7 +108,7 @@ echo $OUTPUT->header();
 
 echo $managementoutput->render_management_program_tabs($program, 'users');
 
-echo $OUTPUT->heading(get_string('uploadotherevidence', 'enrol_programs'), 3);
+echo $OUTPUT->heading(get_string('evidenceupload', 'enrol_programs'), 3);
 
 echo $form->render();
 

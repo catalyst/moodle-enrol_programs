@@ -60,8 +60,8 @@ class cron extends \core\task\scheduled_task {
         $trace->output('notification_manager::trigger_notifications');
         \enrol_programs\local\notification_manager::trigger_notifications(null, null);
 
-        $trace->output('manual::cleanup_uploaded_data');
-        \enrol_programs\local\source\manual::cleanup_uploaded_data();
+        $trace->output('util::cleanup_uploaded_data');
+        \enrol_programs\local\util::cleanup_uploaded_data();
 
         $trace->finished();
     }
