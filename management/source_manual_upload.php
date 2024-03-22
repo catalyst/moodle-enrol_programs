@@ -77,9 +77,6 @@ if ($form->is_cancelled()) {
 if ($data = $form->get_data()) {
     if ($filedata && $form instanceof \enrol_programs\local\form\source_manual_upload_options) {
         $result = manual::process_uploaded_data($data, $filedata);
-        $string['source_manual_result_assigned'] = '{$a} users were assigned to program';
-        $string['source_manual_result_errors'] = '{$a} errors detected when assigning program';
-        $string['source_manual_result_skipped'] = '{$a} users were already assigned to program';
 
         if ($result['assigned']) {
             $message = get_string('source_manual_result_assigned', 'enrol_programs', $result['assigned']);
