@@ -110,11 +110,6 @@ abstract class base extends \local_openlms\notification\notificationtype {
     protected static function notify_allocated_user(stdClass $program, stdClass $source, stdClass $allocation, stdClass $user, bool $alowmultiple = false): void {
         global $DB;
 
-        if (defined('TOTARA_PROGRAM_MIGRATION') && TOTARA_PROGRAM_MIGRATION) {
-            // Skip notifications during migration.
-            return;
-        }
-
         if ($program->archived) {
             // Never send notifications for archived program.
             return;

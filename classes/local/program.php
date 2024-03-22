@@ -782,11 +782,6 @@ final class program {
 
         $program = $DB->get_record('enrol_programs_programs', ['id' => $programid], '*', MUST_EXIST);
 
-        if (defined('TOTARA_PROGRAM_MIGRATION') && TOTARA_PROGRAM_MIGRATION) {
-            // No need for snapshots during migration.
-            return $program;
-        }
-
         $data->programjson = util::json_encode($program);
         $data->itemsjson = util::json_encode($DB->get_records('enrol_programs_items', ['programid' => $program->id], 'id ASC'));
         $data->cohortsjson = util::json_encode($DB->get_records('enrol_programs_cohorts', ['programid' => $program->id], 'id ASC'));

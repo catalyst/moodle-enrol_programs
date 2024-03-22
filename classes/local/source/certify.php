@@ -199,11 +199,6 @@ final class certify extends base {
     public static function sync_certifications(?int $certificationid, ?int $userid): void {
         global $DB;
 
-        if (defined('TOTARA_PROGRAM_MIGRATION') && TOTARA_PROGRAM_MIGRATION) {
-            // Enrolment sync will be done via cron later for performance reasons.
-            return;
-        }
-
         if (!PHPUNIT_TEST && !$userid && $DB->is_transaction_started()) {
             debugging('assignment::sync_certifications() is not supposed to be used in transactions without userid', DEBUG_DEVELOPER);
         }
