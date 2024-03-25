@@ -17,14 +17,14 @@
 namespace enrol_programs\callback;
 
 /**
- * Callbacks from local_navmenu related code.
+ * Hook callbacks from local_navmenu related code.
  *
  * @package    enrol_programs
  * @copyright  2023 Open LMS
  * @author     Petr Skoda
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_navmenu {
+final class local_navmenu {
     /**
      * Callback method for discovering of primary navigation item classes.
      */

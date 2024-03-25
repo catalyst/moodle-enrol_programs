@@ -47,6 +47,13 @@ $functions = [
         'ajax' => true,
         'loginrequired' => true,
     ],
+    'enrol_programs_form_item_append_frameworkid' => [
+        'classname' => \enrol_programs\external\form_item_append_frameworkid::class,
+        'description' => 'Return list of framework candidates for adding of items.',
+        'type' => 'read',
+        'ajax' => true,
+        'loginrequired' => true,
+    ],
     'enrol_programs_get_programs' => [
         'classname' => enrol_programs\external\get_programs::class,
         'description' => 'Return list of programs that match the search parameters.',

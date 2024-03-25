@@ -20,6 +20,8 @@ use enrol_programs\local\content\top;
 use enrol_programs\local\content\course;
 use enrol_programs\local\content\set;
 use enrol_programs\local\content\item;
+use enrol_programs\local\content\training;
+
 /**
  * Program content test.
  *
@@ -221,6 +223,59 @@ final class content_test extends \advanced_testcase {
         $this->assertSame([], $setitem4->get_children());
     }
 
+    public function test_append_training() {
+        /** @var \enrol_programs_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
+
+        /** @var \customfield_training_generator $traininggenerator */
+        $traininggenerator = $this->getDataGenerator()->get_plugin_generator('customfield_training');
+
+        $fielcategory = $this->getDataGenerator()->create_custom_field_category(
+            ['component' => 'core_course', 'area' => 'course']);
+        $field1 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field1']);
+        $field2 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field2']);
+        $field3 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field3']);
+        $field4 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'text', 'shortname' => 'field4']);
+
+        $data = (object)[
+            'name' => 'Some framework',
+            'fields' => [$field1->get('id')],
+        ];
+        $framework1 = $traininggenerator->create_framework($data);
+        $data = (object)[
+            'name' => 'Other framework',
+            'fields' => [$field2->get('id')],
+        ];
+        $framework2 = $traininggenerator->create_framework($data);
+
+        $course1 = $this->getDataGenerator()->create_course(['customfield_field1' => 1]);
+        $course2 = $this->getDataGenerator()->create_course(['customfield_field1' => 2]);
+        $course3 = $this->getDataGenerator()->create_course(['customfield_field1' => 4, 'customfield_field2' => 23]);
+        $course4 = $this->getDataGenerator()->create_course(['customfield_field2' => 11]);
+        $course5 = $this->getDataGenerator()->create_course();
+
+        $program1 = $generator->create_program(['fullname' => 'hokus']);
+        $program2 = $generator->create_program(['fullname' => 'pokus']);
+
+        $top2 = top::load($program2->id);
+        $top2->append_training($top2, $framework1->id);
+        $top2->append_training($top2, $framework2->id);
+
+        /** @var training $trainingitem1 */
+        $trainingitem1 = $top2->get_children()[0];
+        $this->assertInstanceOf(training::class, $trainingitem1);
+        $this->assertSame((int)$program2->id, $trainingitem1->get_programid());
+        $this->assertSame($framework1->name, $trainingitem1->get_fullname());
+        $this->assertSame(false, $trainingitem1->is_problem_detected());
+        $this->assertSame([], $trainingitem1->get_children());
+        $this->assertSame((int)$framework1->id, $trainingitem1->get_frameworkid());
+        $this->assertSame(null, $trainingitem1->get_previous());
+    }
+
     public function test_update_set() {
         /** @var \enrol_programs_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
@@ -377,6 +432,78 @@ final class content_test extends \advanced_testcase {
         $this->assertSame(false, $courseitem1->is_problem_detected());
         $this->assertSame(0, $courseitem1->get_points());
         $this->assertSame(0, $courseitem1->get_completiondelay());
+    }
+
+    public function test_update_training() {
+        /** @var \enrol_programs_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
+
+        /** @var \customfield_training_generator $traininggenerator */
+        $traininggenerator = $this->getDataGenerator()->get_plugin_generator('customfield_training');
+
+        $fielcategory = $this->getDataGenerator()->create_custom_field_category(
+            ['component' => 'core_course', 'area' => 'course']);
+        $field1 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field1']);
+        $field2 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field2']);
+        $field3 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field3']);
+        $field4 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'text', 'shortname' => 'field4']);
+
+        $data = (object)[
+            'name' => 'Some framework',
+            'fields' => [$field1->get('id')],
+        ];
+        $framework1 = $traininggenerator->create_framework($data);
+        $data = (object)[
+            'name' => 'Other framework',
+            'fields' => [$field2->get('id')],
+        ];
+        $framework2 = $traininggenerator->create_framework($data);
+
+        $course1 = $this->getDataGenerator()->create_course(['customfield_field1' => 1]);
+        $course2 = $this->getDataGenerator()->create_course(['customfield_field1' => 2]);
+        $course3 = $this->getDataGenerator()->create_course(['customfield_field1' => 4, 'customfield_field2' => 23]);
+        $course4 = $this->getDataGenerator()->create_course(['customfield_field2' => 11]);
+        $course5 = $this->getDataGenerator()->create_course();
+
+        $program1 = $generator->create_program(['fullname' => 'hokus']);
+        $program2 = $generator->create_program(['fullname' => 'pokus']);
+
+        $top = top::load($program1->id);
+        $top->append_training($top, $framework1->id);
+
+        /** @var training $trainingitem1 */
+        $trainingitem1 = $top->get_children()[0];
+        $this->assertSame((int)$program1->id, $trainingitem1->get_programid());
+        $this->assertSame($framework1->name, $trainingitem1->get_fullname());
+        $this->assertSame(false, $trainingitem1->is_problem_detected());
+        $this->assertSame(1, $trainingitem1->get_points());
+
+        $trainingitem1 = $top->update_training($trainingitem1, []);
+        $this->assertSame($framework1->name, $trainingitem1->get_fullname());
+        $this->assertSame(false, $trainingitem1->is_problem_detected());
+        $this->assertSame(1, $trainingitem1->get_points());
+
+        $trainingitem1 = $top->update_training($trainingitem1, ['points' => 23, 'completiondelay' => HOURSECS * 3]);
+        $this->assertSame($framework1->name, $trainingitem1->get_fullname());
+        $this->assertSame(false, $trainingitem1->is_problem_detected());
+        $this->assertSame(23, $trainingitem1->get_points());
+        $this->assertSame(HOURSECS * 3, $trainingitem1->get_completiondelay());
+
+        $trainingitem1 = $top->update_training($trainingitem1, []);
+        $this->assertSame($framework1->name, $trainingitem1->get_fullname());
+        $this->assertSame(false, $trainingitem1->is_problem_detected());
+        $this->assertSame(23, $trainingitem1->get_points());
+        $this->assertSame(HOURSECS * 3, $trainingitem1->get_completiondelay());
+
+        $trainingitem1 = $top->update_training($trainingitem1, ['points' => 0, 'completiondelay' => 0]);
+        $this->assertSame($framework1->name, $trainingitem1->get_fullname());
+        $this->assertSame(false, $trainingitem1->is_problem_detected());
+        $this->assertSame(0, $trainingitem1->get_points());
+        $this->assertSame(0, $trainingitem1->get_completiondelay());
     }
 
     public function test_move_item() {
@@ -589,6 +716,8 @@ final class content_test extends \advanced_testcase {
 
         if ($source instanceof course) {
             self::assertSame($source->get_courseid(), $target->get_courseid());
+        } else if ($source instanceof training) {
+            self::assertSame($source->get_frameworkid(), $target->get_frameworkid());
         } else if ($source instanceof set) {
             self::assertSame($source->get_sequencetype_info(), $target->get_sequencetype_info());
         } else {
@@ -652,6 +781,56 @@ final class content_test extends \advanced_testcase {
         $this->assertItemCloned($top1->get_children()[0], $top2->get_children()[0]);
         $this->assertItemCloned($top1->get_children()[1], $top2->get_children()[1]);
         $this->assertItemCloned($top3->get_children()[0], $top2->get_children()[2]);
+    }
+
+    public function test_content_import_training() {
+        /** @var \enrol_programs_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
+
+        /** @var \customfield_training_generator $traininggenerator */
+        $traininggenerator = $this->getDataGenerator()->get_plugin_generator('customfield_training');
+
+        $fielcategory = $this->getDataGenerator()->create_custom_field_category(
+            ['component' => 'core_course', 'area' => 'course']);
+        $field1 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field1']);
+        $field2 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field2']);
+        $field3 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field3']);
+        $field4 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'text', 'shortname' => 'field4']);
+
+        $data = (object)[
+            'name' => 'Some framework',
+            'fields' => [$field1->get('id')],
+        ];
+        $framework1 = $traininggenerator->create_framework($data);
+        $data = (object)[
+            'name' => 'Other framework',
+            'fields' => [$field2->get('id')],
+        ];
+        $framework2 = $traininggenerator->create_framework($data);
+
+        $course1 = $this->getDataGenerator()->create_course(['customfield_field1' => 1]);
+        $course2 = $this->getDataGenerator()->create_course(['customfield_field1' => 2]);
+        $course3 = $this->getDataGenerator()->create_course(['customfield_field1' => 4, 'customfield_field2' => 23]);
+        $course4 = $this->getDataGenerator()->create_course(['customfield_field2' => 11]);
+        $course5 = $this->getDataGenerator()->create_course();
+
+        $program1 = $generator->create_program(['fullname' => 'hokus']);
+        $program2 = $generator->create_program(['fullname' => 'pokus']);
+
+        $top1 = top::load($program1->id);
+        $top1->append_training($top1, $framework1->id);
+        $top2 = top::load($program2->id);
+
+        $top2->content_import((object)['id' => $program2->id, 'fromprogram' => $program1->id]);
+        $top2 = top::load($program2->id);
+        $this->assertSame($program2->fullname, $top2->get_fullname());
+        $this->assertSame($top1->get_points(), $top2->get_points());
+        $this->assertCount(1, $top2->get_children());
+        $this->assertItemCloned($top1->get_children()[0], $top2->get_children()[0]);
     }
 
     public function test_orphaned_items() {

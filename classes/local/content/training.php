@@ -17,24 +17,93 @@
 namespace enrol_programs\local\content;
 
 use enrol_programs\local\util;
+use stdClass;
 
 /**
- * Program course item.
+ * Program training item.
  *
  * @package    enrol_programs
  * @copyright  2022 Open LMS (https://www.openlms.net/)
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class course extends item {
+final class training extends item {
     /** @var int */
-    protected $courseid;
+    protected $frameworkid;
 
-    /** @var ?item Previous item needs to be completed in order to allow course access */
+    /** @var ?item Previous item is not actually used because there is no concept of start of training */
     protected $previous;
 
-    public function get_courseid(): int {
-        return $this->courseid;
+    public function get_frameworkid(): int {
+        return $this->frameworkid;
+    }
+
+    /**
+     * What is the required total learning?
+     *
+     * @return int|null
+     */
+    public function get_required_training(): ?int {
+        global $DB;
+        $framework = $DB->get_record('customfield_training_frameworks', ['id' => $this->frameworkid]);
+        if (!$framework) {
+            return null;
+        }
+        return $framework->requiredtraining;
+    }
+
+    /**
+     * What is the current sum of completed training?
+     * @param stdClass $allocation
+     * @return int
+     */
+    public function get_completed_training(stdClass $allocation): int {
+        global $DB;
+        $sql = "SELECT SUM(cd.intvalue) AS completed
+                  FROM {customfield_training_completions} ctc
+                  JOIN {customfield_field} cf ON cf.id = ctc.fieldid
+                  JOIN {customfield_data} cd ON cd.fieldid = cf.id AND cd.instanceid = ctc.instanceid
+                  JOIN {customfield_training_fields} tf ON tf.fieldid = cf.id
+                  JOIN {customfield_training_frameworks} tfr ON tfr.id = tf.frameworkid
+                 WHERE tfr.id = :frameworkid AND ctc.userid = :userid AND cd.intvalue IS NOT NULL
+                       AND (tfr.restrictedcompletion = 0 OR ctc.timecompleted >= :timestart)";
+        $params = [
+            'frameworkid' => $this->frameworkid,
+            'userid' => $allocation->userid,
+            'timestart' => $allocation->timestart,
+        ];
+        return (int)$DB->get_field_sql($sql, $params);
+    }
+
+    /**
+     * Current progress for current active program allocations,
+     * required training in all other cases.
+     *
+     * @param stdClass $allocation
+     * @return string
+     */
+    public function get_training_progress(stdClass $allocation): string {
+        global $DB;
+
+        $now = time();
+
+        $framework = $DB->get_record('customfield_training_frameworks', ['id' => $this->frameworkid]);
+        if (!$framework) {
+            return get_string('error');
+        }
+
+        if ($framework->archived || $allocation->archived
+            || $allocation->timestart > $now || ($allocation->timeend && $allocation->timeend <= $now)) {
+
+            return get_string('trainingcompletion', 'enrol_programs', $framework->requiredtraining);
+        }
+
+        $data = [
+            'current' => self::get_completed_training($allocation),
+            'total' => $framework->requiredtraining,
+        ];
+
+        return get_string('trainingprogress', 'enrol_programs', $data);
     }
 
     /**
@@ -50,7 +119,7 @@ final class course extends item {
     }
 
     /**
-     * Return item that must be completed before allowing access to this course.
+     * Return item that must be completed before allowing access to this training.
      *
      * @return item|null
      */
@@ -75,16 +144,16 @@ final class course extends item {
      * @param item|null $previous
      * @param array $unusedrecords
      * @param array $prerequisites
-     * @return course
+     * @return training
      */
     protected static function init_from_record(\stdClass $record, ?item $previous, array &$unusedrecords, array &$prerequisites): item {
-        if ($record->topitem || !$record->courseid || $record->frameworkid !== null) {
-            throw new \coding_exception('Invalid course item');
+        if ($record->topitem || $record->courseid !== null || $record->frameworkid === null) {
+            throw new \coding_exception('Invalid training item');
         }
-        $item = new course();
+        $item = new training();
         $item->id = $record->id;
         $item->programid = $record->programid;
-        $item->courseid = $record->courseid;
+        $item->frameworkid = $record->frameworkid;
         $item->previous = $previous;
         if ($previous) {
             if ($previous->id == $record->id) {
@@ -109,7 +178,7 @@ final class course extends item {
             $item->problemdetected = true;
         }
 
-        // NOTE: Prerequisites are verified in set that contains this course.
+        // NOTE: Prerequisites are verified in set that contains this training.
 
         return $item;
     }
@@ -133,7 +202,7 @@ final class course extends item {
     protected function get_record(): array {
         global $DB;
 
-        $fullname = $DB->get_field('course', 'fullname', ['id' => $this->courseid]);
+        $fullname = $DB->get_field('customfield_training_frameworks', 'name', ['id' => $this->frameworkid]);
         if ($fullname === false) {
             $fullname = $this->fullname;
         }
@@ -142,8 +211,8 @@ final class course extends item {
             'id' => (empty($this->id) ? null : (string)$this->id),
             'programid' => (string)$this->programid,
             'topitem' => null,
-            'courseid' => (string)$this->courseid,
-            'frameworkid' => null,
+            'courseid' => null,
+            'frameworkid' => (string)$this->frameworkid,
             'previtemid' => (isset($this->previous) ? (string)$this->previous->id : null),
             'fullname' => $fullname,
             'sequencejson' => util::json_encode([]),

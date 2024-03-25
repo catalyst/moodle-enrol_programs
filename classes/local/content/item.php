@@ -127,6 +127,24 @@ abstract class item {
     }
 
     /**
+     * Is this a training item?
+     *
+     * @return bool
+     */
+    final public function is_training(): bool {
+        return ($this instanceof training);
+    }
+
+    /**
+     * Is this a training item?
+     *
+     * @return bool
+     */
+    final public function is_set(): bool {
+        return ($this instanceof set || $this instanceof top);
+    }
+
+    /**
      * Is this item deletable?
      *
      * @return bool

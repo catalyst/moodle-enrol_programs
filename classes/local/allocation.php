@@ -538,6 +538,62 @@ final class allocation {
                        $programselect $userselect";
         $DB->execute($sql, $params);
 
+        $select = "frameworkid IS NOT NULL";
+        $params = [];
+        if ($programid) {
+            $select .= " AND programid = :programid";
+            $params['programid'] = $programid;
+        }
+        if ($DB->record_exists_select('enrol_programs_items', $select, $params)) {
+            // Aggregate training progress unless the training framework is archived.
+            if ($trace) {
+                $trace->output('aggregating training progress', 1);
+            }
+            $params = [];
+            $programselect = '';
+            $userselect = '';
+            if ($programid) {
+                $programselect = "AND pi.programid = :programid";
+                $params['programid'] = $programid;
+            }
+            if ($userid) {
+                $userselect = "AND pa.userid = :userid";
+                $params['userid'] = $userid;
+            }
+            $now = time();
+            $params['now1'] = $now;
+            $params['now2'] = $now;
+            $params['now3'] = $now;
+            $params['now4'] = $now;
+
+            $sql = "INSERT INTO {enrol_programs_completions} (itemid, allocationid, timecompleted)
+
+                    SELECT pi.id AS itemid, pa.id AS allocationid, (:now3 + pi.completiondelay) AS timecompleted
+                      FROM {enrol_programs_allocations} pa
+                      JOIN {enrol_programs_programs} p ON p.id = pa.programid
+                      JOIN {enrol_programs_items} pi ON pi.programid = pa.programid
+                      JOIN {customfield_training_frameworks} tfr ON tfr.id = pi.frameworkid
+                 LEFT JOIN {enrol_programs_completions} pc ON pc.allocationid = pa.id AND pc.itemid = pi.id
+                     WHERE pc.id IS NULL
+                           AND EXISTS (
+
+                               SELECT SUM(cd.intvalue)
+                                 FROM {customfield_training_completions} ctc
+                                 JOIN {customfield_field} cf ON cf.id = ctc.fieldid
+                                 JOIN {customfield_data} cd ON cd.fieldid = cf.id AND cd.instanceid = ctc.instanceid
+                                 JOIN {customfield_training_fields} tf ON tf.fieldid = cf.id
+                                WHERE tf.frameworkid = tfr.id AND ctc.userid = pa.userid AND cd.intvalue IS NOT NULL
+                                      AND (tfr.restrictedcompletion = 0 OR ctc.timecompleted >= pa.timestart)
+                               HAVING SUM(cd.intvalue) >= tfr.requiredtraining
+
+                           )
+                           AND p.archived = 0 AND pa.archived = 0 AND tfr.archived = 0
+                           AND (pa.timestart <= :now1)
+                           AND (pa.timeend IS NULL OR pa.timeend > :now2)
+                           $programselect $userselect";
+            $DB->execute($sql, $params);
+        }
+
         // Copy completion info from course completion to program item completion,
         // do not remove program item completion if completion gets reset in course later.
         if ($trace) {

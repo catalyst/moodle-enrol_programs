@@ -19,7 +19,7 @@ namespace enrol_programs\local\content;
 use enrol_programs\local\util;
 
 /**
- * Program course set item.
+ * Program set item.
  *
  * @package    enrol_programs
  * @copyright  2022 Open LMS (https://www.openlms.net/)
@@ -117,7 +117,7 @@ class set extends item {
      * @return set
      */
     protected static function init_from_record(\stdClass $record, ?item $previous, array &$unusedrecords, array &$prerequisites): item {
-        if ($record->courseid) {
+        if ($record->courseid !== null || $record->frameworkid !== null) {
             throw new \coding_exception('Invalid set item');
         }
         if ($record->topitem) {
@@ -147,8 +147,10 @@ class set extends item {
                     throw new \coding_exception('Invalid records contains invalid programid');
                 }
                 unset($unusedrecords[$childitemid]);
-                if ($childrecord->courseid) {
+                if ($childrecord->courseid !== null) {
                     $child = course::init_from_record($childrecord, $previous, $unusedrecords, $prerequisites);
+                } else if ($childrecord->frameworkid !== null) {
+                    $child = training::init_from_record($childrecord, $previous, $unusedrecords, $prerequisites);
                 } else {
                     $child = self::init_from_record($childrecord, $previous, $unusedrecords, $prerequisites);
                 }
@@ -314,6 +316,7 @@ class set extends item {
             'programid' => (string)$this->programid,
             'topitem' => null,
             'courseid' => null,
+            'frameworkid' => null,
             'previtemid' => null,
             'fullname' => $this->fullname,
             'sequencejson' => util::json_encode($sequence),

@@ -157,6 +157,13 @@ class enrol_programs_generator extends component_generator_base {
                 $course = $DB->get_record('course', ['fullname' => $record->course], '*', MUST_EXIST);
             }
             return $top->append_course($parent, $course->id);
+        } else if (!empty($record->trainingid) || !empty($record->training)) {
+            if (!empty($record->trainingid)) {
+                $framework = $DB->get_record('customfield_training_frameworks', ['id' => $record->trainingid], '*', MUST_EXIST);
+            } else {
+                $framework = $DB->get_record('customfield_training_frameworks', ['name' => $record->training], '*', MUST_EXIST);
+            }
+            return $top->append_training($parent, $framework->id);
         } else {
             if (!empty($record->sequencetype)) {
                 $types = \enrol_programs\local\content\set::get_sequencetype_types();

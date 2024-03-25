@@ -32,6 +32,9 @@ final class top extends set {
     /** @var course[] list of orphaned courses in program */
     protected $orphanedcourses = [];
 
+    /** @var training[] list of orphaned trainings in program */
+    protected $orphanedtrainings = [];
+
     /** @var set[] list of orphaned sets in program */
     protected $orphanedsets = [];
 
@@ -97,7 +100,7 @@ final class top extends set {
                 if ($record->topitem) {
                     throw new \coding_exception('only one item can be topitem');
                 }
-                if ($record->courseid) {
+                if ($record->courseid !== null) {
                     $fakerecords = [];
                     // Prevent course access by requiring program completion.
                     $orphan = course::init_from_record($record, $top, $fakerecords, $prerequisites);
@@ -105,6 +108,13 @@ final class top extends set {
                         $top->problemdetected = true;
                     }
                     $top->orphanedcourses[$orphan->id] = $orphan;
+                } else if ($record->frameworkid !== null) {
+                    $fakerecords = [];
+                    $orphan = training::init_from_record($record, $top, $fakerecords, $prerequisites);
+                    if ($orphan->problemdetected) {
+                        $top->problemdetected = true;
+                    }
+                    $top->orphanedtrainings[$orphan->id] = $orphan;
                 } else {
                     $record = clone($record);
                     $fakerecords = [];  // We do not want to load any children for orphaned sets.
@@ -135,6 +145,15 @@ final class top extends set {
     }
 
     /**
+     * Returns list of program trainings that are not correctly linked to any valid set.
+     *
+     * @return training[]
+     */
+    public function get_orphaned_trainings(): array {
+        return $this->orphanedtrainings;
+    }
+
+    /**
      * Returns list of sets that are not correctly linked to any valid set.
      *
      * @return set[]
@@ -152,6 +171,9 @@ final class top extends set {
     public function find_orphaned_item(int $itemid): ?item {
         if (isset($this->orphanedcourses[$itemid])) {
             return $this->orphanedcourses[$itemid];
+        }
+        if (isset($this->orphanedtrainings[$itemid])) {
+            return $this->orphanedtrainings[$itemid];
         }
         if (isset($this->orphanedsets[$itemid])) {
             return $this->orphanedsets[$itemid];
@@ -215,6 +237,7 @@ final class top extends set {
             'programid' => (string)$this->programid,
             'topitem' => null,
             'courseid' => (string)$course->id,
+            'frameworkid' => null,
             'previtemid' => null,
             'fullname' => $course->fullname,
             'sequencejson' => util::json_encode([]),
@@ -227,6 +250,76 @@ final class top extends set {
         $fakeprerequisites = [];
         /** @var course $item */
         $item = course::init_from_record((object)$record, null, $fakerecords, $fakeprerequisites);
+
+        $trans = $DB->start_delegated_transaction();
+        $item->id = (string)$DB->insert_record('enrol_programs_items', (object)$item->get_record());
+        $parent->add_child($item);
+        $DB->update_record('enrol_programs_items', (object)$parent->get_record());
+
+        $this->fix_content();
+
+        program::make_snapshot($item->programid, 'item_append');
+        $trans->allow_commit();
+
+        // Do not use transactions for enrolments, we can always fix them later.
+        allocation::fix_enrol_instances($this->programid);
+        allocation::fix_user_enrolments($this->programid, null);
+
+        return $item;
+    }
+
+    /**
+     * Add new training item to given parent set.
+     *
+     * @param set $parent
+     * @param int $frameworkid
+     * @param array $data
+     * @return training
+     */
+    public function append_training(set $parent, int $frameworkid, array $data = []): training {
+        global $DB;
+
+        if ($parent->programid != $this->programid) {
+            throw new \coding_exception('invalid programid');
+        }
+        if (isset($this->orphanedsets[$parent->id])) {
+            throw new \coding_exception('orphaned set cannot be modified');
+        }
+
+        if (array_key_exists('points', $data)) {
+            if ($data['points'] < 0) {
+                throw new \invalid_parameter_exception('Points cannot be negative');
+            }
+            $points = (string)(int)$data['points'];
+        } else {
+            $points = '1';
+        }
+
+        $completiondelay = $data['completiondelay'] ?? 0;
+        if ($completiondelay < 0) {
+            throw new \invalid_parameter_exception('Completion delay cannot be negative');
+        }
+
+        $framework = $DB->get_record('customfield_training_frameworks', ['id' => $frameworkid], '*', MUST_EXIST);
+
+        $record = [
+            'id' => null,
+            'programid' => (string)$this->programid,
+            'topitem' => null,
+            'courseid' => null,
+            'frameworkid' => (string)$framework->id,
+            'previtemid' => null,
+            'fullname' => $framework->name,
+            'sequencejson' => util::json_encode([]),
+            'minprerequisites' => null,
+            'points' => $points,
+            'minpoints' => null,
+            'completiondelay' => (string)$completiondelay,
+        ];
+        $fakerecords = [];
+        $fakeprerequisites = [];
+        /** @var training $item */
+        $item = training::init_from_record((object)$record, null, $fakerecords, $fakeprerequisites);
 
         $trans = $DB->start_delegated_transaction();
         $item->id = (string)$DB->insert_record('enrol_programs_items', (object)$item->get_record());
@@ -314,6 +407,7 @@ final class top extends set {
             'programid' => (string)$this->programid,
             'topitem' => null,
             'courseid' => null,
+            'frameworkid' => null,
             'previtemid' => null,
             'fullname' => $fullname,
             'sequencejson' => util::json_encode($sequence),
@@ -472,6 +566,52 @@ final class top extends set {
     }
 
     /**
+     * Update training item.
+     *
+     * @param training $training
+     * @param array $data
+     * @return training
+     */
+    public function update_training(training $training, array $data): training {
+        global $DB;
+
+        if ($training->programid != $this->programid) {
+            throw new \coding_exception('invalid programid');
+        }
+
+        if (!array_key_exists('points', $data)) {
+            return $training;
+        }
+
+        if ($data['points'] < 0) {
+            throw new \invalid_parameter_exception('Points cannot be negative');
+        }
+
+        $training->points = (string)(int)$data['points'];
+
+        if (array_key_exists('completiondelay', $data)) {
+            if ($data['completiondelay'] < 0) {
+                throw new \invalid_parameter_exception('Completion delay cannot be negative');
+            }
+            $training->completiondelay = (int)$data['completiondelay'];
+        }
+
+        $trans = $DB->start_delegated_transaction();
+        $DB->update_record('enrol_programs_items', (object)$training->get_record());
+
+        $this->fix_content();
+
+        program::make_snapshot($training->programid, 'item_update');
+        $trans->allow_commit();
+
+        // Do not use transactions for enrolments, we can always fix them later.
+        allocation::fix_enrol_instances($this->programid);
+        allocation::fix_user_enrolments($this->programid, null);
+
+        return $training;
+    }
+
+    /**
      * Move item to a different parent or position.
      *
      * @param int $itemid
@@ -614,6 +754,8 @@ final class top extends set {
             $parent = null;
             if ($item instanceof course) {
                 unset($this->orphanedcourses[$item->get_id()]);
+            } else if ($item instanceof training) {
+                unset($this->orphanedtrainings[$item->get_id()]);
             } else {
                 unset($this->orphanedsets[$item->get_id()]);
             }
@@ -622,7 +764,7 @@ final class top extends set {
         $trans = $DB->start_delegated_transaction();
 
         $record = $DB->get_record('enrol_programs_items', ['id' => $itemid], '*', MUST_EXIST);
-        if ($record->courseid) {
+        if ($record->courseid !== null) {
             $groups = $DB->get_records('enrol_programs_groups', ['programid' => $record->programid, 'courseid' => $record->courseid]);
             foreach ($groups as $g) {
                 groups_delete_group($g->groupid);
@@ -681,6 +823,11 @@ final class top extends set {
                     'points' => $item->get_points(),
                     'completiondelay' => $item->get_completiondelay(),
                 ]);
+            } else if ($item instanceof training) {
+                $top->append_training($newparent, $item->get_frameworkid(), [
+                    'points' => $item->get_points(),
+                    'completiondelay' => $item->get_completiondelay(),
+                ]);
             } else if ($item instanceof set) {
                 $newset = $top->append_set($newparent, [
                     'fullname' => $item->get_fullname(),
@@ -736,6 +883,9 @@ final class top extends set {
         $saveclosure($this);
 
         foreach ($this->get_orphaned_courses() as $item) {
+            $saveclosure($item);
+        }
+        foreach ($this->get_orphaned_trainings() as $item) {
             $saveclosure($item);
         }
         foreach ($this->get_orphaned_sets() as $item) {

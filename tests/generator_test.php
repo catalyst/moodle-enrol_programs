@@ -216,6 +216,49 @@ final class generator_test extends \advanced_testcase {
         $this->assertSame($course3->id, (string)$item5->get_courseid());
         $top = program::load_content($program->id);
         $this->assertSame($item5->get_id(), $top->get_children()[2]->get_children()[1]->get_id());
+
+        /** @var \customfield_training_generator $traininggenerator */
+        $traininggenerator = $this->getDataGenerator()->get_plugin_generator('customfield_training');
+        $fielcategory = $this->getDataGenerator()->create_custom_field_category(
+            ['component' => 'core_course', 'area' => 'course']);
+        $field1 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field1']);
+        $field2 = $this->getDataGenerator()->create_custom_field(
+            ['categoryid' => $fielcategory->get('id'), 'type' => 'training', 'shortname' => 'field2']);
+        $data = (object)[
+            'name' => 'Some framework',
+            'fields' => [$field1->get('id')],
+        ];
+        $framework1 = $traininggenerator->create_framework($data);
+        $data = (object)[
+            'name' => 'Other framework',
+            'fields' => [$field2->get('id')],
+        ];
+        $framework2 = $traininggenerator->create_framework($data);
+
+        $record = [
+            'programid' => $program->id,
+            'trainingid' => $framework1->id,
+            'parent' => 'First set',
+        ];
+        $item6 = $generator->create_program_item($record);
+        $this->assertInstanceOf(\enrol_programs\local\content\training::class, $item6);
+        $this->assertSame($program->id, (string)$item6->get_programid());
+        $this->assertSame($framework1->id, (string)$item6->get_frameworkid());
+        $top = program::load_content($program->id);
+        $this->assertSame($item6->get_id(), $top->get_children()[2]->get_children()[2]->get_id());
+
+        $record = [
+            'programid' => $program->id,
+            'training' => $framework2->name,
+            'parent' => 'First set',
+        ];
+        $item7 = $generator->create_program_item($record);
+        $this->assertInstanceOf(\enrol_programs\local\content\training::class, $item7);
+        $this->assertSame($program->id, (string)$item7->get_programid());
+        $this->assertSame($framework2->id, (string)$item7->get_frameworkid());
+        $top = program::load_content($program->id);
+        $this->assertSame($item7->get_id(), $top->get_children()[2]->get_children()[3]->get_id());
     }
 
     public function test_create_program_allocation() {

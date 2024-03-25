@@ -22,7 +22,8 @@ use enrol_programs\local\util;
 use enrol_programs\local\content\item,
     enrol_programs\local\content\top,
     enrol_programs\local\content\set,
-    enrol_programs\local\content\course;
+    enrol_programs\local\content\course,
+    enrol_programs\local\content\training;
 use stdClass, moodle_url, tabobject;
 
 /**
@@ -117,9 +118,12 @@ EOT;
             $id = $item->get_id();
             $padding = str_repeat('&nbsp;', $itemdepth * 6);
 
-            $completiontype = '';
             if ($item instanceof set) {
                 $completiontype = $item->get_sequencetype_info();
+            } else if ($item instanceof training) {
+                $completiontype = $item->get_training_progress($allocation);
+            } else {
+                $completiontype = '';
             }
             if ($completiondelay = $item->get_completiondelay()) {
                 if ($completiontype !== '') {
@@ -152,6 +156,8 @@ EOT;
                 $itemname = $this->output->pix_icon('itemtop', get_string('program', 'enrol_programs'), 'enrol_programs') . '&nbsp;' . $fullname;
             } else if ($item instanceof course) {
                 $itemname = $padding . $this->output->pix_icon('itemcourse', get_string('course'), 'enrol_programs') . $fullname;
+            } else if ($item instanceof training) {
+                $itemname = $padding . $this->output->pix_icon('itemtraining', get_string('training', 'enrol_programs'), 'enrol_programs') . $fullname;
             } else {
                 $itemname = $padding . $this->output->pix_icon('itemset', get_string('set', 'enrol_programs'), 'enrol_programs') . $fullname;
             }

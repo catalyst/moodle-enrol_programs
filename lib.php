@@ -220,6 +220,7 @@ function enrol_programs_get_fontawesome_icon_map() {
         'enrol_programs:itemcourse' => 'fa-graduation-cap',
         'enrol_programs:itemset' => 'fa-list',
         'enrol_programs:itemtop' => 'fa-cubes',
+        'enrol_programs:itemtraining' => 'fa-ellipsis-h',
         'enrol_programs:move' => 'fa-arrows',
         'enrol_programs:program' => 'fa-cubes',
         'enrol_programs:myprograms' => 'fa-cubes',

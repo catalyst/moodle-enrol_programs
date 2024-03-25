@@ -288,6 +288,52 @@ Feature: Program content management tests
     When I click on "Delete set" "link" in the "First set" "table_row"
     And I press dialog form button "Delete set"
 
+  @javascript
+  Scenario: Manager may add, udpate and delete training in program
+    Given the following "custom field categories" exist:
+      | name              | component   | area   | itemid |
+      | Category for test | core_course | course | 0      |
+    And the following "custom fields" exist:
+      | name             | category           | type     | shortname | configdata            |
+      | Training Field 1 | Category for test  | training | training1 |                       |
+      | Training Field 2 | Category for test  | training | training2 |                       |
+      | Training Field 3 | Category for test  | training | training3 |                       |
+    And the following "customfield_training > frameworks" exist:
+      | name    | fields    | category | public | requiredtraining | restrictedcompletion |
+      | TFR 001 | training1 |          | 1      | 10               | 0                    |
+      | TFR 002 | training2 | Cat 2    | 1      | 20               | 1                    |
+      | TFR 003 | training1 |          | 0      | 30               | 0                    |
+    And the following "courses" exist:
+      | fullname | shortname | format | category | customfield_training1 | customfield_training2 |
+      | Course 7 | C7        | topics | CAT2     | 7                     | 1                     |
+      | Course 8 | C8        | topics | CAT2     | 13                    | 2                     |
+      | Course 9 | C9        | topics | CAT2     | 29                    | 3                     |
+    And I log in as "manager1"
+    And I am on all programs management page
+    And I follow "Program 000"
+    And I click on "Content" "link" in the ".nav-tabs" "css_element"
+
+    When I click on "Append item" "link" in the "Program 000" "table_row"
+    And I set the following fields to these values:
+      | Training                  | TFR 001   |
+    And I press dialog form button "Append item"
+    Then I should see "Required training: 10" in the "TFR 001" "table_row"
+
+    When I click on "Update training" "link" in the "TFR 001" "table_row"
+    And I set the following fields to these values:
+      | Points                    | 789              |
+      | completiondelay[enabled]  | 1                |
+      | completiondelay[number]   | 3                |
+      | completiondelay[timeunit] | days             |
+    And I press dialog form button "Update training"
+    Then I should see "789" in the "TFR 001" "table_row"
+    And I should see "Completion delay: 3 days" in the "TFR 001" "table_row"
+    And I should see "Required training: 10" in the "TFR 001" "table_row"
+
+    When I click on "Remove training" "link" in the "TFR 001" "table_row"
+    And I press dialog form button "Remove training"
+    Then I should not see "TFR 001"
+
   @javascript @tool_olms_tenant
   Scenario: Tenant manager may add program courses from non-conflicting tenants
     Given tenant support was activated

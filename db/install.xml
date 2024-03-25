@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="enrol/programs/db" VERSION="20231125" COMMENT="XMLDB file for Open LMS enrol/programs"
+<XMLDB PATH="enrol/programs/db" VERSION="20240325" COMMENT="XMLDB file for Open LMS enrol/programs"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -38,6 +38,7 @@
         <FIELD NAME="programid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="topitem" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false" COMMENT="1 for top most item representing program itself, NULL for all other items"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Course reference, NULL if item is course-set (must not be set for top item)"/>
+        <FIELD NAME="frameworkid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Training reference, NULL for sets (must not be set for top item)"/>
         <FIELD NAME="previtemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Previous item needs to be completed in order to allow courseid access, this is ignored for sets"/>
         <FIELD NAME="fullname" TYPE="char" LENGTH="254" NOTNULL="true" SEQUENCE="false" COMMENT="Human readable name of course-set, copy of course.fullname if courseid set, copy of program name for top item"/>
         <FIELD NAME="sequencejson" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="List of children with ordering and completion rules, optional start delay info if courseid set"/>
@@ -50,6 +51,7 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="programid" TYPE="foreign" FIELDS="programid" REFTABLE="enrol_programs_programs" REFFIELDS="id"/>
         <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="frameworkid" TYPE="foreign" FIELDS="frameworkid" REFTABLE="customfield_training_frameworks" REFFIELDS="id"/>
         <KEY NAME="previtemid" TYPE="foreign" FIELDS="previtemid" REFTABLE="enrol_programs_items" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>

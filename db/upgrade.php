@@ -338,5 +338,20 @@ function xmldb_enrol_programs_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023112500, 'enrol', 'programs');
     }
 
+    if ($oldversion < 2024032500) {
+        $table = new xmldb_table('enrol_programs_items');
+        $field = new xmldb_field('frameworkid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'courseid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $table = new xmldb_table('enrol_programs_items');
+        $key = new xmldb_key('frameworkid', XMLDB_KEY_FOREIGN, ['frameworkid'], 'customfield_training_frameworks', ['id']);
+        $dbman->add_key($table, $key);
+
+        // Programs savepoint reached.
+        upgrade_plugin_savepoint(true, 2024032500, 'enrol', 'programs');
+    }
+
     return true;
 }

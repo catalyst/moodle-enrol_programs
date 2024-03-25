@@ -24,7 +24,8 @@ use enrol_programs\local\util;
 use enrol_programs\local\content\item,
     enrol_programs\local\content\top,
     enrol_programs\local\content\set,
-    enrol_programs\local\content\course;
+    enrol_programs\local\content\course,
+    enrol_programs\local\content\training;
 use stdClass, moodle_url, tabobject, html_writer;
 
 /**
@@ -248,9 +249,12 @@ class renderer extends \plugin_renderer_base {
             $padding = str_repeat('&nbsp;', $itemdepth * 6);
             $childpadding = str_repeat('&nbsp;', ($itemdepth + 1) * 6);
 
-            $completion = '';
             if ($item instanceof set) {
                 $completion = $item->get_sequencetype_info();
+            } else if ($item instanceof training) {
+                $completion = get_string('trainingcompletion', 'enrol_programs', $item->get_required_training());
+            } else {
+                $completion = '';
             }
 
             if ($completiondelay = $item->get_completiondelay()) {
@@ -284,10 +288,12 @@ class renderer extends \plugin_renderer_base {
                     $actions[] = $output->pix_icon('i/empty', '') . ' ';
                 }
                 if ($item->is_deletable()) {
-                    if ($item instanceof set) {
-                        $deletestr = get_string('deleteset', 'enrol_programs');
-                    } else {
+                    if ($item instanceof course) {
                         $deletestr = get_string('deletecourse', 'enrol_programs');
+                    } else if ($item instanceof training) {
+                        $deletestr = get_string('deletetraining', 'enrol_programs');
+                    } else {
+                        $deletestr = get_string('deleteset', 'enrol_programs');
                     }
                     $deleteurl = new moodle_url('/enrol/programs/management/item_delete.php', ['id' => $id]);
                     $deleteaction = new \local_openlms\output\dialog_form\icon($deleteurl, 'deleteitem', $deletestr, 'enrol_programs');
@@ -327,6 +333,11 @@ class renderer extends \plugin_renderer_base {
                     $editaction = new \local_openlms\output\dialog_form\icon($editurl, 'i/settings', get_string('updatecourse', 'enrol_programs'));
                     $actions[] = $dialogformoutput->render($editaction);
                     $actions[] = $output->pix_icon('i/empty', '') . ' ';
+                } else if ($item instanceof training) {
+                    $editurl = new moodle_url('/enrol/programs/management/item_training_edit.php', ['id' => $id]);
+                    $editaction = new \local_openlms\output\dialog_form\icon($editurl, 'i/settings', get_string('updatetraining', 'enrol_programs'));
+                    $actions[] = $dialogformoutput->render($editaction);
+                    $actions[] = $output->pix_icon('i/empty', '') . ' ';
                 } else {
                     $actions[] = $output->pix_icon('i/empty', '') . ' ';
                 }
@@ -347,6 +358,8 @@ class renderer extends \plugin_renderer_base {
                 $itemname = $output->pix_icon('itemtop', get_string('program', 'enrol_programs'), 'enrol_programs') . '&nbsp;' . $fullname;
             } else if ($item instanceof course) {
                 $itemname = $padding . $output->pix_icon('itemcourse', get_string('course'), 'enrol_programs') . $fullname;
+            } else if ($item instanceof training) {
+                $itemname = $padding . $output->pix_icon('itemtraining', get_string('training', 'enrol_programs'), 'enrol_programs') . $fullname;
             } else {
                 $itemname = $padding . $output->pix_icon('itemset', get_string('set', 'enrol_programs'), 'enrol_programs') . $fullname;
             }
@@ -619,9 +632,12 @@ class renderer extends \plugin_renderer_base {
             $id = $item->get_id();
             $padding = str_repeat('&nbsp;', $itemdepth * 6);
 
-            $completiontype = '';
             if ($item instanceof set) {
                 $completiontype = $item->get_sequencetype_info();
+            } else if ($item instanceof training) {
+                $completiontype = $item->get_training_progress($allocation);
+            } else {
+                $completiontype = '';
             }
 
             if ($item instanceof course) {
@@ -648,6 +664,8 @@ class renderer extends \plugin_renderer_base {
                 $itemname = $output->pix_icon('itemtop', get_string('program', 'enrol_programs'), 'enrol_programs') . '&nbsp;' . $fullname;
             } else if ($item instanceof course) {
                 $itemname = $padding . $output->pix_icon('itemcourse', get_string('course'), 'enrol_programs') . $fullname;
+            } else if ($item instanceof training) {
+                $itemname = $padding . $output->pix_icon('itemtraining', get_string('training', 'enrol_programs'), 'enrol_programs') . $fullname;
             } else {
                 $itemname = $padding . $output->pix_icon('itemset', get_string('set', 'enrol_programs'), 'enrol_programs') . $fullname;
             }

@@ -17,6 +17,7 @@
 namespace enrol_programs\local\form;
 
 use enrol_programs\local\content\set;
+use enrol_programs\external\form_item_append_frameworkid;
 
 /**
  * Add program content item.
@@ -40,6 +41,12 @@ final class item_append extends \local_openlms\dialog_form {
 
         $mform->addElement('course', 'courses', get_string('courses'),
             ['multiple' => true, 'exclude' => $exclude, 'requiredcapabilities' => ['enrol/programs:addcourse']]);
+
+        if ($DB->record_exists('customfield_training_frameworks', ['archived' => 0])) {
+            $arguments = ['programid' => $parentset->get_programid()];
+            form_item_append_frameworkid::add_form_element(
+                $mform, $arguments, 'frameworkid', get_string('training', 'enrol_programs'));
+        }
 
         $mform->addElement('select', 'addset', get_string('addset', 'enrol_programs'), ['0' => get_string('no'), '1' => get_string('yes')]);
 
@@ -80,6 +87,8 @@ final class item_append extends \local_openlms\dialog_form {
         $errors = parent::validation($data, $files);
 
         $context = $this->_customdata['context'];
+        /** @var set $parentset */
+        $parentset = $this->_customdata['parentset'];
 
         if ($data['points'] < 0) {
             $errors['points'] = get_string('error');
@@ -99,7 +108,7 @@ final class item_append extends \local_openlms\dialog_form {
                 }
             }
         } else {
-            if (!$data['courses']) {
+            if (!$data['courses'] && empty($data['frameworkid'])) {
                 $errors['courses'] = get_string('required');
             } else {
                 if (\enrol_programs\local\tenant::is_active()) {
@@ -117,6 +126,14 @@ final class item_append extends \local_openlms\dialog_form {
                         }
                     }
                 }
+            }
+        }
+
+        if (!empty($data['frameworkid'])) {
+            $arguments = ['programid' => $parentset->get_programid()];
+            $error = form_item_append_frameworkid::validate_form_value($arguments, $data['frameworkid']);
+            if ($error !== null) {
+                $errors['frameworkid'] = $error;
             }
         }
 
