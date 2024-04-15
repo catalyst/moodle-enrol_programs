@@ -31,7 +31,7 @@ $plugin->version   = 2024031501;
 $plugin->requires  = 2023100902.00; // 4.3.2
 $plugin->component = 'enrol_programs';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v3.0alpha';
+$plugin->release   = 'v3.0.0dev';
 $plugin->supported = [403, 403];
 
 $plugin->dependencies = ['local_openlms' => 2024031200];
