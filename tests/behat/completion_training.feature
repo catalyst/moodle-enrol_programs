@@ -16,15 +16,15 @@ Feature: Training program completion by students tests
       | TrainingF 1 | Category for test  | training | training1 | tf1         |                       |
       | TrainingF 2 | Category for test  | training | training2 | tf2         |                       |
     And the following "courses" exist:
-      | fullname | shortname | format | category | enablecompletion | showcompletionconditions | customfield_training1 |
-      | Course 1 | C1        | topics | CAT1     | 1                | 1                        | 4                     |
-      | Course 2 | C2        | topics | CAT2     | 1                | 1                        | 8                     |
-      | Course 3 | C3        | topics | CAT3     | 1                | 1                        | 16                    |
-      | Course 4 | C4        | topics | CAT1     | 1                | 1                        |                       |
+      | fullname | shortname | format | category | enablecompletion | showcompletionconditions | customfield_training1 |  customfield_training2 |
+      | Course 1 | C1        | topics | CAT1     | 1                | 1                        | 4                     | 8                      |
+      | Course 2 | C2        | topics | CAT2     | 1                | 1                        | 8                     | 4                      |
+      | Course 3 | C3        | topics | CAT3     | 1                | 1                        | 16                    | 2                      |
+      | Course 4 | C4        | topics | CAT1     | 1                | 1                        |                       | 1                      |
     And the following "customfield_training > frameworks" exist:
       | name        | public | requiredtraining | restrictedcompletion | fields    |
       | Framework 1 | 1      | 5                | 0                    | training1 |
-      | Framework 2 | 1      | 15               | 0                    |           |
+      | Framework 2 | 1      | 5                | 1                    | training2 |
     And the following "activity" exists:
       | activity       | page                     |
       | course         | C1                       |
@@ -63,6 +63,7 @@ Feature: Training program completion by students tests
       | viewer1  | Viewer    | 1        | viewer1@example.com  |
       | student1 | Student   | 1        | student1@example.com |
       | student2 | Student   | 2        | student2@example.com |
+      | student3 | Student   | 3        | student3@example.com |
     And the following "roles" exist:
       | name            | shortname |
       | Program viewer  | pviewer   |
@@ -87,16 +88,22 @@ Feature: Training program completion by students tests
       | program     | parent     | training    | fullname   | sequencetype     | minprerequisites |
       | Program 000 |            |             | First set  | All in order     |                  |
       | Program 000 | First set  | Framework 1 |            |                  |                  |
+      | Program 001 |            |             | First set  | All in any order |                  |
+      | Program 001 | First set  | Framework 2 |            |                  |                  |
     And the following "enrol_programs > program_allocations" exist:
       | program     | user     |
       | Program 000 | student1 |
-      | Program 000 | student2 |
+      | Program 000 | student3 |
     And the following "course enrolments" exist:
       | user     | course | role    |
       | student1 | C1     | student |
       | student1 | C2     | student |
       | student1 | C3     | student |
       | student1 | C4     | student |
+      | student2 | C1     | student |
+      | student2 | C2     | student |
+      | student2 | C3     | student |
+      | student2 | C4     | student |
 
     And I log in as "admin"
     And I am on "Course 1" course homepage
@@ -126,14 +133,24 @@ Feature: Training program completion by students tests
     And I log out
 
   @javascript
-  Scenario: Student may complete a training program
-    When I log in as "student1"
-    And I am on "Course 1" course homepage
+  Scenario: Student may complete a training program without restricted completion
+    Given I log in as "student1"
+
+    When I am on My programs page
+    And I follow "Program 000"
+    Then I should see "Open" in the "Program status:" definition list item
+    And I should see "Training progress: 0/5"
+
+    When I am on "Course 1" course homepage
     And I follow "Sample page"
     # The cron job has to be executed twice with a pause.
     And I run the "core\task\completion_regular_task" task
     And I wait "1" seconds
     And I run the "core\task\completion_regular_task" task
+    And I am on My programs page
+    And I follow "Program 000"
+    Then I should see "Open" in the "Program status:" definition list item
+    And I should see "Training progress: 4/5"
 
     And I am on My programs page
     And I am on "Course 2" course homepage
@@ -146,3 +163,47 @@ Feature: Training program completion by students tests
     And I am on My programs page
     And I follow "Program 000"
     Then I should see "Completed" in the "Program status:" definition list item
+    And I should see "Training progress: 12/5"
+
+  @javascript
+  Scenario: Student may complete a training program with restricted completion
+    Given I log in as "student2"
+    And I am on "Course 1" course homepage
+    And I follow "Sample page"
+    # The cron job has to be executed twice with a pause.
+    And I run the "core\task\completion_regular_task" task
+    And I wait "1" seconds
+    And I run the "core\task\completion_regular_task" task
+    And I wait "1" seconds
+
+    When the following "enrol_programs > program_allocations" exist:
+      | program     | user     |
+      | Program 001 | student2 |
+    And I am on My programs page
+    And I follow "Program 001"
+    Then I should see "Open" in the "Program status:" definition list item
+    And I should see "Training progress: 0/5"
+
+    When I am on My programs page
+    And I am on "Course 2" course homepage
+    And I follow "Sample page"
+    # The cron job has to be executed twice with a pause.
+    And I run the "core\task\completion_regular_task" task
+    And I wait "1" seconds
+    And I run the "core\task\completion_regular_task" task
+    And I am on My programs page
+    And I follow "Program 001"
+    Then I should see "Open" in the "Program status:" definition list item
+    And I should see "Training progress: 4/5"
+
+    When I am on My programs page
+    And I am on "Course 3" course homepage
+    And I follow "Sample page"
+    # The cron job has to be executed twice with a pause.
+    And I run the "core\task\completion_regular_task" task
+    And I wait "1" seconds
+    And I run the "core\task\completion_regular_task" task
+    And I am on My programs page
+    And I follow "Program 001"
+    Then I should see "Completed" in the "Program status:" definition list item
+    And I should see "Training progress: 6/5"
