@@ -16,13 +16,12 @@
 
 namespace enrol_programs\external;
 
-use external_api;
-use external_function_parameters;
-use external_value;
 use enrol_programs\local\source\manual;
-
-global $CFG;
-require_once("$CFG->libdir/externallib.php");
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
 
 /**
  * Allocates the given users to the program.
@@ -41,13 +40,13 @@ final class source_manual_allocate_users extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'programid' => new external_value(PARAM_INT, 'Program id'),
-            'userids' => new \external_multiple_structure(
+            'userids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'User id')
             , 'User ids to be allocated the program', VALUE_DEFAULT, []),
-            'cohortids' => new \external_multiple_structure(
+            'cohortids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'Cohort id')
             , 'Cohort ids to be allocated to the program', VALUE_DEFAULT, []),
-            'dateoverrides' => new \external_single_structure([
+            'dateoverrides' => new external_single_structure([
                 'timestart' => new external_value(PARAM_INT, 'time start', VALUE_OPTIONAL),
                 'timedue' => new external_value(PARAM_INT, 'time due', VALUE_OPTIONAL),
                 'timeend' => new external_value(PARAM_INT, 'time start', VALUE_OPTIONAL)
@@ -132,10 +131,10 @@ final class source_manual_allocate_users extends external_api {
     /**
      * Describes the external function parameters.
      *
-     * @return \external_multiple_structure
+     * @return external_multiple_structure
      */
-    public static function execute_returns(): \external_multiple_structure {
-        return new \external_multiple_structure(
+    public static function execute_returns(): external_multiple_structure {
+        return new external_multiple_structure(
             new external_value(PARAM_INT, 'User id')
         , 'List of users who were enrolled');
     }

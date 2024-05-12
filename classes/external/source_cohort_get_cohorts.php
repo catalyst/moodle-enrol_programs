@@ -16,12 +16,11 @@
 
 namespace enrol_programs\external;
 
-use external_function_parameters;
-use external_value;
-use external_api;
-
-global $CFG;
-require_once("$CFG->libdir/externallib.php");
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_api;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
 
 /**
  * Provides list of cohorts that are synchronized with a program.
@@ -68,20 +67,20 @@ final class source_cohort_get_cohorts extends external_api {
     /**
      * Describes the external function parameters.
      *
-     * @return \external_multiple_structure
+     * @return external_multiple_structure
      */
-    public static function execute_returns(): \external_multiple_structure {
+    public static function execute_returns(): external_multiple_structure {
         return self::get_cohorts_returns();
     }
 
     /**
      * Description of get_cohorts() result.
      *
-     * @return \external_multiple_structure
+     * @return external_multiple_structure
      */
-    public static function get_cohorts_returns(): \external_multiple_structure {
-        return new \external_multiple_structure(
-            new \external_single_structure([
+    public static function get_cohorts_returns(): external_multiple_structure {
+        return new external_multiple_structure(
+            new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Cohort id'),
                 'contextid' => new external_value(PARAM_INT, 'Cohort context id'),
                 'name' => new external_value(PARAM_TEXT, 'Cohort name'),

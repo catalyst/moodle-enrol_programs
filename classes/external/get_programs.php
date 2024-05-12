@@ -16,12 +16,11 @@
 
 namespace enrol_programs\external;
 
-use external_function_parameters;
-use external_value;
-use external_api;
-
-global $CFG;
-require_once("$CFG->libdir/externallib.php");
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_api;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
 
 /**
  * Provides list of programs based on search parameters.
@@ -40,8 +39,8 @@ final class get_programs extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'fieldvalues' => new \external_multiple_structure(
-                new \external_single_structure(
+            'fieldvalues' => new external_multiple_structure(
+                new external_single_structure(
                     [
                         'field' => new external_value(PARAM_ALPHANUM, 'The name of the field to be searched by list of'
                             . ' acceptable fields is : id, contextid, fullname, idnumber, public, archived, tenantid'),
@@ -128,11 +127,11 @@ final class get_programs extends external_api {
     /**
      * Describes the external function parameters.
      *
-     * @return \external_multiple_structure
+     * @return external_multiple_structure
      */
-    public static function execute_returns(): \external_multiple_structure {
-        return new \external_multiple_structure(
-            new \external_single_structure([
+    public static function execute_returns(): external_multiple_structure {
+        return new external_multiple_structure(
+            new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Program id'),
                 'contextid' => new external_value(PARAM_INT, 'Program context id'),
                 'fullname' => new external_value(PARAM_TEXT, 'Program fullname'),
@@ -149,10 +148,10 @@ final class get_programs extends external_api {
                 'duedatejson' => new external_value(PARAM_RAW, 'Due date calculation logic in json format'),
                 'enddatejson' => new external_value(PARAM_RAW, 'End date calculation logic in json format'),
                 'timecreated' => new external_value(PARAM_INT, 'Program creation date'),
-                'sources' => new \external_multiple_structure(
+                'sources' => new external_multiple_structure(
                     new external_value(PARAM_ALPHANUMEXT, 'Internal source name'), 'Enabled allocation sources'
                 ),
-                'cohortids' => new \external_multiple_structure(
+                'cohortids' => new external_multiple_structure(
                     new external_value(PARAM_INT, 'Cohort id'), 'Visible cohorts for non-public programs'
                 ),
             ], 'List of programs')

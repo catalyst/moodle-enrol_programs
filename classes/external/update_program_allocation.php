@@ -18,12 +18,10 @@ namespace enrol_programs\external;
 
 use enrol_programs\local\allocation;
 use enrol_programs\local\source\manual;
-use external_api;
-use external_function_parameters;
-use external_value;
-
-global $CFG;
-require_once("$CFG->libdir/externallib.php");
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_single_structure;
 
 /**
  * Updates the allocation for the given userid and program id.
@@ -43,7 +41,7 @@ final class update_program_allocation extends external_api {
         return new external_function_parameters([
             'programid' => new external_value(PARAM_INT, 'Program id'),
             'userid' => new external_value(PARAM_INT, 'User id'),
-            'allocationdates' => new \external_single_structure([
+            'allocationdates' => new external_single_structure([
                 'timestart' => new external_value(PARAM_INT, 'time start', VALUE_OPTIONAL),
                 'timedue' => new external_value(PARAM_INT, 'time due', VALUE_OPTIONAL),
                 'timeend' => new external_value(PARAM_INT, 'time start', VALUE_OPTIONAL),
@@ -119,11 +117,11 @@ final class update_program_allocation extends external_api {
     /**
      * Describes the external function parameters.
      *
-     * @return \external_single_structure
+     * @return external_single_structure
      */
-    public static function execute_returns(): \external_single_structure {
+    public static function execute_returns(): external_single_structure {
         // NOTE: This matches \enrol_programs\external\get_program_allocations::execute_returns().
-        return new \external_single_structure([
+        return new external_single_structure([
             'id' => new external_value(PARAM_INT, 'Program allocation id'),
             'programid' => new external_value(PARAM_INT, 'Program id'),
             'userid' => new external_value(PARAM_INT, 'User id'),

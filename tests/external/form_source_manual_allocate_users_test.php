@@ -25,7 +25,6 @@ namespace enrol_programs\external;
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
- * @runTestsInSeparateProcesses
  * @covers form_source_manual_allocate_users
  */
 final class form_source_manual_allocate_users_test extends \advanced_testcase {
@@ -119,7 +118,6 @@ final class form_source_manual_allocate_users_test extends \advanced_testcase {
 
     public function test_execution_tenant() {
         global $DB, $CFG;
-        require_once("$CFG->dirroot/lib/externallib.php");
 
         if (!\enrol_programs\local\tenant::is_available()) {
             $this->markTestSkipped('tenant support not available');

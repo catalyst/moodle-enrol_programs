@@ -17,12 +17,10 @@
 namespace enrol_programs\external;
 
 use enrol_programs\local\allocation;
-use external_api;
-use external_function_parameters;
-use external_value;
-
-global $CFG;
-require_once("$CFG->libdir/externallib.php");
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_multiple_structure;
 
 /**
  * Deallocates the given users from the program.
@@ -41,7 +39,7 @@ final class delete_program_allocations extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'programid' => new external_value(PARAM_INT, 'Program id'),
-            'userids' => new \external_multiple_structure(
+            'userids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'User id')
                 , 'User ids to be deallocated from program')
         ]);
@@ -109,10 +107,10 @@ final class delete_program_allocations extends external_api {
     /**
      * Describes the external function parameters.
      *
-     * @return \external_multiple_structure
+     * @return external_multiple_structure
      */
-    public static function execute_returns(): \external_multiple_structure {
-        return new \external_multiple_structure(
+    public static function execute_returns(): external_multiple_structure {
+        return new external_multiple_structure(
             new external_value(PARAM_INT, 'User id')
             , 'List of users who were de allocated');
     }

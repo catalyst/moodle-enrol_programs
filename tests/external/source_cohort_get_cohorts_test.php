@@ -25,13 +25,10 @@ namespace enrol_programs\external;
  * @author     Farhan Karmali
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
- * @runTestsInSeparateProcesses
  * @covers \enrol_programs\external\source_cohort_get_cohorts
  */
 final class source_cohort_get_cohorts_test extends \advanced_testcase {
     public function setUp(): void {
-        global $CFG;
-        require_once("$CFG->dirroot/lib/externallib.php");
         $this->resetAfterTest();
     }
 

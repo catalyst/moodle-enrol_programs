@@ -25,13 +25,10 @@ namespace enrol_programs\external;
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
- * @runTestsInSeparateProcesses
  * @covers \enrol_programs\external\form_program_allocation_import_fromprogram
  */
 final class form_program_allocation_import_fromprogram_test extends \advanced_testcase {
     public function setUp(): void {
-        global $CFG;
-        require_once("$CFG->dirroot/lib/externallib.php");
         $this->resetAfterTest();
     }
 

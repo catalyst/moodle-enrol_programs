@@ -16,13 +16,12 @@
 
 namespace enrol_programs\external;
 
-use external_function_parameters;
-use external_value;
-use external_api;
 use enrol_programs\local\source\cohort;
-
-global $CFG;
-require_once("$CFG->libdir/externallib.php");
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_api;
+use core_external\external_multiple_structure;
+use core_external\external_single_structure;
 
 /**
  * Remove cohort from the list of synchronised cohorts in a program.
@@ -86,9 +85,9 @@ final class source_cohort_delete_cohort extends external_api {
     /**
      * Describes the external function parameters.
      *
-     * @return \external_multiple_structure
+     * @return external_multiple_structure
      */
-    public static function execute_returns(): \external_multiple_structure {
+    public static function execute_returns(): external_multiple_structure {
         return source_cohort_get_cohorts::get_cohorts_returns();
     }
 }

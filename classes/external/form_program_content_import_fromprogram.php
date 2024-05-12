@@ -16,8 +16,8 @@
 
 namespace enrol_programs\external;
 
-use external_function_parameters;
-use external_value;
+use core_external\external_function_parameters;
+use core_external\external_value;
 
 /**
  * Provides list of programs from which the user can import content.
