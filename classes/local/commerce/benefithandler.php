@@ -45,10 +45,12 @@ class benefithandler extends benefithandlerbase {
         return get_string('benefitname', 'enrol_programs', format_string($prog->fullname));
     }
 
-    public function grantbenefit(int $userid, int $start, int $end, int $purchaseruserid, int $holdkey, array $params = []): void {
+    public function grantbenefit(int $userid, int $start, int $end, int $purchaseruserid, int $holdkey, array $params = [], $voucherredemptionid = null): bool {
         ecommerce::grantbenefit($this->instance, $userid, ['timestart' => $start, 'timeend' => $end]);
 
         $this->releaseheldresources($holdkey, 1);
+
+        return true;
     }
 
     public function benefitcurrentlypossessed(int $userid, int $holdkeyid = null, array $params = []): bool {
@@ -78,7 +80,7 @@ class benefithandler extends benefithandlerbase {
         return array_keys($courses);
     }
 
-    public function getredirecturl(int $holdkeyid): array {
+    public function getredirecturl(int $holdkeyid, $voucherredemptionid = null): array {
         return [10, new \moodle_url('/enrol/programs/my/program.php', ['id' => $this->instance])];
     }
 
