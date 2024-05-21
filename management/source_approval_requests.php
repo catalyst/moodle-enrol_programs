@@ -97,7 +97,7 @@ foreach ($requests as $request) {
     if ($request->allocationid) {
         $userurl = new moodle_url('/enrol/programs/management/user_allocation.php', ['id' => $request->allocationid]);
     } else {
-        $userurl = new moodle_url('/user/view.php', ['id' => $request->id]);
+        $userurl = new moodle_url('/user/view.php', ['id' => $user->id]);
     }
     $fullname = fullname($user);
     $userpicture = $OUTPUT->user_picture($user, ['alttext' => $fullname]);
