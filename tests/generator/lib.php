@@ -250,6 +250,11 @@ class enrol_programs_generator extends component_generator_base {
             'instanceid' => $program->id,
             'enabled' => '1',
         ];
+        if (!empty($record->custom)) {
+            $data['custom'] = 1;
+            $data['body'] = $record->body ?? '';
+            $data['subject'] = $record->subject ?? '';
+        }
         return \local_openlms\notification\util::notification_create($data);
     }
 }

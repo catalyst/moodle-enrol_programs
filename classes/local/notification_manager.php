@@ -283,4 +283,42 @@ final class notification_manager extends \local_openlms\notification\manager {
                  WHERE p.id = :programid AND pa.userid = :userid";
         return $DB->get_field_sql($sql, $params);
     }
+
+    /**
+     * Whether import of notification is supported
+     *
+     * @return bool
+     */
+    public static function is_instance_notification_import_supported(): bool {
+        return true;
+    }
+
+    /**
+     * Adds the from instance element dropdown
+     *
+     * @param int $instanceid
+     * @param \MoodleQuickForm $mform
+     * @return void
+     */
+    public static function add_frominstance_element(int $instanceid, \MoodleQuickForm $mform): void {
+        $arguments = ['id' => $instanceid];
+        \enrol_programs\external\form_notification_import::add_form_element(
+            $mform, $arguments, 'frominstance', get_string('importselectprogram', 'enrol_programs'));
+        $mform->addRule('frominstance', null, 'required', null, 'client');
+    }
+
+    /**
+     * Validates if the user can import from the specified instanceid.
+     *
+     * @param int $frominstanceid
+     * @return void
+     */
+    public static function validate_frominstance(int $frominstanceid): bool {
+        global $DB;
+
+        $programcontextid = $DB->get_field('enrol_programs_programs', 'contextid', ['id' => $frominstanceid]);
+        $context = \context::instance_by_id($programcontextid);
+
+        return has_capability('enrol/programs:clone', $context);
+    }
 }

@@ -180,7 +180,7 @@ $capabilities = [
         ],
     ],
 
-    /* To copy over content and allocation settings to other programs */
+    /* To copy over content, allocation and notification settings to other programs */
     'enrol/programs:clone' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSECAT,
