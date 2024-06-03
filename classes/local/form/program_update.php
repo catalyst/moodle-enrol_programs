@@ -63,10 +63,26 @@ final class program_update extends \local_openlms\dialog_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
+        // Add custom fields to the form.
+        $handler = \enrol_programs\customfield\fields_handler::create();
+        $handler->instance_form_definition($mform, $data->id);
+
         $this->add_action_buttons(true, get_string('updateprogram', 'enrol_programs'));
+
+        // Prepare custom fields data.
+        $handler->instance_form_before_set_data($data);
 
         $this->set_data($data);
     }
+
+    public function definition_after_data() {
+        parent::definition_after_data();
+        $data = $this->_customdata['data'];
+        $mform = $this->_form;
+        $handler  = \enrol_programs\customfield\fields_handler::create();
+        $handler->instance_form_definition_after_data($mform, $data->id);
+    }
+
 
     public function validation($data, $files) {
         global $DB;
@@ -103,6 +119,10 @@ final class program_update extends \local_openlms\dialog_form {
                 $errors['contextid'] = get_string('error');
             }
         }
+
+        // Add the custom fields validation.
+        $handler = \enrol_programs\customfield\fields_handler::create();
+        $errors  = array_merge($errors, $handler->instance_form_validation($data, $files));
 
         return $errors;
     }

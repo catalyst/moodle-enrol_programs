@@ -164,6 +164,11 @@ final class program {
 
         $program = self::make_snapshot($data->id, 'add');
 
+        // Save custom fields if there are any of them in the form.
+        $handler = \enrol_programs\customfield\fields_handler::create();
+        $data->id = $program->id;
+        $handler->instance_form_save($data);
+
         $trans->allow_commit();
 
         $event = \enrol_programs\event\program_created::create_from_program($program);
@@ -265,6 +270,10 @@ final class program {
         }
 
         $program = self::update_program_image($data);
+
+        // Save custom fields if there are any of them in the form.
+        $handler = \enrol_programs\customfield\fields_handler::create();
+        $handler->instance_form_save($data);
 
         $item = $DB->get_record('enrol_programs_items', ['programid' => $program->id, 'topitem' => 1], '*', MUST_EXIST);
         if ($item->fullname !== $program->fullname) {
@@ -743,6 +752,9 @@ final class program {
         $DB->delete_records('enrol_programs_programs', ['id' => $program->id]);
 
         self::make_snapshot($program->id, 'delete');
+
+        $handler = \enrol_programs\customfield\fields_handler::create();
+        $handler->delete_instance($program->id);
 
         $trans->allow_commit();
 

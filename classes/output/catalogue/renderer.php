@@ -35,7 +35,7 @@ use stdClass, moodle_url, tabobject;
  */
 class renderer extends \plugin_renderer_base {
     public function render_program(\stdClass $program): string {
-        global $CFG, $DB;
+        global $CFG, $DB, $PAGE;
 
         $strnotset = get_string('notset', 'enrol_programs');
 
@@ -83,6 +83,8 @@ EOT;
             . (isset($program->timeallocationstart) ? userdate($program->timeallocationstart) : $strnotset) . '</dd>';
         $result .= '<dt class="col-3">' . get_string('allocationend', 'enrol_programs') . ':</dt><dd class="col-9">'
             . (isset($program->timeallocationend) ? userdate($program->timeallocationend) : $strnotset) . '</dd>';
+        $customfieldoutput = $PAGE->get_renderer('enrol_programs', 'customfield');
+        $result .= $customfieldoutput->render_customfields($program->id);
         $result .= '</dl>';
 
         $actions = [];

@@ -79,6 +79,7 @@ EOT;
     }
 
     public function render_user_allocation(stdClass $program, stdClass $source, stdClass $allocation): string {
+        global $PAGE;
         $strnotset = get_string('notset', 'enrol_programs');
 
         $sourceclasses = allocation::get_source_classes();
@@ -102,7 +103,9 @@ EOT;
             . (isset($allocation->timeend) ? userdate($allocation->timeend) : $strnotset) . '</dd>';
         $result .= '<dt class="col-3">' . get_string('completiondate', 'enrol_programs') . ':</dt><dd class="col-9">'
             . (isset($allocation->timecompleted) ? userdate($allocation->timecompleted) : $strnotset) . '</dd>';
-        $result .= '</dl>';
+
+        $customfieldoutput = $PAGE->get_renderer('enrol_programs', 'customfield');
+        $result .= $customfieldoutput->render_customfields($program->id);
 
         return $result;
     }

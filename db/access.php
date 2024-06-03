@@ -189,6 +189,15 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+    'enrol/programs:configurecustomfields' => [
+        'riskbitmask' => RISK_CONFIG | RISK_DATALOSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
 ];
 
 // Compatibility hacks for vanilla Moodle.

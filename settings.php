@@ -89,6 +89,10 @@ if ($ADMIN->fulltree) {
             new lang_string('source_ecommerce_allownew_desc', 'enrol_programs'), 0));
     }
 }
+$ADMIN->add('programs', new admin_externalpage('programs_customfield',
+     new lang_string('customfield', 'enrol_programs'),
+     new moodle_url("/enrol/programs/customfield.php"),
+     'enrol/programs:configurecustomfields'));
 unset($programsenabled);
 
 // Do not use enrol plugin settings, create a top level management section.

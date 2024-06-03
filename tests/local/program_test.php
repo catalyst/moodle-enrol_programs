@@ -570,4 +570,58 @@ final class program_test extends \advanced_testcase {
         $program2 = $DB->get_record('enrol_programs_programs', ['id' => $program2->id], '*', MUST_EXIST);
         $this->assertSame((string)$syscontext->id, $program2->contextid);
     }
+
+    public function test_programs_customfields() {
+        global $DB;
+
+        /** @var \enrol_programs_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
+        $this->setAdminUser();
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'enrol_programs',
+            'area' => 'fields',
+            'name' => 'Other custom fields',
+        ]);
+
+        $field1 = $this->getDataGenerator()->create_custom_field([
+            'shortname' => 'testfield1',
+            'name' => 'Custom field',
+            'type' => 'text',
+            'categoryid' => $fieldcategory->get('id'),
+        ]);
+        $field2 = $this->getDataGenerator()->create_custom_field([
+            'shortname' => 'testfield2',
+            'name' => 'Custom field',
+            'type' => 'text',
+            'categoryid' => $fieldcategory->get('id'),
+            'configdata' => ['visibilitymanagers' => true]
+        ]);
+
+        $program1 = $generator->create_program(['customfield_testfield1' => 'Test value 1']);
+        $program2 = $generator->create_program(['customfield_testfield1' => 'hocus', 'customfield_testfield2' => 'pocus']);
+
+        $this->assertTrue($DB->record_exists('customfield_data', ['instanceid' => $program1->id, 'fieldid' => $field1->get('id')]));
+
+        $handler = \enrol_programs\customfield\fields_handler::create();
+        $customfieldsdata = $handler->export_instance_data_object($program1->id);
+        $this->assertEquals('Test value 1', $customfieldsdata->testfield1);
+
+        $customfieldsdata = $handler->export_instance_data_object($program2->id);
+        $this->assertEquals('hocus', $customfieldsdata->testfield1);
+
+        $customfieldsdata = $handler->export_instance_data_object($program2->id);
+        $this->assertEquals('pocus', $customfieldsdata->testfield2);
+
+        $program2->customfield_testfield1 = 'hocus-pocus';
+        program::update_program_general($program2);
+
+        $customfieldsdata = $handler->export_instance_data_object($program2->id);
+        $this->assertEquals('hocus-pocus', $customfieldsdata->testfield1);
+
+        program::delete_program($program1->id);
+
+        $this->assertFalse($DB->record_exists('customfield_data', ['instanceid' => $program1->id, 'fieldid' => $field1->get('id')]));
+
+//        $this->assertTrue($customfieldsdata->testfield2->can_view());
+    }
 }
