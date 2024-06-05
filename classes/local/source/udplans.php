@@ -46,6 +46,9 @@ final class udplans extends base {
         if (!\tool_udplans\local\util::udplans_active()) {
             return false;
         }
+        if (!parent::is_new_allowed($program)) {
+            return false;
+        }
 
         $context = \context::instance_by_id($program->contextid);
         return has_capability('enrol/programs:configframeworks', $context);

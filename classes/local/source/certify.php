@@ -38,16 +38,6 @@ final class certify extends base {
     }
 
     /**
-     * Certification allocation is possible only if tool_certify is present and active.
-     *
-     * @param stdClass $program
-     * @return bool
-     */
-    public static function is_new_allowed(\stdClass $program): bool {
-        return true;
-    }
-
-    /**
      * Allocation is controlled by tool_certify.
      *
      * @param stdClass $program

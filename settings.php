@@ -76,6 +76,13 @@ if ($ADMIN->fulltree) {
         new lang_string('source_selfallocation_allownew', 'enrol_programs'),
         new lang_string('source_selfallocation_allownew_desc', 'enrol_programs'), 1));
 
+    $settings->add(new admin_setting_configcheckbox('enrol_programs/source_certify_allownew',
+        new lang_string('source_certify_allownew', 'enrol_programs'),
+        new lang_string('source_certify_allownew_desc', 'enrol_programs'), 1));
+    $settings->add(new admin_setting_configcheckbox('enrol_programs/source_udplans_allownew',
+        new lang_string('source_udplans_allownew', 'enrol_programs'),
+        new lang_string('source_udplans_allownew_desc', 'enrol_programs'), 1));
+
     if (\enrol_programs\local\source\ecommerce::is_commerce_enabled()) {
         $settings->add(new admin_setting_configcheckbox('enrol_programs/source_ecommerce_allownew',
             new lang_string('source_ecommerce_allownew', 'enrol_programs'),
