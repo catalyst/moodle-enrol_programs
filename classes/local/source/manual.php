@@ -130,34 +130,33 @@ final class manual extends base {
     }
 
     /**
-     * Allocation related buttons for program management page.
+     * Source related extra menu items for program allocation tab.
      *
-     * @param stdClass $program
+     * @param \enrol_programs\hook\extra_menu\management_program_users $menu
      * @param stdClass $source
-     * @return array
      */
-    public static function get_management_program_users_buttons(\stdClass $program, \stdClass $source): array {
-        global $PAGE;
+    public static function add_management_program_users_extra_actions(
+        \enrol_programs\hook\extra_menu\management_program_users $menu, stdClass $source): void {
 
-        /** @var \local_openlms\output\dialog_form\renderer $dialogformoutput */
-        $dialogformoutput = $PAGE->get_renderer('local_openlms', 'dialog_form');
-
-        if ($source->type !== static::get_type()) {
-            throw new \coding_exception('invalid instance');
+        $program = $menu->get_program();
+        if ($program->id != $source->programid || $source->type !== self::get_type()) {
+            throw new \coding_exception('Parameter mismatch detected');
         }
-        $enabled = self::is_allocation_possible($program, $source);
+
+        if (!self::is_allocation_possible($program, $source)) {
+            return;
+        }
+
         $context = \context::instance_by_id($program->contextid);
-        $buttons = [];
-        if ($enabled && has_capability('enrol/programs:allocate', $context)) {
+        if (has_capability('enrol/programs:allocate', $context)) {
             $url = new \moodle_url('/enrol/programs/management/source_manual_allocate.php', ['sourceid' => $source->id]);
-            $button = new \local_openlms\output\dialog_form\button($url, get_string('source_manual_allocateusers', 'enrol_programs'));
-            $buttons[] = $dialogformoutput->render($button);
+            $link = new \local_openlms\output\dialog_form\link($url, get_string('source_manual_allocateusers', 'enrol_programs'));
+            $menu->add_dialog_form($link);
 
             $url = new \moodle_url('/enrol/programs/management/source_manual_upload.php', ['sourceid' => $source->id]);
-            $button = new \local_openlms\output\dialog_form\button($url, get_string('source_manual_uploadusers', 'enrol_programs'));
-            $buttons[] = $dialogformoutput->render($button);
+            $link = new \local_openlms\output\dialog_form\link($url, get_string('source_manual_uploadusers', 'enrol_programs'));
+            $menu->add_dialog_form($link);
         }
-        return $buttons;
     }
 
     /**

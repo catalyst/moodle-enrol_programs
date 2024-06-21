@@ -21,16 +21,6 @@
     background-color: rgba(0, 0, 0, 0.03);
 }
 
-#page-enrol-programs-management-program_users .allocation-filtering .simplesearchform,
-#page-admin-enrol-programs-management-program_users .allocation-filtering .simplesearchform {
-    float: left;
-}
-
-#page-enrol-programs-management-program_users .allocation-filtering .singleselect,
-#page-admin-enrol-programs-management-program_users .allocation-filtering .singleselect {
-    float: right;
-}
-
 #page-enrol-programs-documentation #programs_docs img {
     width: 100%;
     height: 100%;

@@ -77,9 +77,10 @@ Feature: Upload program completion evidence using csv
     And I press dialog form button "Update"
     And I should see "Active" in the "Manual allocation:" definition list item
     And I click on "Users" "link" in the "#region-main" "css_element"
+    And I click on "Users actions" "link"
     And I should not see "Upload completion evidences"
 
-    And I press "Upload allocations"
+    And I click on "Upload allocations" "link"
     And I upload "enrol/programs/tests/fixtures/evidence1.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ,     |
@@ -91,14 +92,16 @@ Feature: Upload program completion evidence using csv
       | First line is header       | 1        |
     And I press dialog form button "Upload allocations"
     And I should see "5 users were assigned to program."
+    And I click on "Users actions" "link"
     And I should see "Upload completion evidences"
 
     And I follow "Student 3"
     And I press "Archive"
     And I press dialog form button "Archive"
     And I click on "Users" "link" in the "#region-main" "css_element"
+    And I click on "Users actions" "link"
 
-    When I press "Upload completion evidences"
+    When I click on "Upload completion evidences" "link"
     And I upload "enrol/programs/tests/fixtures/evidence1.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ,     |
@@ -136,8 +139,9 @@ Feature: Upload program completion evidence using csv
       | Completion date | Other evidence |
       | 12/03/23, 00:00 | EvidenceX      |
     And I click on "Users" "link" in the "#region-main" "css_element"
+    And I click on "Users actions" "link"
 
-    When I press "Upload completion evidences"
+    When I click on "Upload completion evidences" "link"
     And I upload "enrol/programs/tests/fixtures/evidence2.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ,     |

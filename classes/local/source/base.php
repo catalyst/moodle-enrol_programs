@@ -140,12 +140,24 @@ abstract class base {
     /**
      * Allocation related buttons for program management page.
      *
+     * @deprecated
+     *
      * @param stdClass $program
      * @param stdClass $source
      * @return array
      */
     public static function get_management_program_users_buttons(\stdClass $program, \stdClass $source): array {
         return [];
+    }
+
+    /**
+     * Source related extra menu items for program allocation tab.
+     *
+     * @param \enrol_programs\hook\extra_menu\management_program_users $menu
+     * @param stdClass $source source record
+     */
+    public static function add_management_program_users_extra_actions(
+        \enrol_programs\hook\extra_menu\management_program_users $menu, stdClass $source): void {
     }
 
     /**

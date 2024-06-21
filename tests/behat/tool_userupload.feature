@@ -113,7 +113,8 @@ Feature: Program allocation via tool_userupload
       | Active | Yes |
     And I press dialog form button "Update"
     And I click on "Users" "link" in the "#region-main" "css_element"
-    And I press "Allocate users"
+    And I click on "Users actions" "link"
+    And I click on "Allocate users" "link"
     And I set the following fields to these values:
       | Users | Student 2 |
     And I press dialog form button "Allocate users"
@@ -162,7 +163,8 @@ Feature: Program allocation via tool_userupload
     And I press dialog form button "Update"
     And I should see "Active" in the "Manual allocation:" definition list item
     And I click on "Users" "link" in the "#region-main" "css_element"
-    When I press "Allocate users"
+    And I click on "Users actions" "link"
+    When I click on "Allocate users" "link"
     And I set the following fields to these values:
       | Users | Student 4 |
     And I press dialog form button "Allocate users"

@@ -78,41 +78,13 @@ $managementoutput = $PAGE->get_renderer('enrol_programs', 'management');
 /** @var \enrol_programs\output\catalogue\renderer $catalogueoutput */
 $catalogueoutput = $PAGE->get_renderer('enrol_programs', 'catalogue');
 
+$sources = $DB->get_records('enrol_programs_sources', ['programid' => $program->id]);
+/** @var \enrol_programs\local\source\base[] $sourceclasses */ // Type hack.
+$sourceclasses = \enrol_programs\local\allocation::get_source_classes();
+
 echo $OUTPUT->header();
 
 echo $managementoutput->render_management_program_tabs($program, 'users');
-
-echo '<div class="allocation-filtering">';
-// Add search form.
-$data = [
-    'action' => new moodle_url('/enrol/programs/management/program_users.php'),
-    'inputname' => 'search',
-    'searchstring' => get_string('search', 'search'),
-    'query' => $searchquery,
-    'hiddenfields' => [
-        (object)['name' => 'id', 'value' => $program->id],
-        (object)['name' => 'sort', 'value' => $sort],
-        (object)['name' => 'dir', 'value' => $dir],
-        (object)['name' => 'status', 'value' => $status],
-    ],
-    'extraclasses' => 'mb-3'
-];
-echo $OUTPUT->render_from_template('core/search_input', $data);
-$changestatus = new moodle_url($currenturl);
-$statusoptions = [
-    0 => get_string('programstatus_any', 'enrol_programs'),
-    1 => get_string('programstatus_completed', 'enrol_programs'),
-    2 => get_string('programstatus_future', 'enrol_programs'),
-    3 => get_string('programstatus_failed', 'enrol_programs'),
-    4 => get_string('programstatus_overdue', 'enrol_programs'),
-    5 => get_string('programstatus_open', 'enrol_programs'),
-];
-if (!isset($statusoptions[$status])) {
-    $status = 0;
-}
-echo $OUTPUT->single_select($currenturl, 'status', $statusoptions, $status, []);
-echo '</div>';
-echo '<div class="clearfix"></div>';
 
 $allusernamefields = \core_user\fields::get_name_fields(true);
 $userfieldsapi = \core_user\fields::for_identity(\context_system::instance(), false)->with_userpic();
@@ -204,12 +176,65 @@ $sql = "SELECT COUNT(a.id)
          WHERE a.programid = :programid $usersearch";
 $totalcount = $DB->count_records_sql($sql, $params);
 
+
+$extramenu = new \enrol_programs\hook\extra_menu\management_program_users($program);
+foreach ($sourceclasses as $sourceclass) {
+    $sourcetype = $sourceclass::get_type();
+    $sourcerecord = $DB->get_record('enrol_programs_sources', ['programid' => $program->id, 'type' => $sourcetype]);
+    if (!$sourcerecord) {
+        continue;
+    }
+    $sourceclass::add_management_program_users_extra_actions($extramenu, $sourcerecord);
+}
+$canmanageevidence = has_capability('enrol/programs:manageevidence', $context);
+if ($totalcount && !$program->archived && $canmanageevidence) {
+    $url = new \moodle_url('/enrol/programs/management/program_evidence_upload.php', ['programid' => $id]);
+    $link = new \local_openlms\output\dialog_form\link($url, get_string('evidenceupload', 'enrol_programs'));
+    $extramenu->add_dialog_form($link);
+}
+\core\hook\manager::get_instance()->dispatch($extramenu);
+
+echo '<div class="allocation-filtering">';
+// Add search form.
+$data = [
+    'action' => new moodle_url('/enrol/programs/management/program_users.php'),
+    'inputname' => 'search',
+    'searchstring' => get_string('search', 'search'),
+    'query' => $searchquery,
+    'hiddenfields' => [
+        (object)['name' => 'id', 'value' => $program->id],
+        (object)['name' => 'sort', 'value' => $sort],
+        (object)['name' => 'dir', 'value' => $dir],
+        (object)['name' => 'status', 'value' => $status],
+    ],
+    'extraclasses' => 'mb-3 float-left'
+];
+echo $OUTPUT->render_from_template('core/search_input', $data);
+$changestatus = new moodle_url($currenturl);
+$statusoptions = [
+    0 => get_string('programstatus_any', 'enrol_programs'),
+    1 => get_string('programstatus_completed', 'enrol_programs'),
+    2 => get_string('programstatus_future', 'enrol_programs'),
+    3 => get_string('programstatus_failed', 'enrol_programs'),
+    4 => get_string('programstatus_overdue', 'enrol_programs'),
+    5 => get_string('programstatus_open', 'enrol_programs'),
+];
+if (!isset($statusoptions[$status])) {
+    $status = 0;
+}
+echo '&nbsp';
+echo $OUTPUT->single_select($currenturl, 'status', $statusoptions, $status, []);
+if ($extramenu->has_items()) {
+    echo '<div class="float-right">';
+    echo $OUTPUT->render($extramenu->get_dropdown());
+    echo '</div>';
+}
+echo '</div>';
+echo '<div class="clearfix"></div>';
+
 echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $currenturl);
 
-$sources = $DB->get_records('enrol_programs_sources', ['programid' => $program->id]);
 $sourcenames = \enrol_programs\local\allocation::get_source_names();
-/** @var \enrol_programs\local\source\base[] $sourceclasses */ // Type hack.
-$sourceclasses = \enrol_programs\local\allocation::get_source_classes();
 $dateformat = get_string('strftimedatetimeshort');
 
 $data = [];
@@ -344,8 +369,8 @@ if (!$totalcount) {
 
 echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $currenturl);
 
+// Buttons are deprecated here.
 $buttons = [];
-
 foreach ($sourceclasses as $sourceclass) {
     $sourcetype = $sourceclass::get_type();
     $sourcerecord = $DB->get_record('enrol_programs_sources', ['programid' => $program->id, 'type' => $sourcetype]);
@@ -355,12 +380,6 @@ foreach ($sourceclasses as $sourceclass) {
     $buttons = array_merge_recursive($buttons,  $sourceclass::get_management_program_users_buttons($program, $sourcerecord));
 }
 
-$canmanageevidence = has_capability('enrol/programs:manageevidence', $context);
-if ($totalcount && !$program->archived && $canmanageevidence) {
-    $url = new \moodle_url('/enrol/programs/management/program_evidence_upload.php', ['programid' => $id]);
-    $button = new \local_openlms\output\dialog_form\button($url, get_string('evidenceupload', 'enrol_programs'));
-    $buttons[] = $dialogformoutput->render($button);
-}
 if ($buttons) {
     $buttons = implode(' ', $buttons);
     echo $OUTPUT->box($buttons, 'buttons');

@@ -81,7 +81,8 @@ Feature: Manual program allocation tests
     And I should see "Active" in the "Manual allocation:" definition list item
     And I follow "Users"
 
-    When I press "Allocate users"
+    When I click on "Users actions" "link"
+    And I click on "Allocate users" "link"
     And I set the following fields to these values:
       | Users | Student 1, Student 5 |
     And I press dialog form button "Allocate users"
@@ -91,7 +92,8 @@ Feature: Manual program allocation tests
     And I should not see "Student 3"
     And I should not see "Student 4"
 
-    When I press "Allocate users"
+    When I click on "Users actions" "link"
+    And I click on "Allocate users" "link"
     And I set the following fields to these values:
       | Cohort | Cohort 2 |
     And I press dialog form button "Allocate users"
@@ -131,7 +133,8 @@ Feature: Manual program allocation tests
     And I press dialog form button "Update"
     And I should see "Active" in the "Manual allocation:" definition list item
     And I click on "Users" "link" in the "#region-main" "css_element"
-    When I press "Allocate users"
+    When I click on "Users actions" "link"
+    And I click on "Allocate users" "link"
     And I set the following fields to these values:
       | Users | Student 1 |
     And I press dialog form button "Allocate users"
@@ -147,7 +150,8 @@ Feature: Manual program allocation tests
     And I should see "Active" in the "Manual allocation:" definition list item
     And I click on "Users" "link" in the "#region-main" "css_element"
 
-    When I press "Allocate users"
+    When I click on "Users actions" "link"
+    And I click on "Allocate users" "link"
     And I set the following fields to these values:
       | Users | Student 1 |
     And I press dialog form button "Allocate users"
@@ -162,7 +166,8 @@ Feature: Manual program allocation tests
     And I follow "Program 000"
     And I click on "Users" "link" in the "#region-main" "css_element"
 
-    When I press "Allocate users"
+    When I click on "Users actions" "link"
+    And I click on "Allocate users" "link"
     And I set the following fields to these values:
       | Users | Tenant 1 Student |
     And I press dialog form button "Allocate users"
@@ -172,7 +177,8 @@ Feature: Manual program allocation tests
     And I follow "Program 001"
     And I click on "Users" "link" in the "#region-main" "css_element"
 
-    When I press "Allocate users"
+    When I click on "Users actions" "link"
+    And I click on "Allocate users" "link"
     And I set the following fields to these values:
       | Users | Tenant 1 Student |
     And I press dialog form button "Allocate users"
@@ -191,7 +197,8 @@ Feature: Manual program allocation tests
     And I should see "Active" in the "Manual allocation:" definition list item
     And I click on "Users" "link" in the "#region-main" "css_element"
 
-    When I press "Upload allocations"
+    When I click on "Users actions" "link"
+    And I click on "Upload allocations" "link"
     And I upload "enrol/programs/tests/fixtures/upload1.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ,     |
@@ -207,7 +214,8 @@ Feature: Manual program allocation tests
     And "Student 2" row "Source" column of "program_allocations" table should contain "Manual allocation"
     And "Student 3" row "Source" column of "program_allocations" table should contain "Manual allocation"
 
-    When I press "Upload allocations"
+    When I click on "Users actions" "link"
+    And I click on "Upload allocations" "link"
     And I upload "enrol/programs/tests/fixtures/upload2.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ,     |
@@ -228,7 +236,8 @@ Feature: Manual program allocation tests
     And "Student 3" row "Source" column of "program_allocations" table should contain "Manual allocation"
     And "Student 4" row "Source" column of "program_allocations" table should contain "Manual allocation"
 
-    When I press "Upload allocations"
+    When I click on "Users actions" "link"
+    And I click on "Upload allocations" "link"
     And I upload "enrol/programs/tests/fixtures/upload3.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ;     |
@@ -281,7 +290,8 @@ Feature: Manual program allocation tests
     And I should see "Active" in the "Manual allocation:" definition list item
     And I click on "Users" "link" in the "#region-main" "css_element"
 
-    When I press "Upload allocations"
+    When I click on "Users actions" "link"
+    And I click on "Upload allocations" "link"
     And I upload "enrol/programs/tests/fixtures/upload4.csv" file to "CSV file" filemanager
     And I set the following fields to these values:
       | CSV separator | ,     |

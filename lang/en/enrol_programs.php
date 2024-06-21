@@ -96,6 +96,7 @@ $string['evidenceupload_skipped'] = '{$a} rows skipped';
 $string['evidenceupload_updated'] = 'Completion evidence updated for {$a} users';
 $string['evidence_details'] = 'Details';
 $string['evidence_detailsdefault'] = 'Default details';
+$string['extra_menu_management_program_users'] = 'Users actions';
 $string['fixeddate'] = 'At a fixed date';
 $string['importallocationend'] = 'Allocation end ({$a})';
 $string['importallocationstart'] = 'Allocation start ({$a})';
