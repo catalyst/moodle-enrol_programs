@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['addprogram'] = 'Add program';
 $string['addset'] = 'Add new set';
+$string['allocateusertask'] = 'Allocate user ad hoc task';
 $string['allocationend'] = 'Allocation end';
 $string['allocationend_help'] = 'Allocation end date meaning depends on enabled allocation sources. Usually new allocation are not possible after this date if specified.';
 $string['allocation'] = 'Allocation';

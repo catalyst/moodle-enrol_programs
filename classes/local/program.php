@@ -27,6 +27,25 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class program {
+    /** @var array array of program records */
+    private static $programs = [];
+
+    /**
+     * Retrieve program instance by id.
+     *
+     * @param int $id the program id
+     * @return stdClass the program record
+     */
+    public static function get_instance(int $id): stdClass {
+        global $DB;
+
+        if (!isset(self::$programs[$id])) {
+            self::$programs[$id] = $DB->get_record('enrol_programs_programs', ['id' => $id], '*', MUST_EXIST);
+        }
+
+        return self::$programs[$id];
+    }
+
     /**
      * Options for editing of program descriptions.
      *
