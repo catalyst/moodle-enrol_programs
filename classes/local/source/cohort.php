@@ -216,7 +216,7 @@ final class cohort extends base {
      * @return bool true if anything updated
      */
     public static function fix_allocations(?int $programid, ?int $userid): bool {
-        global $DB;
+        global $DB, $USER;
 
         $updated = false;
 
@@ -248,26 +248,25 @@ final class cohort extends base {
                        $programselect $userselect
               ORDER BY p.id ASC, s.id ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
-        $lastprogram = null;
-        $lastsource = null;
         foreach ($rs as $record) {
             if ($record->allocationid) {
                 $DB->set_field('enrol_programs_allocations', 'archived', 0, ['id' => $record->allocationid]);
-            } else {
-                if ($lastprogram && $lastprogram->id == $record->id) {
-                    $program = $lastprogram;
-                } else {
-                    $program = $DB->get_record('enrol_programs_programs', ['id' => $record->id], '*', MUST_EXIST);
-                    $lastprogram = $program;
-                }
-                if ($lastsource && $lastsource->id == $record->sourceid) {
-                    $source = $lastsource;
-                } else {
-                    $source = $DB->get_record('enrol_programs_sources', ['id' => $record->sourceid], '*', MUST_EXIST);
-                    $lastsource = $source;
-                }
-                self::allocate_user($program, $source, $record->userid, []);
                 $updated = true;
+            } else {
+                if (PHPUNIT_TEST) {
+                    self::task_allocate_user($record->id, $record->sourceid, $record->userid);
+                } else {
+                    $task = new \enrol_programs\task\allocate_user_task();
+                    $task->set_userid($USER->id);
+                    $task->set_custom_data([
+                        'programid'    => $record->id,
+                        'userid'       => $record->userid,
+                        'sourceid'     => $record->sourceid,
+                        'sourceclass'  => '\\' . self::class,
+                    ]);
+
+                    \core\task\manager::queue_adhoc_task($task, true);
+                }
             }
         }
         $rs->close();
@@ -311,5 +310,28 @@ final class cohort extends base {
         $rs->close();
 
         return $updated;
+    }
+
+    /**
+     * Allocate user to program.
+     *
+     * @param int $programid
+     * @param int $sourceid
+     * @param int $userid
+     * @return stdClass user allocation record
+     */
+    public static function task_allocate_user(int $programid, int $sourceid, int $userid): \stdClass {
+        global $DB;
+
+        $params = ['programid' => $programid, 'sourceid' => $sourceid, 'userid' => $userid];
+        if ($allocation = $DB->get_record('enrol_programs_allocations', $params)) {
+            // Allocation already exists, no need to allocate, just return the allocation.
+            return $allocation;
+        }
+
+        $program = \enrol_programs\local\program::get_instance($programid);
+        $source = self::get_instance($sourceid);
+
+        return self::allocate_user($program, $source, $userid, []);
     }
 }

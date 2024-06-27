@@ -85,4 +85,16 @@ final class start extends base {
         }
         $rs->close();
     }
+
+    /**
+     * Send notification related to start.
+     *
+     * @param stdClass $user
+     * @param stdClass $program
+     * @param stdClass $source
+     * @param stdClass $allocation
+     */
+    public static function notify_now(stdClass $user, stdClass $program, stdClass $source, stdClass $allocation) {
+        self::notify_allocated_user($program, $source, $allocation, $user);
+    }
 }

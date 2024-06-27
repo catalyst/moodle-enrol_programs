@@ -45,14 +45,14 @@ class cron extends \core\task\scheduled_task {
 
         $trace = new \text_progress_trace();
 
-        $trace->output('allocation::fix_allocation_sources');
-        \enrol_programs\local\allocation::fix_allocation_sources(null, null);
-
         $trace->output('allocation::fix_enrol_instances');
         \enrol_programs\local\allocation::fix_enrol_instances(null);
 
         $trace->output('allocation::fix_user_enrolments');
         \enrol_programs\local\allocation::fix_user_enrolments(null, null, $trace);
+
+        $trace->output('allocation::fix_allocation_sources');
+        \enrol_programs\local\allocation::fix_allocation_sources(null, null);
 
         $trace->output('calendar::fix_program_events');
         \enrol_programs\local\calendar::fix_program_events(null, $trace);
