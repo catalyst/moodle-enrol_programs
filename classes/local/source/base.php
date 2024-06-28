@@ -29,6 +29,25 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class base {
+    /** @var array array of source records */
+    private static $sources = [];
+
+    /**
+     * Retrieve source instance by id.
+     *
+     * @param int $id the source id
+     * @return stdClass the source record
+     */
+    public static function get_instance(int $id): stdClass {
+        global $DB;
+
+        if (!isset(self::$sources[$id])) {
+            self::$sources[$id] = $DB->get_record('enrol_programs_sources', ['id' => $id], '*', MUST_EXIST);;
+        }
+
+        return self::$sources[$id];
+    }
+
     /**
      * Return short type name of source, it is used in database to identify this source.
      *
@@ -222,6 +241,8 @@ abstract class base {
             $record->timedue = $record->timeend;
         }
 
+        $trans = $DB->start_delegated_transaction();
+
         $record->id = $DB->insert_record('enrol_programs_allocations', $record);
         $allocation = $DB->get_record('enrol_programs_allocations', ['id' => $record->id], '*', MUST_EXIST);
 
@@ -230,9 +251,18 @@ abstract class base {
         $event = \enrol_programs\event\user_allocated::create_from_allocation($allocation, $program);
         $event->trigger();
 
+        \enrol_programs\local\allocation::fix_user_enrolments($program->id, $user->id);
+
         \enrol_programs\local\notification\allocation::notify_now($user, $program, $source, $allocation);
 
+        $cutoff = $now - \enrol_programs\local\notification\base::TIME_CUTOFF;
+        if ($allocation->timestart <= $now && $allocation->timestart > $cutoff) {
+            \enrol_programs\local\notification\start::notify_now($user, $program, $source, $allocation);
+        }
+
         \enrol_programs\local\calendar::fix_allocation_events($allocation, $program);
+
+        $trans->allow_commit();
 
         return $allocation;
     }
