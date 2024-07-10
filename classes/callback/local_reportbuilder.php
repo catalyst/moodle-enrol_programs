@@ -14,27 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace enrol_programs\callback;
+
 /**
- * Program enrolment plugin upgrade steps.
+ * Hook callbacks from local_reportbuilder related code.
  *
  * @package    enrol_programs
- * @copyright  2022 Open LMS (https://www.openlms.net/)
+ * @copyright  2024 Open LMS
  * @author     Petr Skoda
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-/** @var stdClass $plugin */
-
-$plugin->version   = 2024071400;
-$plugin->requires  = 2023100902.00; // 4.3.2
-$plugin->component = 'enrol_programs';
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v3.2.0dev';
-$plugin->supported = [403, 403];
-
-$plugin->dependencies = [
-    'local_openlms' => 2024032500,
-    'customfield_training' => 2024032500,
-];
+final class local_reportbuilder {
+    /**
+     * Callback method for discovering of primary navigation item classes.
+     * @param \local_reportbuilder\hook\report_sources $hook
+     */
+    public static function report_sources(\local_reportbuilder\hook\report_sources $hook): void {
+        $hook->add_class(
+            \enrol_programs\rb\source\allocations::get_sourcename(),
+            \enrol_programs\rb\source\allocations::class);
+    }
+}

@@ -36,4 +36,8 @@ $callbacks = [
         'hook' => \customfield_training\hook\completion_updated::class,
         'callback' => \enrol_programs\callback\customfield_training::class . '::completion_updated',
     ],
+    [
+        'hook' => \local_reportbuilder\hook\report_sources::class,
+        'callback' => \enrol_programs\callback\local_reportbuilder::class . '::report_sources',
+    ],
 ];
