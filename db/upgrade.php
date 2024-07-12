@@ -354,6 +354,22 @@ function xmldb_enrol_programs_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024071100) {
+        // There was a foreign key and index on groupid in install.xml which was incorrect.
+
+        // Define key groupid (foreign) to be dropped form enrol_programs_groups - pre 3.1.0 sites.
+        $table = new xmldb_table('enrol_programs_groups');
+        $key = new xmldb_key('groupid', XMLDB_KEY_FOREIGN, ['groupid'], 'groups', ['id']);
+
+        // Launch drop key groupid.
+        $dbman->drop_key($table, $key);
+
+        // Define key groupid (foreign unique) to be added to enrol_programs_groups  - 3.1.0 sites.
+        $table = new xmldb_table('enrol_programs_groups');
+        $key = new xmldb_key('groupid', XMLDB_KEY_FOREIGN_UNIQUE, ['groupid'], 'groups', ['id']);
+
+        // Launch drop key groupid.
+        $dbman->drop_key($table, $key);
+
         // Define index groupid (unique) to be dropped form enrol_programs_groups.
         $table = new xmldb_table('enrol_programs_groups');
         $index = new xmldb_index('groupid', XMLDB_INDEX_UNIQUE, ['groupid']);
@@ -363,14 +379,7 @@ function xmldb_enrol_programs_upgrade($oldversion) {
             $dbman->drop_index($table, $index);
         }
 
-        // Define key groupid (foreign) to be dropped form enrol_programs_groups.
-        $table = new xmldb_table('enrol_programs_groups');
-        $key = new xmldb_key('groupid', XMLDB_KEY_FOREIGN, ['groupid'], 'groups', ['id']);
-
-        // Launch drop key groupid.
-        $dbman->drop_key($table, $key);
-
-        // Define key groupid (foreign) to be added to enrol_programs_groups.
+        // Define key groupid (foreign unique) to be added to enrol_programs_groups.
         $table = new xmldb_table('enrol_programs_groups');
         $key = new xmldb_key('groupid', XMLDB_KEY_FOREIGN_UNIQUE, ['groupid'], 'groups', ['id']);
 
