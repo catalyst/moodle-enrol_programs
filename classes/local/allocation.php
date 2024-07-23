@@ -500,9 +500,7 @@ final class allocation {
         $params['now1'] = $now;
         $params['now2'] = $now;
         $params['now3'] = $now;
-        $sql = "INSERT INTO {enrol_programs_completions} (itemid, allocationid, timecompleted)
-
-                SELECT pi.id, pa.id, :now3
+        $sql = "SELECT pa.id AS allocationid, pi.id AS itemid, :now3 AS timecompleted
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {enrol_programs_items} pi ON pi.programid = pa.programid
@@ -513,7 +511,16 @@ final class allocation {
                        AND (pa.timestart <= :now1)
                        AND (pa.timeend IS NULL OR pa.timeend > :now2)
                        $programselect $userselect";
-        $DB->execute($sql, $params);
+        $rs = $DB->get_recordset_sql($sql, $params);
+        foreach ($rs as $completion) {
+            // Check the record index doesn't already exist, an observer could have
+            // added it already in the time it took to get the recordset.
+            $existsparams = ['itemid' => $completion->itemid, 'allocationid' => $completion->allocationid];
+            if (!$DB->record_exists('enrol_programs_completions', $existsparams)) {
+                $DB->insert_record('enrol_programs_completions', $completion);
+            }
+        }
+        $rs->close();
 
         // Copy completion info from course completion to program item completion,
         // do not remove program item completion if completion gets reset in course later.
@@ -532,9 +539,7 @@ final class allocation {
         $params['now1'] = $now;
         $params['now2'] = $now;
         $params['now3'] = $now;
-        $sql = "INSERT INTO {enrol_programs_completions} (itemid, allocationid, timecompleted)
-
-                SELECT pi.id, pa.id, (:now3 + pi.completiondelay)
+        $sql = "SELECT pa.id AS allocationid, pi.id AS itemid, (:now3 + pi.completiondelay) AS timecompleted
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {enrol_programs_items} pi ON pi.programid = pa.programid
@@ -545,7 +550,16 @@ final class allocation {
                        AND (pa.timestart <= :now1)
                        AND (pa.timeend IS NULL OR pa.timeend > :now2)
                        $programselect $userselect";
-        $DB->execute($sql, $params);
+        $rs = $DB->get_recordset_sql($sql, $params);
+        foreach ($rs as $completion) {
+            // Check the record index doesn't already exist, an observer could have
+            // added it already in the time it took to get the recordset.
+            $existsparams = ['itemid' => $completion->itemid, 'allocationid' => $completion->allocationid];
+            if (!$DB->record_exists('enrol_programs_completions', $existsparams)) {
+                $DB->insert_record('enrol_programs_completions', $completion);
+            }
+        }
+        $rs->close();
 
         // Calculate set completions ignoring course items,
         // do max 100 dependencies to prevent infinite loop.
@@ -593,12 +607,15 @@ final class allocation {
             foreach ($rs as $completion) {
                 // NOTE: this should not return many records because this
                 // should be called with userid parameter from event observers.
-                $record = new stdClass();
-                $record->itemid = $completion->itemid;
-                $record->allocationid = $completion->allocationid;
-                $record->timecompleted = time() + $completion->completiondelay; // Use real time, we are not in a transaction here.
-                $DB->insert_record('enrol_programs_completions', $record);
-                $count++;
+                $existsparams = ['itemid' => $completion->itemid, 'allocationid' => $completion->allocationid];
+                if (!$DB->record_exists('enrol_programs_completions', $existsparams)) {
+                    $record = new stdClass();
+                    $record->itemid = $completion->itemid;
+                    $record->allocationid = $completion->allocationid;
+                    $record->timecompleted = time() + $completion->completiondelay; // Use real time, we are not in a transaction here.
+                    $DB->insert_record('enrol_programs_completions', $record);
+                    $count++;
+                }
             }
             $rs->close();
 
@@ -627,12 +644,15 @@ final class allocation {
                 foreach ($rs as $completion) {
                     // NOTE: this should not return many records because this
                     // should be called with userid parameter from event observers.
-                    $record = new stdClass();
-                    $record->itemid = $completion->itemid;
-                    $record->allocationid = $completion->allocationid;
-                    $record->timecompleted = time() + $completion->completiondelay; // Use real time, we are not in a transaction here.
-                    $DB->insert_record('enrol_programs_completions', $record);
-                    $count++;
+                    $existsparams = ['itemid' => $completion->itemid, 'allocationid' => $completion->allocationid];
+                    if (!$DB->record_exists('enrol_programs_completions', $existsparams)) {
+                        $record = new stdClass();
+                        $record->itemid = $completion->itemid;
+                        $record->allocationid = $completion->allocationid;
+                        $record->timecompleted = time() + $completion->completiondelay; // Use real time, we are not in a transaction here.
+                        $DB->insert_record('enrol_programs_completions', $record);
+                        $count++;
+                    }
                 }
                 $rs->close();
             }
