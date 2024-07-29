@@ -118,6 +118,54 @@ final class certify extends base {
     }
 
     /**
+     * Purge all course and activity completion records
+     * and reset relevant caches.
+     *
+     * @param array $courseids
+     * @param int $userid
+     * @return void
+     */
+    public static function purge_completions(array $courseids, int $userid): void {
+        global $DB;
+
+        if (!$courseids) {
+            return;
+        }
+
+        $cache1 = \cache::make('core', 'coursecompletion');
+        $cache2 = \cache::make('core', 'completion');
+        $cache3 = \cache::make('availability_grade', 'scores');
+
+        foreach ($courseids as $courseid) {
+            $params = ['course' => $courseid, 'userid' => $userid];
+
+            $sql = "DELETE
+                      FROM {course_modules_completion}
+                     WHERE userid = :userid AND coursemoduleid IN (
+                         SELECT cm.id
+                           FROM {course_modules} cm
+                          WHERE cm.course = :course)";
+            $DB->execute($sql, $params);
+
+            $sql = "DELETE
+                      FROM {course_modules_viewed}
+                     WHERE userid = :userid AND coursemoduleid IN (
+                         SELECT cm.id
+                           FROM {course_modules} cm
+                          WHERE cm.course = :course)";
+            $DB->execute($sql, $params);
+
+            $DB->delete_records('course_completion_crit_compl', $params);
+            $DB->delete_records('course_completions', $params);
+
+            $cache1->delete($userid . '_' . $courseid);
+            $cache2->delete($userid . '_' . $courseid);
+        }
+
+        $cache3->delete($userid);
+    }
+
+    /**
      * Purge course data using privacy API.
      *
      * @param int[] $courseids
@@ -126,6 +174,10 @@ final class certify extends base {
      */
     public static function purge_courses(array $courseids, int $userid): void {
         global $DB;
+
+        if (!$courseids) {
+            return;
+        }
 
         $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 
@@ -168,15 +220,7 @@ final class certify extends base {
             }
         }
 
-        // Finally delete all types of completions.
-        foreach ($courseids as $courseid) {
-            if (isset($cmids[$courseid])) {
-                foreach ($cmids[$courseid] as $cmid) {
-                    \core_completion\privacy\provider::delete_completion($user, null, $cmid);
-                }
-            }
-            \core_completion\privacy\provider::delete_completion($user, $courseid, null);
-        }
+        self::purge_completions($courseids, $userid);
     }
 
     /**
@@ -388,6 +432,14 @@ final class certify extends base {
                 continue;
             }
 
+            // Get list of courses.
+            $sql = "SELECT DISTINCT c.id
+                          FROM {enrol_programs_items} i
+                          JOIN {course} c ON c.id = i.courseid
+                         WHERE i.programid = :programid
+                      ORDER BY c.id ASC";
+            $courseids = $DB->get_fieldset_sql($sql, ['programid' => $program->id]);
+
             if ($resettype >= certification::RESETTYPE_DEALLOCATE && $allocation) {
                 $delsource = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid], '*', MUST_EXIST);
                 /** @var \enrol_programs\local\source\base $coursceclass */
@@ -414,18 +466,11 @@ final class certify extends base {
                     }
                     $enrolplugin->unenrol_user($instance, $ue->userid);
                 }
+                self::purge_completions($courseids, $period->userid);
             }
 
             if ($resettype >= certification::RESETTYPE_PURGE) {
-                $sql = "SELECT DISTINCT c.id
-                          FROM {enrol_programs_items} i
-                          JOIN {course} c ON c.id = i.courseid
-                         WHERE i.programid = :programid
-                      ORDER BY c.id ASC";
-                $courseids = $DB->get_fieldset_sql($sql, ['programid' => $program->id]);
-                if ($courseids) {
-                    self::purge_courses($courseids, $userid);
-                }
+                self::purge_courses($courseids, $period->userid);
             }
 
             $allocation = $DB->get_record('enrol_programs_allocations', ['userid' => $period->userid, 'programid' => $period->programid]);
