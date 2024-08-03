@@ -14,27 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace enrol_programs\local\reset;
+
+use stdClass;
+
 /**
- * Program enrolment plugin upgrade steps.
+ * Course module reset base class.
  *
  * @package    enrol_programs
- * @copyright  2022 Open LMS (https://www.openlms.net/)
+ * @copyright  2024 Open LMS (https://www.openlms.net/)
  * @author     Petr Skoda
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-/** @var stdClass $plugin */
-
-$plugin->version   = 2024080300;
-$plugin->requires  = 2023100902.00; // 4.3.2
-$plugin->component = 'enrol_programs';
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v3.2.0dev';
-$plugin->supported = [403, 403];
-
-$plugin->dependencies = [
-    'local_openlms' => 2024071401,
-    'customfield_training' => 2024032500,
-];
+abstract class base {
+    /**
+     * Custom course module reset method.
+     *
+     * @param stdClass $user
+     * @param array $courseids
+     * @param array $options
+     * @return void
+     */
+    abstract public static function purge_data(stdClass $user, array $courseids, array $options = []): void;
+}

@@ -21,6 +21,7 @@ use enrol_programs\local\program;
 use tool_certify\local\certification;
 use tool_certify\local\assignment;
 use tool_certify\local\period;
+use enrol_programs\local\course_reset;
 use stdClass;
 
 /**
@@ -138,41 +139,6 @@ final class certify_test extends \advanced_testcase {
         $this->assertStringContainsString('Active', $result);
         $this->assertStringContainsString('>Certification 1<', $result);
         $this->assertStringContainsString('Certification 3', $result);
-    }
-
-    public function test_purge_courses() {
-        $this->setAdminUser();
-
-        $modules = \core_plugin_manager::instance()->get_plugins_of_type('mod');
-        if (!$modules['bigbluebuttonbn']->is_enabled()) {
-            \core\plugininfo\mod::enable_plugin('bigbluebuttonbn', true);
-        }
-
-        $course1 = $this->getDataGenerator()->create_course();
-        $course2 = $this->getDataGenerator()->create_course();
-        $user1 = $this->getDataGenerator()->create_user();
-        $user2 = $this->getDataGenerator()->create_user();
-
-        $params = ['course' => $course1->id];
-        $this->getDataGenerator()->create_module('assign', $params, []);
-        $this->getDataGenerator()->create_module('bigbluebuttonbn', $params, []);
-        $this->getDataGenerator()->create_module('chat', $params, []);
-        $this->getDataGenerator()->create_module('choice', $params, []);
-        $this->getDataGenerator()->create_module('data', $params, []);
-        if (get_config('mod_facetoface', 'version')) {
-            $this->getDataGenerator()->create_module('facetoface', $params, []);
-        }
-        $this->getDataGenerator()->create_module('feedback', $params, []);
-        $this->getDataGenerator()->create_module('forum', $params, []);
-        $this->getDataGenerator()->create_module('glossary', $params, []);
-        $this->getDataGenerator()->create_module('lesson', $params, []);
-        $this->getDataGenerator()->create_module('quiz', $params, []);
-        $this->getDataGenerator()->create_module('scorm', $params, []);
-        $this->getDataGenerator()->create_module('survey', $params, []);
-        $this->getDataGenerator()->create_module('wiki', $params, []);
-        $this->getDataGenerator()->create_module('workshop', $params, []);
-
-        certify::purge_courses([$course1->id, $course2->id], $user1->id);
     }
 
     public function test_sync_certifications_allocate() {
@@ -990,19 +956,19 @@ final class certify_test extends \advanced_testcase {
         $this->getDataGenerator()->enrol_user($user3->id, $course2->id);
 
         $certification0 = $generator->create_certification(
-            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => certification::RESETTYPE_NONE]);
+            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => course_reset::RESETTYPE_NONE]);
         $source0 = $DB->get_record('tool_certify_sources',
             ['type' => 'manual', 'certificationid' => $certification0->id], '*', MUST_EXIST);
         $certification1 = $generator->create_certification(
-            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => certification::RESETTYPE_DEALLOCATE]);
+            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => course_reset::RESETTYPE_DEALLOCATE]);
         $source1 = $DB->get_record('tool_certify_sources',
             ['type' => 'manual', 'certificationid' => $certification1->id], '*', MUST_EXIST);
         $certification2 = $generator->create_certification(
-            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => certification::RESETTYPE_UNENROL]);
+            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => course_reset::RESETTYPE_STANDARD]);
         $source2 = $DB->get_record('tool_certify_sources',
             ['type' => 'manual', 'certificationid' => $certification2->id], '*', MUST_EXIST);
         $certification3 = $generator->create_certification(
-            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => certification::RESETTYPE_PURGE]);
+            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => course_reset::RESETTYPE_FULL]);
         $source3 = $DB->get_record('tool_certify_sources',
             ['type' => 'manual', 'certificationid' => $certification3->id], '*', MUST_EXIST);
 

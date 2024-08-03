@@ -17,6 +17,7 @@
 namespace enrol_programs\local\source;
 
 use tool_certify\local\certification;
+use enrol_programs\local\course_reset;
 use stdClass;
 
 /**
@@ -115,112 +116,6 @@ final class certify extends base {
         }
 
         return $result;
-    }
-
-    /**
-     * Purge all course and activity completion records
-     * and reset relevant caches.
-     *
-     * @param array $courseids
-     * @param int $userid
-     * @return void
-     */
-    public static function purge_completions(array $courseids, int $userid): void {
-        global $DB;
-
-        if (!$courseids) {
-            return;
-        }
-
-        $cache1 = \cache::make('core', 'coursecompletion');
-        $cache2 = \cache::make('core', 'completion');
-        $cache3 = \cache::make('availability_grade', 'scores');
-
-        foreach ($courseids as $courseid) {
-            $params = ['course' => $courseid, 'userid' => $userid];
-
-            $sql = "DELETE
-                      FROM {course_modules_completion}
-                     WHERE userid = :userid AND coursemoduleid IN (
-                         SELECT cm.id
-                           FROM {course_modules} cm
-                          WHERE cm.course = :course)";
-            $DB->execute($sql, $params);
-
-            $sql = "DELETE
-                      FROM {course_modules_viewed}
-                     WHERE userid = :userid AND coursemoduleid IN (
-                         SELECT cm.id
-                           FROM {course_modules} cm
-                          WHERE cm.course = :course)";
-            $DB->execute($sql, $params);
-
-            $DB->delete_records('course_completion_crit_compl', $params);
-            $DB->delete_records('course_completions', $params);
-
-            $cache1->delete($userid . '_' . $courseid);
-            $cache2->delete($userid . '_' . $courseid);
-        }
-
-        $cache3->delete($userid);
-    }
-
-    /**
-     * Purge course data using privacy API.
-     *
-     * @param int[] $courseids
-     * @param int $userid
-     * @return void
-     */
-    public static function purge_courses(array $courseids, int $userid): void {
-        global $DB;
-
-        if (!$courseids) {
-            return;
-        }
-
-        $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
-
-        $modcontextids = [];
-        $cmids = [];
-        foreach ($courseids as $courseid) {
-            $mods = get_course_mods($courseid);
-            if (!$mods) {
-                continue;
-            }
-            foreach ($mods as $cm) {
-                $modcontext = \context_module::instance($cm->id, IGNORE_MISSING);
-                if (!$modcontext) {
-                    continue;
-                }
-                $cmids[$courseid][] = $cm->id;
-                $modcontextids[$cm->modname][] = $modcontext->id;
-            }
-        }
-
-        // Use all activity privacy providers.
-        foreach (array_keys(\core_component::get_plugin_list('mod')) as $name) {
-            if (!isset($modcontextids[$name])) {
-                continue;
-            }
-            $list = new \core_privacy\local\request\approved_contextlist($user, 'tool_certify', $modcontextids[$name]);
-            $privacyclass = 'mod_' . $name . '\\privacy\provider';
-            if (!class_exists($privacyclass)) {
-                continue;
-            }
-            // Why is there no interface with this method in privacy API?
-            if (!method_exists($privacyclass, 'delete_data_for_user')) {
-                continue;
-            }
-            try {
-                $privacyclass::delete_data_for_user($list);
-            } catch (\Throwable $ex) {
-                debugging("Exception detected in $privacyclass::delete_data_for_user(): " . $ex->getMessage(),
-                    DEBUG_DEVELOPER, $ex->getTrace());
-            }
-        }
-
-        self::purge_completions($courseids, $userid);
     }
 
     /**
@@ -419,6 +314,7 @@ final class certify extends base {
 
             $program = $DB->get_record('enrol_programs_programs', ['id' => $period->programid], '*', MUST_EXIST);
             $allocation = $DB->get_record('enrol_programs_allocations', ['userid' => $period->userid, 'programid' => $period->programid]);
+            $user = $DB->get_record('user', ['id' => $period->userid, 'deleted' => 0, 'confirmed' => 1], '*', MUST_EXIST);
 
             if ($period->first) {
                 $resettype = $settings->resettype1;
@@ -426,59 +322,30 @@ final class certify extends base {
                 $resettype = $settings->resettype2;
             }
 
-            if ($resettype == certification::RESETTYPE_NONE && $allocation) {
-                // Do not retry allocation.
-                $DB->set_field('tool_certify_periods', 'allocationid', 0, ['id' => $period->id]);
-                continue;
-            }
-
-            // Get list of courses.
-            $sql = "SELECT DISTINCT c.id
-                          FROM {enrol_programs_items} i
-                          JOIN {course} c ON c.id = i.courseid
-                         WHERE i.programid = :programid
-                      ORDER BY c.id ASC";
-            $courseids = $DB->get_fieldset_sql($sql, ['programid' => $program->id]);
-
-            if ($resettype >= certification::RESETTYPE_DEALLOCATE && $allocation) {
-                $delsource = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid], '*', MUST_EXIST);
-                /** @var \enrol_programs\local\source\base $coursceclass */
-                $coursceclass = $coursceclasses[$delsource->type];
-                $coursceclass::deallocate_user($program, $delsource, $allocation, true);
-            }
-
-            if ($resettype >= certification::RESETTYPE_UNENROL) {
-                // Force deleting of course enrolments - even if protected by enrol plugins!
-                $sql = "SELECT DISTINCT ue.*
-                          FROM {enrol_programs_items} i
-                          JOIN {course} c ON c.id = i.courseid
-                          JOIN {enrol} e ON e.courseid = c.id   
-                          JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                         WHERE i.programid = :programid AND ue.userid = :userid
-                      ORDER BY ue.id ASC";
-                $ues = $DB->get_records_sql($sql, ['programid' => $program->id, 'userid' => $period->userid]);
-                foreach ($ues as $ue) {
-                    $instance = $DB->get_record('enrol', ['id' => $ue->enrolid], '*', MUST_EXIST);
-                    $enrolplugin = enrol_get_plugin($instance->enrol);
-                    if (!$enrolplugin) {
-                        $instance->enrol = 'manual'; // Hack to work around missing enrol plugins.
-                        $enrolplugin = enrol_get_plugin('manual');
-                    }
-                    $enrolplugin->unenrol_user($instance, $ue->userid);
+            if ($resettype == course_reset::RESETTYPE_NONE) {
+                if ($allocation) {
+                    // Do not retry allocation.
+                    $DB->set_field('tool_certify_periods', 'allocationid', 0, ['id' => $period->id]);
+                    continue;
                 }
-                self::purge_completions($courseids, $period->userid);
-            }
+            } else {
+                // Remove all previous allocations.
+                if ($allocation) {
+                    $delsource = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid], '*', MUST_EXIST);
+                    /** @var \enrol_programs\local\source\base $coursceclass */
+                    $coursceclass = $coursceclasses[$delsource->type];
+                    $coursceclass::deallocate_user($program, $delsource, $allocation);
+                }
 
-            if ($resettype >= certification::RESETTYPE_PURGE) {
-                self::purge_courses($courseids, $period->userid);
-            }
+                course_reset::reset_courses($user, $resettype, $program->id);
 
-            $allocation = $DB->get_record('enrol_programs_allocations', ['userid' => $period->userid, 'programid' => $period->programid]);
-            if ($allocation) {
-                // Something is wrong, probably some automatic allocation source messing this up, oh well.
-                debugging("Failed resetting allocation for certification period $period->id", DEBUG_DEVELOPER);
-                $DB->set_field('tool_certify_periods', 'allocationid', 0, ['id' => $period->id]);
-                continue;
+                $allocation = $DB->get_record('enrol_programs_allocations', ['userid' => $period->userid, 'programid' => $period->programid]);
+                if ($allocation) {
+                    // Something is wrong, probably some automatic allocation source messing this up, oh well.
+                    debugging("Failed resetting allocation for certification period $period->id", DEBUG_DEVELOPER);
+                    $DB->set_field('tool_certify_periods', 'allocationid', 0, ['id' => $period->id]);
+                    continue;
+                }
             }
 
             // Finally allocate user to program.

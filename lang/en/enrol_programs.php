@@ -307,6 +307,10 @@ $string['public_help'] = 'Public programs are visible to all users.
 
 Visibility status does not affect already allocated programs.';
 $string['purchaseaccess'] = 'Purchase access';
+$string['resettype_deallocate'] = 'Program de-allocation only';
+$string['resettype_full'] = 'Full course purge';
+$string['resettype_none'] = 'None';
+$string['resettype_standard'] = 'Standard course purge';
 $string['sequencetype'] = 'Completion type';
 $string['sequencetype_allinorder'] = 'All in order';
 $string['sequencetype_allinanyorder'] = 'All in any order';
