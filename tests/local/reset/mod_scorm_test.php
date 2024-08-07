@@ -94,6 +94,21 @@ final class mod_scorm_test extends \advanced_testcase {
         $program2 = $programgenerator->create_program([]);
         $programgenerator->create_program_item(['programid' => $program2->id, 'courseid' => $course2->id]);
 
+        if (!$DB->get_manager()->table_exists('scorm_attempt')) {
+            $this->assertCount(6, $DB->get_records('scorm_scoes_track', []));
+            $this->assertCount(2, $DB->get_records('scorm_scoes_track', ['userid' => $student1->id, 'scormid' => $cm1->instance]));
+            $this->assertCount(2, $DB->get_records('scorm_scoes_track', ['userid' => $student1->id, 'scormid' => $cm2->instance]));
+            $this->assertCount(2, $DB->get_records('scorm_scoes_track', ['userid' => $student2->id, 'scormid' => $cm1->instance]));
+
+            course_reset::purge_enrolments($student1, $program1->id);
+            course_reset::purge_standard($student1, $program1->id);
+
+            $this->assertCount(4, $DB->get_records('scorm_scoes_track', []));
+            $this->assertCount(2, $DB->get_records('scorm_scoes_track', ['userid' => $student1->id, 'scormid' => $cm2->instance]));
+            $this->assertCount(2, $DB->get_records('scorm_scoes_track', ['userid' => $student2->id, 'scormid' => $cm1->instance]));
+            return;
+        }
+
         $this->assertCount(6, $DB->get_records('scorm_attempt', []));
         $this->assertCount(2, $DB->get_records('scorm_attempt', ['userid' => $student1->id, 'scormid' => $cm1->instance]));
         $this->assertCount(2, $DB->get_records('scorm_attempt', ['userid' => $student1->id, 'scormid' => $cm2->instance]));

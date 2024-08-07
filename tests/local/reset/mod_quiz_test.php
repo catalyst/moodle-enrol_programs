@@ -51,14 +51,22 @@ final class mod_quiz_test extends \advanced_testcase {
         $cm1 = get_coursemodule_from_instance('quiz', $quiz1->id);
         $context1 = \context_module::instance($cm1->id);
         quiz_add_quiz_question($saq->id, $quiz1);
-        $quizobj1 = quiz_settings::create($quiz1->id);
+        if (class_exists('mod_quiz\quiz_settings')) {
+            $quizobj1 = quiz_settings::create($quiz1->id);
+        } else {
+            $quizobj1 = \quiz::create($quiz1->id);
+        }
 
         $course2 = $this->getDataGenerator()->create_course();
         $quiz2 = $quizgenerator->create_instance(['course' => $course2->id, 'grade' => 100.0, 'sumgrades' => 2]);
         $cm2 = get_coursemodule_from_instance('quiz', $quiz2->id);
         $context2 = \context_module::instance($cm2->id);
         quiz_add_quiz_question($saq->id, $quiz2);
-        $quizobj2 = quiz_settings::create($quiz2->id);
+        if (class_exists('mod_quiz\quiz_settings')) {
+            $quizobj2 = quiz_settings::create($quiz2->id);
+        } else {
+            $quizobj2 = \quiz::create($quiz2->id);
+        }
 
         $student1 = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->enrol_user($student1->id, $course1->id, 'student');

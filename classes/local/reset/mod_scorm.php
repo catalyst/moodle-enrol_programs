@@ -42,9 +42,6 @@ class mod_scorm extends base {
             return;
         }
 
-        // There is no simple way to delete all quiz data, there will be leftovers in questions
-        // database tables.
-
         list($courses, $params) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
         $params['userid'] = $user->id;
 
@@ -52,19 +49,26 @@ class mod_scorm extends base {
                      FROM {scorm} s
                     WHERE s.course $courses";
 
-        $attempts = "SELECT sa.id
-                       FROM {scorm_attempt} sa
-                      WHERE sa.userid = :userid AND sa.scormid IN ($scorms)";
+        if (!$DB->get_manager()->table_exists('scorm_attempt')) {
+            $sql = "DELETE
+                      FROM {scorm_scoes_track}
+                     WHERE userid = :userid AND scormid IN ($scorms)";
+            $DB->execute($sql, $params);
+        } else {
+            $attempts = "SELECT sa.id
+                           FROM {scorm_attempt} sa
+                          WHERE sa.userid = :userid AND sa.scormid IN ($scorms)";
 
-        $sql = "DELETE
-                  FROM {scorm_scoes_value}
-                 WHERE attemptid IN ($attempts)";
-        $DB->execute($sql, $params);
+            $sql = "DELETE
+                      FROM {scorm_scoes_value}
+                     WHERE attemptid IN ($attempts)";
+            $DB->execute($sql, $params);
 
-        $sql = "DELETE
-                  FROM {scorm_attempt}
-                 WHERE userid = :userid AND scormid IN ($scorms)";
-        $DB->execute($sql, $params);
+            $sql = "DELETE
+                      FROM {scorm_attempt}
+                     WHERE userid = :userid AND scormid IN ($scorms)";
+            $DB->execute($sql, $params);
+        }
 
         $sql = "DELETE
                   FROM {scorm_aicc_session}

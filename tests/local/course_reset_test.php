@@ -66,6 +66,10 @@ final class course_reset_test extends \advanced_testcase {
                 // Totally unsupported modules without data generator.
                 continue;
             }
+            if ($module === 'publication') {
+                // Skip older version of broken plugin generator.
+                continue;
+            }
             $this->getDataGenerator()->create_module($module, $params, []);
         }
 
@@ -98,6 +102,10 @@ final class course_reset_test extends \advanced_testcase {
         foreach ($modules as $module) {
             if (!file_exists("$CFG->dirroot/mod/$module/tests/generator/lib.php")) {
                 // Totally unsupported modules without data generator.
+                continue;
+            }
+            if ($module === 'publication') {
+                // Skip older version of broken plugin generator.
                 continue;
             }
             $this->getDataGenerator()->create_module($module, $params, []);
