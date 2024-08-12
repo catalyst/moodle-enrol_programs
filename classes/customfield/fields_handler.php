@@ -121,8 +121,8 @@ class fields_handler extends \core_customfield\handler {
                 return true;
             }
         }
-        // Fall back to configurecustomfields in case the visibility is not configured.
-        return has_capability('enrol/programs:configurecustomfields', $context);
+        // Fall back to enrol/programs:edit in case the visibility is not configured.
+        return has_capability('enrol/programs:edit', $context);
     }
 
     /**
@@ -131,11 +131,11 @@ class fields_handler extends \core_customfield\handler {
      * @param \MoodleQuickForm $mform
      */
     public function config_form_definition(\MoodleQuickForm $mform) {
-        $mform->addElement('header', 'session_handler_header', get_string('customfieldsettings', 'enrol_programs'));
-        $mform->setExpanded('session_handler_header', true);
+        $mform->addElement('header', 'programcustomfields', get_string('customfieldsettings', 'enrol_programs'));
+        $mform->setExpanded('programcustomfields', true);
         $mform->addElement('html', get_string('customfieldvisibleto', 'enrol_programs'));
         $mform->addElement('advcheckbox', 'configdata[visibilitymanagers]',
-            '', get_string('customfieldvisible:managers', 'enrol_programs'), ['group' => 1]);
+            '', get_string('customfieldvisible:viewcapability', 'enrol_programs'), ['group' => 1]);
         $mform->addElement('advcheckbox', 'configdata[visibilityallocated]',
             '', get_string('customfieldvisible:allocated', 'enrol_programs'), ['group' => 1]);
         $mform->addElement('advcheckbox', 'configdata[visibilityeveryone]',

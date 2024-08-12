@@ -90,7 +90,7 @@ if ($ADMIN->fulltree) {
     }
 }
 $ADMIN->add('programs', new admin_externalpage('programs_customfield',
-     new lang_string('customfield', 'enrol_programs'),
+     new lang_string('customfields', 'enrol_programs'),
      new moodle_url("/enrol/programs/customfield.php"),
      'enrol/programs:configurecustomfields'));
 unset($programsenabled);

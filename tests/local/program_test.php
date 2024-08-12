@@ -622,6 +622,5 @@ final class program_test extends \advanced_testcase {
 
         $this->assertFalse($DB->record_exists('customfield_data', ['instanceid' => $program1->id, 'fieldid' => $field1->get('id')]));
 
-//        $this->assertTrue($customfieldsdata->testfield2->can_view());
     }
 }

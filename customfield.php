@@ -34,6 +34,6 @@ $handler = \enrol_programs\customfield\fields_handler::create();
 $outputpage = new \core_customfield\output\management($handler);
 
 echo $output->header(),
-$output->heading(new lang_string('customfield', 'enrol_programs')),
+$output->heading(new lang_string('customfields', 'enrol_programs')),
 $output->render($outputpage),
 $output->footer();

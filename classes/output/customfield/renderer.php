@@ -33,13 +33,11 @@ class renderer extends \plugin_renderer_base {
         $handler = \enrol_programs\customfield\fields_handler::create();
         $datas = $handler->get_instance_data($programid);
         foreach ($datas as $data) {
-            if (empty($data->get_value())) {
-                continue;
-            }
-            $content .= '<dt class="col-3">'.$data->get_field()->get('name').':</dt><dd class="col-9">'.$data->get_value().'</dd>';
+            $content .= '<dt class="col-3">'.$data->get_field()->get('name').':</dt><dd class="col-9">'.$data->export_value().'</dd>';
         }
-        $content .= '</dl>';
 
         return $content;
     }
+
+
 }

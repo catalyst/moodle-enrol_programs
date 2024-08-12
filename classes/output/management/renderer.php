@@ -74,7 +74,7 @@ class renderer extends \plugin_renderer_base {
         }
         $result .= '<dt class="col-3">' . get_string('description') . ':</dt><dd class="col-9">' . $description . '</dd>';
         $result .= '<dt class="col-3">' . get_string('archived', 'enrol_programs') . ':</dt><dd class="col-9">'
-            . ($program->archived ? get_string('yes') : get_string('no')) . '<br />';
+            . ($program->archived ? get_string('yes') : get_string('no')) . '</dd>';
 
         $customfieldoutput = $PAGE->get_renderer('enrol_programs', 'customfield');
         $result .= $customfieldoutput->render_customfields($program->id);

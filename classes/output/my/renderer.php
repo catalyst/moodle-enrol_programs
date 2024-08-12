@@ -106,7 +106,7 @@ EOT;
 
         $customfieldoutput = $PAGE->get_renderer('enrol_programs', 'customfield');
         $result .= $customfieldoutput->render_customfields($program->id);
-
+        $result .= '</dl>';
         return $result;
     }
 

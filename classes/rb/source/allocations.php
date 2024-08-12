@@ -49,6 +49,9 @@ final class allocations extends rb_base_source {
     public function __construct() {
         $this->base = '{enrol_programs_allocations}';
         parent::__construct();
+        $this->registercustomfieldhandler(\enrol_programs\customfield\fields_handler::create(),
+            'base.id', 'program_customfields', 'base',
+            get_string('pluginname', 'enrol_programs'));
     }
 
     /**
