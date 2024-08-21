@@ -55,15 +55,56 @@ abstract class base extends \local_openlms\notification\notificationtype {
     }
 
     /**
+     * Returns relateduser field id.
+     * @return int|null
+     */
+    public static function get_relateduser_fieldid(): ?int {
+        if (!get_config('profilefield_relateduser', 'version')) {
+            return null;
+        }
+        $fieldid = (int)get_config('enrol_programs', 'notification_relateduserfield');
+        if ($fieldid > 0) {
+            return $fieldid;
+        }
+        return null;
+    }
+
+    /**
+     * Returns relateduser.
+     *
+     * @param int $userid
+     * @return stdClass|null
+     */
+    public static function get_relateduser(int $userid): ?stdClass {
+        global $DB;
+
+        $fieldid = self::get_relateduser_fieldid();
+        if (!$fieldid) {
+            return null;
+        }
+        $ruid = $DB->get_field('user_info_data', 'data', ['fieldid' => $fieldid, 'userid' => $userid]);
+        if (!$ruid) {
+            return null;
+        }
+        $relateduser = $DB->get_record('user', ['id' => $ruid, 'deleted' => 0, 'confirmed' => 1]);
+        if (!$relateduser) {
+            return null;
+        }
+        return $relateduser;
+    }
+
+    /**
      * Returns standard program allocation placeholders.
      *
      * @param stdClass $program
      * @param stdClass $source
      * @param stdClass $allocation
      * @param stdClass $user
+     * @param stdClass|null $relateduser
      * @return array
      */
-    public static function get_allocation_placeholders(stdClass $program, stdClass $source, stdClass $allocation, stdClass $user): array {
+    public static function get_allocation_placeholders(stdClass $program, stdClass $source, stdClass $allocation,
+                                                       stdClass $user, ?stdClass $relateduser = null): array {
         /** @var \enrol_programs\local\source\base[] $sourceclasses */
         $sourceclasses = \enrol_programs\local\allocation::get_source_classes();
         if (isset($sourceclasses[$source->type])) {
@@ -93,6 +134,18 @@ abstract class base extends \local_openlms\notification\notificationtype {
         $a['program_duedate'] = (isset($allocation->timedue) ? userdate($allocation->timedue) : $strnotset);
         $a['program_enddate'] = (isset($allocation->timeend) ? userdate($allocation->timeend) : $strnotset);
         $a['program_completeddate'] = (isset($allocation->timecompleted) ? userdate($allocation->timecompleted) : $strnotset);
+
+        if ($relateduser) {
+            $context = \context::instance_by_id($program->contextid);
+            $a['relateduser_fullname'] = s(fullname($relateduser));
+            $a['relateduser_firstname'] = s($relateduser->firstname);
+            $a['relateduser_lastname'] = s($relateduser->lastname);
+            if (has_capability('enrol/programs:view', $context)) {
+                $a['program_url'] = (new moodle_url('/enrol/programs/management/user_allocation.php', ['id' => $allocation->id]))->out(false);
+            } else {
+                $a['program_url'] = (new moodle_url('/enrol/programs/catalogue/program.php', ['id' => $program->id]))->out(false);
+            }
+        }
 
         return $a;
     }
@@ -163,6 +216,76 @@ abstract class base extends \local_openlms\notification\notificationtype {
     }
 
     /**
+     * Send notification to user related to allocated user.
+     *
+     * @param stdClass $program
+     * @param stdClass $source
+     * @param stdClass $allocation
+     * @param stdClass $user
+     * @param stdClass $relateduser
+     * @param bool $alowmultiple
+     * @return void
+     */
+    protected static function notify_related_user(stdClass $program, stdClass $source, stdClass $allocation,
+                                                  stdClass $user, stdClass $relateduser, bool $alowmultiple = false): void {
+        global $DB;
+
+        if ($program->archived) {
+            // Never send notifications for archived program.
+            return;
+        }
+
+        if ($allocation->archived && static::get_notificationtype() !== 'deallocation') {
+            // Notification for deallocation is different because we require archiving before deallocation.
+            return;
+        }
+
+        if ($user->deleted) {
+            // Do not skip suspended users here, the managers might want to know what is going on with suspended users.
+            return;
+        }
+
+        if (!$relateduser || $relateduser->suspended) {
+            return;
+        }
+
+        $notification = $DB->get_record('local_openlms_notifications', [
+            'instanceid' => $program->id,
+            'component' => static::get_component(),
+            'notificationtype' => static::get_notificationtype(),
+        ]);
+        if (!$notification || !$notification->enabled) {
+            return;
+        }
+
+        try {
+            self::force_language($relateduser->lang);
+
+            $a = static::get_allocation_placeholders($program, $source, $allocation, $user, $relateduser);
+            $subject = static::get_subject($notification, $a);
+            $body = static::get_body($notification, $a);
+
+            $message = new \core\message\message();
+            $message->notification = '1';
+            $message->component = static::get_component();
+            $message->name = static::get_provider();
+            $message->userfrom = static::get_notifier($program, $allocation);
+            $message->userto = $relateduser;
+            $message->subject = $subject;
+            $message->fullmessage = $body;
+            $message->fullmessageformat = FORMAT_HTML;
+            $message->fullmessagehtml = $body;
+            $message->smallmessage = $subject;
+            $message->contexturlname = $a['program_fullname'];
+            $message->contexturl = $a['program_url'];
+
+            self::message_send($message, $notification->id, $relateduser->id, $allocation->id, null, $alowmultiple);
+        } finally {
+            self::revert_language();
+        }
+    }
+
+    /**
      * Send notifications.
      *
      * @param stdClass|null $program
@@ -190,7 +313,6 @@ abstract class base extends \local_openlms\notification\notificationtype {
         }
         $DB->delete_records('local_openlms_user_notified', [
             'notificationid' => $notification->id,
-            'userid' => $allocation->userid,
             'otherid1' => $allocation->id,
         ]);
     }

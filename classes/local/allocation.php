@@ -881,6 +881,7 @@ final class allocation {
             $event = \enrol_programs\event\program_completed::create_from_allocation($allocation, $program);
             $event->trigger();
             notification\completion::notify_now($user, $program, $source, $allocation);
+            notification\completion_relateduser::notify_now($user, $program, $source, $allocation);
             calendar::delete_allocation_events($allocation->id);
         }
         $rs->close();

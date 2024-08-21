@@ -57,6 +57,8 @@ final class base_test extends \advanced_testcase {
         $user1 = $this->getDataGenerator()->create_user();
         $user2 = $this->getDataGenerator()->create_user();
 
+        $related1 = $this->getDataGenerator()->create_user();
+
         manual::allocate_users($program1->id, $source1->id, [$user1->id]);
         $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
 
@@ -70,6 +72,25 @@ final class base_test extends \advanced_testcase {
         $this->assertSame($program1->fullname, $result['program_fullname']);
         $this->assertSame($program1->idnumber, $result['program_idnumber']);
         $this->assertSame("$CFG->wwwroot/enrol/programs/my/program.php?id=$program1->id", $result['program_url']);
+        $this->assertSame('Manual allocation', $result['program_sourcename']);
+        $this->assertSame('Open', $result['program_status']);
+        $this->assertSame(userdate($allocation->timeallocated), $result['program_allocationdate']);
+        $this->assertSame(userdate($allocation->timestart), $result['program_startdate']);
+        $this->assertSame($strnotset, $result['program_duedate']);
+        $this->assertSame($strnotset, $result['program_enddate']);
+        $this->assertSame($strnotset, $result['program_completeddate']);
+
+        $result = base::get_allocation_placeholders($program1, $source1, $allocation, $user1, $related1);
+        $this->assertIsArray($result);
+        $this->assertSame(fullname($user1), $result['user_fullname']);
+        $this->assertSame($user1->firstname, $result['user_firstname']);
+        $this->assertSame($user1->lastname, $result['user_lastname']);
+        $this->assertSame(fullname($related1), $result['relateduser_fullname']);
+        $this->assertSame($related1->firstname, $result['relateduser_firstname']);
+        $this->assertSame($related1->lastname, $result['relateduser_lastname']);
+        $this->assertSame($program1->fullname, $result['program_fullname']);
+        $this->assertSame($program1->idnumber, $result['program_idnumber']);
+        $this->assertSame("$CFG->wwwroot/enrol/programs/catalogue/program.php?id=$program1->id", $result['program_url']);
         $this->assertSame('Manual allocation', $result['program_sourcename']);
         $this->assertSame('Open', $result['program_status']);
         $this->assertSame(userdate($allocation->timeallocated), $result['program_allocationdate']);
@@ -130,5 +151,55 @@ final class base_test extends \advanced_testcase {
         $this->setUser($user2);
         $result = base::get_notifier($program1, $allocation1);
         $this->assertSame(-10, $result->id);
+    }
+
+    function test_get_relateduser_fieldid() {
+        /** @var \profilefield_relateduser_generator $relatedgenerator */
+        $relatedgenerator = $this->getDataGenerator()->get_plugin_generator('profilefield_relateduser');
+
+        $this->assertNull(base::get_relateduser_fieldid());
+
+        $categoryid = $relatedgenerator->add_profile_category();
+        $profilefieldid1 = $relatedgenerator->add_profile_field($categoryid, 'relateduser');
+        $profilefieldid2 = $relatedgenerator->add_profile_field($categoryid, 'relateduser');
+
+        $this->assertNull(base::get_relateduser_fieldid());
+
+        set_config('notification_relateduserfield', $profilefieldid1, 'enrol_programs');
+        $this->assertSame($profilefieldid1, base::get_relateduser_fieldid());
+
+        unset_config('version', 'profilefield_relateduser');
+        $this->assertNull(base::get_relateduser_fieldid());
+    }
+
+    public function test_get_relateduser() {
+        /** @var \profilefield_relateduser_generator $relatedgenerator */
+        $relatedgenerator = $this->getDataGenerator()->get_plugin_generator('profilefield_relateduser');
+
+        $categoryid = $relatedgenerator->add_profile_category();
+        $profilefieldid = $relatedgenerator->add_profile_field($categoryid, 'relateduser');
+        $profilefieldid2 = $relatedgenerator->add_profile_field($categoryid, 'relateduser');
+
+        $related1 = $this->getDataGenerator()->create_user();
+        $related2 = $this->getDataGenerator()->create_user();
+
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        $user3 = $this->getDataGenerator()->create_user();
+
+        $this->assertNull(base::get_relateduser($user1->id));
+        $this->assertNull(base::get_relateduser($user2->id));
+        $this->assertNull(base::get_relateduser($user3->id));
+
+        set_config('notification_relateduserfield', $profilefieldid, 'enrol_programs');
+        $this->assertNull(base::get_relateduser($user1->id));
+        $this->assertNull(base::get_relateduser($user2->id));
+        $this->assertNull(base::get_relateduser($user3->id));
+
+        $relatedgenerator->add_user_info_data($user1->id, $profilefieldid, $related1->id);
+        $relatedgenerator->add_user_info_data($user2->id, $profilefieldid, $related2->id);
+        $this->assertSame((array)$related1, (array)base::get_relateduser($user1->id));
+        $this->assertSame((array)$related2, (array)base::get_relateduser($user2->id));
+        $this->assertNull(base::get_relateduser($user3->id));
     }
 }

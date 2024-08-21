@@ -129,12 +129,17 @@ $string['messageprovider:allocation_notification'] = 'Program allocation notific
 $string['messageprovider:approval_request_notification'] = 'Program approval request notification';
 $string['messageprovider:approval_reject_notification'] = 'Program request rejection notification';
 $string['messageprovider:completion_notification'] = 'Program completed notification';
+$string['messageprovider:completion_relateduser_notification'] = 'Program completed notification - related user';
 $string['messageprovider:deallocation_notification'] = 'Program deallocation notification';
 $string['messageprovider:duesoon_notification'] = 'Program due date soon notification';
+$string['messageprovider:duesoon_relateduser_notification'] = 'Program due date soon notification - related user';
 $string['messageprovider:due_notification'] = 'Program overdue notification';
+$string['messageprovider:due_relateduser_notification'] = 'Program overdue notification - related user';
 $string['messageprovider:endsoon_notification'] = 'Program end date soon notification';
+$string['messageprovider:endsoon_relateduser_notification'] = 'Program end date soon notification - related user';
 $string['messageprovider:endcompleted_notification'] = 'Completed program ended notification';
 $string['messageprovider:endfailed_notification'] = 'Failed program ended notification';
+$string['messageprovider:endfailed_relateduser_notification'] = 'Failed program ended notification - related user';
 $string['messageprovider:start_notification'] = 'Program started notification';
 $string['moveitem'] = 'Move item';
 $string['moveitemcancel'] = 'Cancel moving';
@@ -156,9 +161,16 @@ $string['notification_completion_body'] = 'Hello {$a->user_fullname},
 you have completed program "{$a->program_fullname}".
 ';
 $string['notification_completion_description'] = 'Notification sent to users when they are complete their program.';
+$string['notification_completion_relateduser'] = 'Program completed - related user';
+$string['notification_completion_relateduser_subject'] = 'User {$a->user_fullname} completed program';
+$string['notification_completion_relateduser_body'] = 'Hello {$a->relateduser_fullname},
+
+user {$a->user_fullname} has completed program "{$a->program_fullname}".
+';
+$string['notification_completion_relateduser_description'] = 'Notification sent to users related to user when they are complete their program.';
 $string['notification_deallocation'] = 'User deallocated';
 $string['notification_deallocation_subject'] = 'Program deallocation notification';
-$string['notification_deallocation_body'] = 'Hello {$a->user_fullname},
+$string['notification_deallocation_body'] = 'Hello {$a->relateduser_fullname},
 
 you have been deallocated from program "{$a->program_fullname}".
 ';
@@ -170,6 +182,13 @@ $string['notification_duesoon_body'] = 'Hello {$a->user_fullname},
 completion of program "{$a->program_fullname}" is expected on {$a->program_duedate}.
 ';
 $string['notification_duesoon_description'] = 'Notification sent to users ahead of their program completion date unless program is already completed.';
+$string['notification_duesoon_relateduser'] = 'Program due date soon - related user';
+$string['notification_duesoon_relateduser_subject'] = 'Program completion is expected soon for user {$a->user_fullname}';
+$string['notification_duesoon_relateduser_body'] = 'Hello {$a->relateduser_fullname},
+
+completion of program "{$a->program_fullname}" for user {$a->user_fullname} is expected on {$a->program_duedate}.
+';
+$string['notification_duesoon_relateduser_description'] = 'Notification sent to users related to user ahead of their program completion date unless program is already completed.';
 $string['notification_due'] = 'Program overdue';
 $string['notification_due_subject'] = 'Program completion was expected';
 $string['notification_due_body'] = 'Hello {$a->user_fullname},
@@ -177,6 +196,13 @@ $string['notification_due_body'] = 'Hello {$a->user_fullname},
 completion of program "{$a->program_fullname}" was expected before {$a->program_duedate}.
 ';
 $string['notification_due_description'] = 'Notification sent to users when their program completion is overdue.';
+$string['notification_due_relateduser'] = 'Program overdue - related user';
+$string['notification_due_relateduser_subject'] = 'Program completion was expected for user {$a->user_fullname}';
+$string['notification_due_relateduser_body'] = 'Hello {$a->relateduser_fullname},
+
+completion of program "{$a->program_fullname}" for user {$a->user_fullname} was expected before {$a->program_duedate}.
+';
+$string['notification_due_relateduser_description'] = 'Notification sent to users related to user when their program completion is overdue.';
 $string['notification_endsoon'] = 'Program end date soon';
 $string['notification_endsoon_subject'] = 'Program ends soon';
 $string['notification_endsoon_body'] = 'Hello {$a->user_fullname},
@@ -184,6 +210,13 @@ $string['notification_endsoon_body'] = 'Hello {$a->user_fullname},
 program "{$a->program_fullname}" is ending on {$a->program_enddate}.
 ';
 $string['notification_endsoon_description'] = 'Notification sent to users ahead of their program end date unless program is already completed.';
+$string['notification_endsoon_relateduser'] = 'Program end date soon - related user';
+$string['notification_endsoon_relateduser_subject'] = 'Program ends soon for user {$a->user_fullname}';
+$string['notification_endsoon_relateduser_body'] = 'Hello {$a->relateduser_fullname},
+
+program "{$a->program_fullname}" for user {$a->user_fullname} is ending on {$a->program_enddate}.
+';
+$string['notification_endsoon_relateduser_description'] = 'Notification sent to users related to user ahead of their program end date unless program is already completed.';
 $string['notification_endcompleted'] = 'Completed program ended';
 $string['notification_endcompleted_subject'] = 'Completed program ended';
 $string['notification_endcompleted_body'] = 'Hello {$a->user_fullname},
@@ -198,6 +231,15 @@ $string['notification_endfailed_body'] = 'Hello {$a->user_fullname},
 program "{$a->program_fullname}" ended, you have failed to complete it.
 ';
 $string['notification_endfailed_description'] = 'Notification sent to users when program they failed to complete ends.';
+$string['notification_endfailed_relateduser'] = 'Failed program ended - related user';
+$string['notification_endfailed_relateduser_subject'] = 'Failed program ended for user {$a->user_fullname}';
+$string['notification_endfailed_relateduser_body'] = 'Hello {$a->relateduser_fullname},
+
+program "{$a->program_fullname}" ended and user {$a->user_fullname} failed to complete it.
+';
+$string['notification_endfailed_relateduser_description'] = 'Notification sent to users related to user when program they failed to complete ends.';
+$string['notification_relateduserfield'] = 'Notification related user field';
+$string['notification_relateduserfield_desc'] = 'Select related users profile field to be used for notification of related users.';
 $string['notification_start'] = 'Program started';
 $string['notification_start_subject'] = 'Program started';
 $string['notification_start_body'] = 'Hello {$a->user_fullname},

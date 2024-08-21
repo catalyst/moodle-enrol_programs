@@ -38,11 +38,16 @@ final class notification_manager extends \local_openlms\notification\manager {
             'allocation' => notification\allocation::class,
             'start' => notification\start::class,
             'completion' => notification\completion::class,
+            'completion_relateduser' => notification\completion_relateduser::class,
             'duesoon' => notification\duesoon::class,
+            'duesoon_relateduser' => notification\duesoon_relateduser::class,
             'due' => notification\due::class,
+            'due_relateduser' => notification\due_relateduser::class,
             'endsoon' => notification\endsoon::class,
+            'endsoon_relateduser' => notification\endsoon_relateduser::class,
             'endcompleted' => notification\endcompleted::class,
             'endfailed' => notification\endfailed::class,
+            'endfailed_relateduser' => notification\endfailed_relateduser::class,
             'deallocation' => notification\deallocation::class,
         ];
     }
@@ -56,6 +61,15 @@ final class notification_manager extends \local_openlms\notification\manager {
         global $DB;
 
         $types = self::get_all_types();
+
+        $fieldid = notification\base::get_relateduser_fieldid();
+        if (!$fieldid) {
+            foreach ($types as $k => $v) {
+                if (str_ends_with($k, '_relateduser')) {
+                    unset($types[$k]);
+                }
+            }
+        }
 
         $existing = $DB->get_records('local_openlms_notifications',
             ['component' => 'enrol_programs', 'instanceid' => $instanceid]);
@@ -264,23 +278,23 @@ final class notification_manager extends \local_openlms\notification\manager {
     /**
      * Returns last notification time for given user in program.
      *
-     * @param int $userid
+     * @param int $allocateduserid allocated user id
      * @param int $programid
      * @param string $notificationtype
      * @return int|null
      */
-    public static function get_timenotified(int $userid, int $programid, string $notificationtype): ?int {
+    public static function get_timenotified(int $allocateduserid, int $programid, string $notificationtype): ?int {
         global $DB;
 
-        $params = ['programid' => $programid, 'userid' => $userid, 'type' => $notificationtype];
+        $params = ['programid' => $programid, 'allocateduserid' => $allocateduserid, 'type' => $notificationtype];
         $sql = "SELECT MAX(un.timenotified)
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {local_openlms_notifications} n
                        ON n.component = 'enrol_programs' AND n.notificationtype = :type AND n.instanceid = p.id
                   JOIN {local_openlms_user_notified} un
-                       ON un.notificationid = n.id AND un.userid = pa.userid AND un.otherid1 = pa.id
-                 WHERE p.id = :programid AND pa.userid = :userid";
+                       ON un.notificationid = n.id AND un.otherid1 = pa.id
+                 WHERE p.id = :programid AND pa.userid = :allocateduserid";
         return $DB->get_field_sql($sql, $params);
     }
 

@@ -66,6 +66,17 @@ if ($ADMIN->fulltree) {
         unset($student);
     }
 
+    if (!during_initial_install() && get_config('profilefield_relateduser', 'version')) {
+        $optionsfunction = function() {
+            global $DB;
+            $fields = $DB->get_records_menu('user_info_field', ['datatype' => 'relateduser'], 'name ASC', 'id, name');
+            return ['' => get_string('notset', 'enrol_programs')] + $fields;
+        };
+        $settings->add(new admin_setting_configselect('enrol_programs/notification_relateduserfield',
+            new lang_string('notification_relateduserfield', 'enrol_programs'),
+            new lang_string('notification_relateduserfield_desc', 'enrol_programs'), '', $optionsfunction));
+    }
+
     $settings->add(new admin_setting_configcheckbox('enrol_programs/source_approval_allownew',
         new lang_string('source_approval_allownew', 'enrol_programs'),
         new lang_string('source_approval_allownew_desc', 'enrol_programs'), 1));
