@@ -64,6 +64,11 @@ Feature: Program selfallocation tests
       | Program 001 | PR1      | Cat 1    |          | 1      |
       | Program 002 | PR2      | Cat 2    |          |        |
       | Program 003 | PR3      | Cat 3    |          |        |
+    And the following "enrol_programs > program_items" exist:
+      | program     | parent     | course   | fullname   | sequencetype     | minprerequisites |
+      | Program 001 |            | Course 1 |            |                  |                  |
+      | Program 001 |            | Course 2 |            |                  |                  |
+      | Program 001 |            | Course 3 |            |                  |                  |
 
   @javascript
   Scenario: Student may self allocate without a key
@@ -174,3 +179,19 @@ Feature: Program selfallocation tests
     And I am on Program catalogue page
     And I follow "Program 001"
     Then I should see "Maximum number of users self-allocated already"
+
+  @javascript
+  Scenario: Student may see course is missing before self allocation into program
+    Given I log in as "admin"
+    And I go to the courses management page
+    And I should see the "Course categories and courses" management page
+    And I click on category "Cat 1" in the management interface
+    And I click on "delete" action for "Course 1" in management course listing
+    And I press "Delete"
+    And I log out
+
+    When I log in as "student1"
+    And I am on Program catalogue page
+    And I follow "Program 001"
+    Then I should see "Course is missing" in the "Course 1" "table_row"
+    And I should not see "Course is missing" in the "Course 2" "table_row"

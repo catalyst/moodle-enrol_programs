@@ -818,7 +818,11 @@ final class top extends set {
             ]);
         }
         $copyfunction = function (item $item, set $newparent, top $top) use (&$copyfunction) {
+            global $DB;
             if ($item instanceof course) {
+                if (!$DB->record_exists('course', ['id' => $item->get_courseid()])) {
+                    return;
+                }
                 $top->append_course($newparent, $item->get_courseid(), [
                     'points' => $item->get_points(),
                     'completiondelay' => $item->get_completiondelay(),

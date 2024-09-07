@@ -115,3 +115,35 @@ Feature: Import program content
     And I press dialog form button "Import program content"
     Then I should see "Course 6"
     And I should see "Course 1"
+
+  @javascript
+  Scenario: Deleted courses are skipped during content import from another program
+    Given the following "enrol_programs > programs" exist:
+      | fullname    | idnumber |
+      | Program 004 | PR4      |
+    And the following "enrol_programs > program_items" exist:
+      | program     | parent     | course   | fullname   | sequencetype     | minprerequisites |
+      | Program 004 |            | Course 1 |            |                  |                  |
+      | Program 004 |            | Course 2 |            |                  |                  |
+      | Program 004 |            | Course 3 |            |                  |                  |
+    And I log in as "admin"
+    And I go to the courses management page
+    And I should see the "Course categories and courses" management page
+    And I click on category "Cat 1" in the management interface
+    And I click on "delete" action for "Course 1" in management course listing
+    And I press "Delete"
+    And I log out
+
+    And I log in as "manager1"
+    And I am on all programs management page
+    And I follow "Program 000"
+    And I click on "Content" "link" in the ".nav-tabs" "css_element"
+
+    When I click on "Import program content" "link" in the "Program 000" "table_row"
+    And I set the following fields to these values:
+      | Select program | Program 004 |
+    And I press dialog form button "Continue"
+    And I press dialog form button "Import program content"
+    Then I should not see "Course 1"
+    And I should see "Course 2"
+    And I should see "Course 3"

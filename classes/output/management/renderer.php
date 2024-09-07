@@ -355,6 +355,8 @@ class renderer extends \plugin_renderer_base {
                         $detailurl = new moodle_url('/course/view.php', ['id' => $courseid]);
                         $fullname = \html_writer::link($detailurl, $fullname);
                     }
+                } else {
+                    $fullname .= ' <span class="badge badge-danger">' . get_string('errorcoursemissing', 'enrol_programs') . '</span>';
                 }
             }
 
@@ -661,6 +663,8 @@ class renderer extends \plugin_renderer_base {
                         $detailurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
                         $fullname = \html_writer::link($detailurl, $fullname);
                     }
+                } else {
+                    $fullname .= ' <span class="badge badge-danger">' . get_string('errorcoursemissing', 'enrol_programs') . '</span>';
                 }
             }
 

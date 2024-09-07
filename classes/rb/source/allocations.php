@@ -946,45 +946,46 @@ final class allocations extends rb_base_source {
                 $courseid = $item->get_courseid();
                 $coursecontext = \context_course::instance($courseid, IGNORE_MISSING);
                 if (!$coursecontext) {
-                    $programcontent[] = $padding . get_string('unknowncourseidnumber', 'error', $courseid);
-                    return;
-                }
-                $course = get_course($courseid);
-                if ($coursecontext) {
-                    $canaccesscourse = false;
-                    if (has_capability('moodle/course:view', $coursecontext)) {
-                        $canaccesscourse = true;
-                    } else {
-                        if ($course && can_access_course($course, null, '', true)) {
+                    $completionstatus = '';
+                    $fullname .= ' <span class="badge badge-danger">' . get_string('errorcoursemissing', 'enrol_programs') . '</span>';
+                } else {
+                    $course = get_course($courseid);
+                    if ($coursecontext) {
+                        $canaccesscourse = false;
+                        if (has_capability('moodle/course:view', $coursecontext)) {
                             $canaccesscourse = true;
+                        } else {
+                            if ($course && can_access_course($course, null, '', true)) {
+                                $canaccesscourse = true;
+                            }
+                        }
+                        if ($canaccesscourse) {
+                            $detailurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
+                            $fullname = \html_writer::link($detailurl, $fullname);
                         }
                     }
-                    if ($canaccesscourse) {
-                        $detailurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
-                        $fullname = \html_writer::link($detailurl, $fullname);
-                    }
-                }
-                $completionstatus = '';
-                $completion = $DB->get_record('enrol_programs_completions', ['itemid' => $item->get_id(), 'allocationid' => $allocationid]);
-                if (!empty($completion) && $completion->timecompleted > 0) {
-                    $completionstatus = '<div class="badge badge-success">' . get_string('programstatus_completed', 'enrol_programs') . '</div>';
-                } else {
-                    $params = array(
-                        'userid' => $user->id,
-                        'course' => $courseid,
-                    );
-                    $ccompletion = new \completion_completion($params);
-                    $info = new \completion_info($course);
-
-                    // Is course complete?
-                    $coursecomplete = $info->is_course_complete($user->id);
-
-                    if ($coursecomplete) {
+                    $completionstatus = '';
+                    $completion = $DB->get_record('enrol_programs_completions', ['itemid' => $item->get_id(), 'allocationid' => $allocationid]);
+                    if (!empty($completion) && $completion->timecompleted > 0) {
                         $completionstatus = '<div class="badge badge-success">' . get_string('programstatus_completed', 'enrol_programs') . '</div>';
-                    } else if (!$ccompletion->timestarted) {
-                        $completionstatus = '<div class="badge badge-primary">' . get_string('notyetstarted', 'completion') . '</div>';
                     } else {
-                        $completionstatus = '<div class="badge badge-light">' . get_string('inprogress', 'completion') . '</div>';;
+                        $params = array(
+                            'userid' => $user->id,
+                            'course' => $courseid,
+                        );
+                        $ccompletion = new \completion_completion($params);
+                        $info = new \completion_info($course);
+
+                        // Is course complete?
+                        $coursecomplete = $info->is_course_complete($user->id);
+
+                        if ($coursecomplete) {
+                            $completionstatus = '<div class="badge badge-success">' . get_string('programstatus_completed', 'enrol_programs') . '</div>';
+                        } else if (!$ccompletion->timestarted) {
+                            $completionstatus = '<div class="badge badge-primary">' . get_string('notyetstarted', 'completion') . '</div>';
+                        } else {
+                            $completionstatus = '<div class="badge badge-light">' . get_string('inprogress', 'completion') . '</div>';;
+                        }
                     }
                 }
             }

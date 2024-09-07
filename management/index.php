@@ -182,6 +182,15 @@ foreach ($programsinfo['programs'] as $program) {
         $detailurl = new moodle_url('/enrol/programs/management/program_content.php', ['id' => $program->id]);
         $coursecount = html_writer::link($detailurl, $coursecount);
     }
+    $sql = "SELECT COUNT(DISTINCT pi.courseid)
+              FROM {enrol_programs_items} pi
+         LEFT JOIN {course} c ON c.id = pi.courseid
+             WHERE pi.courseid IS NOT NULL AND c.id IS NULL AND pi.programid = :programid";
+    $params = ['programid' => $program->id];
+    $missingcount = $DB->count_records_sql($sql, $params);
+    if ($missingcount) {
+        $coursecount .= '</br><span class="badge badge-danger">' . get_string('errorcoursesmissing', 'enrol_programs', $missingcount) . '</span>';
+    }
     $row[] = $coursecount;
     $allocationcount = $DB->count_records('enrol_programs_allocations', ['programid' => $program->id]);
     if (has_capability('enrol/programs:view', $pcontext)) {

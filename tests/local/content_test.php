@@ -781,6 +781,14 @@ final class content_test extends \advanced_testcase {
         $this->assertItemCloned($top1->get_children()[0], $top2->get_children()[0]);
         $this->assertItemCloned($top1->get_children()[1], $top2->get_children()[1]);
         $this->assertItemCloned($top3->get_children()[0], $top2->get_children()[2]);
+
+        delete_course($course1->id, false);
+        $program4 = $generator->create_program(['fullname' => 'dabra']);
+        $top4 = top::load($program4->id);
+        $top4->content_import((object)['id' => $program4->id,'fromprogram' => $program1->id]);
+        $top4 = top::load($program4->id);
+        $this->assertCount(1, $top4->get_children());
+        $this->assertItemCloned($top1->get_children()[1], $top4->get_children()[0]);
     }
 
     public function test_content_import_training() {

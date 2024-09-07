@@ -190,3 +190,38 @@ Feature: General program management tests
       | ID number          | P007              |
       | Test field         | Test value        |
     And I press dialog form button "Add program"
+
+  @javascript
+  Scenario: Manager may see there are deleted courses in program in list of programs
+    Given the following "enrol_programs > programs" exist:
+      | fullname    | idnumber |
+      | Program 001 | PR01      |
+      | Program 002 | PR02      |
+      | Program 003 | PR03      |
+    And the following "enrol_programs > program_items" exist:
+      | program     | parent     | course   | fullname   | sequencetype     | minprerequisites |
+      | Program 001 |            | Course 1 |            |                  |                  |
+      | Program 001 |            | Course 2 |            |                  |                  |
+      | Program 001 |            | Course 3 |            |                  |                  |
+      | Program 002 |            | Course 1 |            |                  |                  |
+      | Program 002 |            | Course 3 |            |                  |                  |
+      | Program 003 |            | Course 4 |            |                  |                  |
+      | Program 003 |            | Course 5 |            |                  |                  |
+    And I log in as "admin"
+    And I go to the courses management page
+    And I should see the "Course categories and courses" management page
+    And I click on category "Cat 1" in the management interface
+    And I click on "delete" action for "Course 1" in management course listing
+    And I press "Delete"
+    And I go to the courses management page
+    And I should see the "Course categories and courses" management page
+    And I click on category "Cat 2" in the management interface
+    And I click on "delete" action for "Course 2" in management course listing
+    And I press "Delete"
+    And I log out
+
+    When I log in as "manager1"
+    And I am on all programs management page
+    Then "PR01" row "Courses" column of "management_programs" table should contain "Missing courses: 2"
+    And "PR02" row "Courses" column of "management_programs" table should contain "Missing courses: 1"
+    And "PR03" row "Courses" column of "management_programs" table should not contain "Missing courses"

@@ -289,7 +289,36 @@ Feature: Program content management tests
     And I press dialog form button "Delete set"
 
   @javascript
-  Scenario: Manager may add, udpate and delete training in program
+  Scenario: Manager may add deleted references to missing courses from program
+    Given the following "enrol_programs > program_items" exist:
+      | program     | parent     | course   | fullname   | sequencetype     | minprerequisites |
+      | Program 001 |            | Course 1 |            |                  |                  |
+      | Program 001 |            | Course 2 |            |                  |                  |
+      | Program 001 |            | Course 3 |            |                  |                  |
+    And I log in as "admin"
+    And I go to the courses management page
+    And I should see the "Course categories and courses" management page
+    And I click on category "Cat 1" in the management interface
+    And I click on "delete" action for "Course 1" in management course listing
+    And I press "Delete"
+    And I log out
+
+    When I log in as "manager1"
+    And I am on all programs management page
+    And I follow "Program 001"
+    And I click on "Content" "link" in the ".nav-tabs" "css_element"
+    Then I should see "Course is missing" in the "Course 1" "table_row"
+    And I should not see "Course is missing" in the "Course 2" "table_row"
+    And I should not see "Course is missing" in the "Course 3" "table_row"
+
+    When I click on "Remove course" "link" in the "Course 1" "table_row"
+    And I press dialog form button "Remove course"
+    Then I should not see "Course 1"
+    And I should see "Course 2"
+    And I should see "Course 3"
+
+  @javascript
+  Scenario: Manager may add, update and delete training in program
     Given the following "custom field categories" exist:
       | name              | component   | area   | itemid |
       | Category for test | core_course | course | 0      |

@@ -148,3 +148,19 @@ Feature: Program completion by students tests
     And I am on My programs page
     And I follow "Program 000"
     Then I should see "Completed" in the "Program status:" definition list item
+
+  @javascript
+  Scenario: Student may see that course is missing which prevents completion
+    Given I log in as "admin"
+    And I go to the courses management page
+    And I should see the "Course categories and courses" management page
+    And I click on category "Cat 1" in the management interface
+    And I click on "delete" action for "Course 1" in management course listing
+    And I press "Delete"
+    And I log out
+
+    When I log in as "student1"
+    And I am on My programs page
+    And I follow "Program 000"
+    Then I should see "Course is missing" in the "Course 1" "table_row"
+    And I should not see "Course is missing" in the "Course 2" "table_row"
