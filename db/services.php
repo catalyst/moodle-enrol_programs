@@ -40,9 +40,9 @@ $functions = [
         'ajax' => true,
         'loginrequired' => true,
     ],
-    'enrol_programs_form_notification_import' => [
-        'classname' => enrol_programs\external\form_notification_import::class,
-         'description' => 'Return list of programs that can be used as source for importing of notification.',
+    'enrol_programs_form_notification_import_frominstance' => [
+        'classname' => enrol_programs\external\form_notification_import_frominstance::class,
+         'description' => 'Return list of programs that can be used as source for importing of notifications.',
          'type' => 'read',
          'ajax' => true,
          'loginrequired' => true,

@@ -26,9 +26,9 @@ namespace enrol_programs\external;
  * @author     Farhan Karmali
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
- * @covers \enrol_programs\external\form_notification_import
+ * @covers \enrol_programs\external\form_notification_import_frominstance
  */
-final class form_notification_import_test extends \advanced_testcase {
+final class form_notification_import_frominstance_test extends \advanced_testcase {
 
     public function setUp(): void {
         $this->resetAfterTest();
@@ -46,7 +46,7 @@ final class form_notification_import_test extends \advanced_testcase {
         $cohort2 = $this->getDataGenerator()->create_cohort();
 
         $program1 = $generator->create_program([
-            'fullname' => 'hokus',
+            'fullname' => 'Hokus',
             'idnumber' => 'p1',
             'description' => 'some desc 1',
             'descriptionformat' => FORMAT_MARKDOWN,
@@ -60,7 +60,7 @@ final class form_notification_import_test extends \advanced_testcase {
         $generator->create_program_notification(['notificationtype' => 'endsoon', 'programid' => $program1->id]);
 
         $program2 = $generator->create_program([
-            'fullname' => 'pokus',
+            'fullname' => 'Pokus',
             'idnumber' => 'p2',
             'description' => '<b>some desc 2</b>',
             'descriptionformat' => FORMAT_HTML,
@@ -70,6 +70,7 @@ final class form_notification_import_test extends \advanced_testcase {
             'sources' => ['manual' => [], 'cohort' => []],
             'cohorts' => [$cohort1->id, $cohort2->id],
         ]);
+        $generator->create_program_notification(['notificationtype' => 'allocation', 'programid' => $program2->id]);
         $program3 = $generator->create_program([
             'fullname' => 'Prog3',
             'idnumber' => 'p3',
@@ -78,14 +79,43 @@ final class form_notification_import_test extends \advanced_testcase {
             'contextid' => $syscontext->id,
             'sources' => ['manual' => []]
         ]);
+        $generator->create_program_notification(['notificationtype' => 'allocation', 'programid' => $program3->id]);
+        $program4 = $generator->create_program([
+            'fullname' => 'Prog4',
+            'idnumber' => 'p4',
+            'public' => 1,
+            'archived' => 0,
+            'contextid' => $syscontext->id,
+            'sources' => ['manual' => []]
+        ]);
 
         $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        $user3 = $this->getDataGenerator()->create_user();
+        $user4 = $this->getDataGenerator()->create_user();
 
-        $this->setAdminUser();
-        $response = form_notification_import::execute ('', $program1->id);
-        $results = form_notification_import::clean_returnvalue(form_program_allocation_import_fromprogram::execute_returns(), $response);
+        $editroleid = $this->getDataGenerator()->create_role();
+        assign_capability('enrol/programs:edit', CAP_ALLOW, $editroleid, $syscontext);
+        $cloneroleid = $this->getDataGenerator()->create_role();
+        assign_capability('enrol/programs:clone', CAP_ALLOW, $cloneroleid, $syscontext);
+
+        role_assign($editroleid, $user1->id, $syscontext->id);
+        role_assign($cloneroleid, $user1->id, $syscontext->id);
+        $this->setUser($user1);
+        $response = form_notification_import_frominstance::execute ('', $program1->id);
+        $results = form_notification_import_frominstance::clean_returnvalue(form_program_allocation_import_fromprogram::execute_returns(), $response);
         $this->assertSame(null, $results['notice']);
         $this->assertCount(2, $results['list']);
-    }
+        $this->assertSame($program2->id, $results['list'][0]['value']);
+        $this->assertSame($program3->id, $results['list'][1]['value']);
 
+        role_assign($editroleid, $user2->id, $syscontext->id);
+        role_assign($cloneroleid, $user2->id, $catcontext1->id);
+        $this->setUser($user2);
+        $response = form_notification_import_frominstance::execute ('', $program1->id);
+        $results = form_notification_import_frominstance::clean_returnvalue(form_program_allocation_import_fromprogram::execute_returns(), $response);
+        $this->assertSame(null, $results['notice']);
+        $this->assertCount(1, $results['list']);
+        $this->assertSame($program2->id, $results['list'][0]['value']);
+    }
 }

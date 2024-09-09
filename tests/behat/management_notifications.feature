@@ -95,3 +95,73 @@ Feature: Program notifications management tests
     And I press "Back"
     And I follow "User deallocated"
     And I press "Back"
+
+  @javascript
+  Scenario: Manager can import notification from one program to another
+    Given the following "enrol_programs > programs" exist:
+      | fullname    | idnumber | category | cohorts  | public |
+      | Program 000 | PR0      |          |          |        |
+      | Program 001 | PR1      |          |          | 1      |
+    And the following "permission overrides" exist:
+      | capability                     | permission | role     | contextlevel | reference |
+      | enrol/programs:clone           | Allow      | pmanager | System       |           |
+    And I log in as "manager1"
+    And I am on all programs management page
+    And I follow "Program 000"
+    And I follow "Notifications"
+    And I follow "Add notification"
+    And I set the following fields to these values:
+      | User allocated         | 1   |
+      | Program started        | 1   |
+      | Program due date soon  | 1   |
+      | Program overdue        | 1   |
+      | Program end date soon  | 1   |
+      | Program completed      | 1   |
+      | Failed program ended   | 1   |
+    And I press dialog form button "Add notification"
+    And I click on "Update notification" "link" in the "User allocated" "table_row"
+    And I set the following fields to these values:
+      | Enabled                | 1   |
+      | Customised             | 1   |
+    And I press dialog form button "Update notification"
+    And I click on "Update notification" "link" in the "Failed program ended" "table_row"
+    And I set the following fields to these values:
+      | Enabled                | 0   |
+    And I press dialog form button "Update notification"
+    And I am on all programs management page
+    And I follow "Program 001"
+    And I follow "Notifications"
+    And I follow "Add notification"
+    And I set the following fields to these values:
+      | User allocated        | 1   |
+      | Program overdue       | 1   |
+      | Program completed     | 1   |
+    And I press dialog form button "Add notification"
+    And I click on "Update notification" "link" in the "User allocated" "table_row"
+    And I set the following fields to these values:
+      | Enabled                | 0   |
+    And I press dialog form button "Update notification"
+    And I click on "Update notification" "link" in the "Program completed" "table_row"
+    And I set the following fields to these values:
+      | Enabled                | 1   |
+      | Customised             | 1   |
+    And I press dialog form button "Update notification"
+
+    When I click on "Notification actions" "link"
+    And I follow "Import notifications"
+    And I set the following fields to these values:
+      | Import from           | Program 000   |
+    And I press dialog form button "Continue"
+    And I should not see "Failed program ended"
+    And I set the following fields to these values:
+      | User allocated        | 1   |
+      | Program due date soon | 1   |
+    And I press dialog form button "Import notifications"
+    Then the following should exist in the "enrol_programs_notifications" table:
+      | Notification            | Customised | Enabled |
+      | Program completed       | Yes        | Yes     |
+      | Program overdue         | No         | Yes     |
+      | Program due date soon   | No         | Yes     |
+      | User allocated          | Yes        | Yes     |
+    And I should not see "Program end date soon"
+    And I should not see "Failed program ended"

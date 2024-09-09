@@ -27,7 +27,7 @@ use core_external\external_value;
  * @author      Farhan Karmali
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class form_notification_import extends \local_openlms\external\form_autocomplete_field {
+final class form_notification_import_frominstance extends \local_openlms\external\form_autocomplete_field {
     const MAX_RESULTS = 20;
 
     /**
@@ -52,7 +52,7 @@ final class form_notification_import extends \local_openlms\external\form_autoco
     }
 
     /**
-     * Gets list of available programs.
+     * Gets list of programs that user can import notifications from.
      *
      * @param string $query The search request.
      * @param int $id The Program to which the program notifications have to be imported, we will exclude this program.
@@ -89,6 +89,11 @@ final class form_notification_import extends \local_openlms\external\form_autoco
                   JOIN {context} c ON c.id = p.contextid
                  WHERE p.id <> :programid AND $searchsql
                        $tenantselect
+                       AND EXISTS(
+                           SELECT 1
+                             FROM {local_openlms_notifications} lon
+                            WHERE lon.instanceid = p.id AND lon.component = 'enrol_programs' AND lon.enabled = 1
+                       )
               ORDER BY p.fullname ASC";
         $rs = $DB->get_recordset_sql($sql, $params);
 
@@ -96,18 +101,15 @@ final class form_notification_import extends \local_openlms\external\form_autoco
         $list = [];
         $count = 0;
         foreach ($rs as $program) {
-            $count++;
             if ($count > self::MAX_RESULTS) {
                 $notice = get_string('toomanyrecords', 'local_openlms', self::MAX_RESULTS);
                 break;
             }
-            $pcontext = \context::instance_by_id($program->contextid, IGNORE_MISSING);
-            if (!$pcontext) {
-                continue;
-            }
+            $pcontext = \context::instance_by_id($program->contextid);
             if (!has_capability('enrol/programs:clone', $pcontext)) {
                 continue;
             }
+            $count++;
             $list[] = ['value' => $program->id, 'label' => format_string($program->fullname)];
         }
         $rs->close();

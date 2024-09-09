@@ -30,7 +30,7 @@ use enrol_programs\local\source\manual;
  * @author     Petr Skoda
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
- * @covers \enrol_programs\local\notification_manager
+ * @coversDefaultClass \enrol_programs\local\notification_manager
  */
 final class notification_manager_test extends \advanced_testcase {
     public function setUp(): void {
@@ -328,5 +328,59 @@ final class notification_manager_test extends \advanced_testcase {
         $this->assertNull(notification_manager::get_timenotified($user1->id, $program1->id, 'completion'));
         $this->assertNull(notification_manager::get_timenotified($user1->id, $program2->id, 'completion'));
         $this->assertNull(notification_manager::get_timenotified($user2->id, $program1->id, 'completion'));
+    }
+
+    /**
+     * @covers ::is_import_supported
+     */
+    public function test_is_notification_supported() {
+        $this->assertTrue(notification_manager::is_import_supported());
+    }
+
+    /**
+     * @covers \local_openlms\notification\util::notification_import
+     */
+    public function test_notification_util_notification_import() {
+        global $DB;
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
+        $syscontext = \context_system::instance();
+        $cohort1 = $this->getDataGenerator()->create_cohort();
+
+        $program1 = $generator->create_program([
+            'fullname' => 'hokus',
+            'idnumber' => 'p1',
+            'description' => 'some desc 1',
+            'descriptionformat' => FORMAT_MARKDOWN,
+            'public' => 1,
+            'archived' => 0,
+            'contextid' => $syscontext->id,
+            'sources' => ['manual' => []],
+            'cohorts' => [$cohort1->id],
+        ]);
+        $notification1 = $generator->create_program_notification(['notificationtype' => 'allocation', 'programid' => $program1->id,
+            'custom' => 1, 'subject' => 'You are allocated', 'body' => 'Welcome to the program']);
+        $notification2 = $generator->create_program_notification(['notificationtype' => 'endsoon', 'programid' => $program1->id]);
+        $program2 = $generator->create_program([
+            'fullname' => 'pokus',
+            'idnumber' => 'p2',
+            'description' => 'some desc 2',
+            'descriptionformat' => FORMAT_MARKDOWN,
+            'public' => 1,
+            'archived' => 0,
+            'contextid' => $syscontext->id,
+            'sources' => ['manual' => []],
+            'cohorts' => [$cohort1->id],
+        ]);
+        $generator->create_program_notification(['notificationtype' => 'allocation', 'programid' => $program2->id]);
+        $notificationsbeforeimport = $DB->get_records('local_openlms_notifications');
+        $this->assertCount(3, $notificationsbeforeimport);
+        \local_openlms\notification\util::notification_import(
+            (object)['component' => 'enrol_programs', 'instanceid' => $program2->id, 'frominstance' => $program1->id], [$notification1->id, $notification2->id]);
+        $notificationsafterimport = $DB->get_records('local_openlms_notifications');
+        $this->assertCount(4, $notificationsafterimport);
+        $allocationnotificationprogram2 = $DB->get_record('local_openlms_notifications',
+            ['component' => 'enrol_programs', 'notificationtype' => 'allocation', 'instanceid' => $program2->id]);
+        $this->assertSame('{"subject":"You are allocated","body":"Welcome to the program"}', $allocationnotificationprogram2->customjson);
     }
 }

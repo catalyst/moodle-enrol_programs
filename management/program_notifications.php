@@ -55,6 +55,14 @@ echo $OUTPUT->header();
 
 echo $managementoutput->render_management_program_tabs($program, 'notifications');
 
+$dropdown = \enrol_programs\local\notification_manager::get_extra_actions($program->id);
+if ($dropdown) {
+    echo '<div class="float-right">';
+    echo $OUTPUT->render($dropdown);
+    echo '</div>';
+    echo '<div class="clearfix"></div>';
+}
+
 echo \enrol_programs\local\notification_manager::render_notifications($program->id);
 
 echo $OUTPUT->footer();

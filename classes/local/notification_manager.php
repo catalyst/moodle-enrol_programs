@@ -289,36 +289,30 @@ final class notification_manager extends \local_openlms\notification\manager {
      *
      * @return bool
      */
-    public static function is_instance_notification_import_supported(): bool {
+    public static function is_import_supported(): bool {
         return true;
-    }
-
-    /**
-     * Adds the from instance element dropdown
-     *
-     * @param int $instanceid
-     * @param \MoodleQuickForm $mform
-     * @return void
-     */
-    public static function add_frominstance_element(int $instanceid, \MoodleQuickForm $mform): void {
-        $arguments = ['id' => $instanceid];
-        \enrol_programs\external\form_notification_import::add_form_element(
-            $mform, $arguments, 'frominstance', get_string('importselectprogram', 'enrol_programs'));
-        $mform->addRule('frominstance', null, 'required', null, 'client');
     }
 
     /**
      * Validates if the user can import from the specified instanceid.
      *
+     * @param int $instanceid
      * @param int $frominstanceid
-     * @return void
+     * @return bool true means value ok, false means value is invalid
      */
-    public static function validate_frominstance(int $frominstanceid): bool {
+    public static function validate_import_frominstance(int $instanceid, int $frominstanceid): bool {
         global $DB;
 
-        $programcontextid = $DB->get_field('enrol_programs_programs', 'contextid', ['id' => $frominstanceid]);
-        $context = \context::instance_by_id($programcontextid);
+        if (!$frominstanceid) {
+            return false;
+        }
 
+        $programcontextid = $DB->get_field('enrol_programs_programs', 'contextid', ['id' => $frominstanceid]);
+        if (!$programcontextid) {
+            return false;
+        }
+
+        $context = \context::instance_by_id($programcontextid);
         return has_capability('enrol/programs:clone', $context);
     }
 }
