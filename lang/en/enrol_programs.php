@@ -170,7 +170,7 @@ user {$a->user_fullname} has completed program "{$a->program_fullname}".
 $string['notification_completion_relateduser_description'] = 'Notification sent to users related to user when they are complete their program.';
 $string['notification_deallocation'] = 'User deallocated';
 $string['notification_deallocation_subject'] = 'Program deallocation notification';
-$string['notification_deallocation_body'] = 'Hello {$a->relateduser_fullname},
+$string['notification_deallocation_body'] = 'Hello {$a->user_fullname},
 
 you have been deallocated from program "{$a->program_fullname}".
 ';
