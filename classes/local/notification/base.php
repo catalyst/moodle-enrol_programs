@@ -140,7 +140,7 @@ abstract class base extends \local_openlms\notification\notificationtype {
             $a['relateduser_fullname'] = s(fullname($relateduser));
             $a['relateduser_firstname'] = s($relateduser->firstname);
             $a['relateduser_lastname'] = s($relateduser->lastname);
-            if (has_capability('enrol/programs:view', $context)) {
+            if (has_capability('enrol/programs:view', $context, $relateduser)) {
                 $a['program_url'] = (new moodle_url('/enrol/programs/management/user_allocation.php', ['id' => $allocation->id]))->out(false);
             } else {
                 $a['program_url'] = (new moodle_url('/enrol/programs/catalogue/program.php', ['id' => $program->id]))->out(false);
