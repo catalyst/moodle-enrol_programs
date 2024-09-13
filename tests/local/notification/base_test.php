@@ -154,6 +154,12 @@ final class base_test extends \advanced_testcase {
     }
 
     function test_get_relateduser_fieldid() {
+        $this->assertNull(base::get_relateduser_fieldid());
+
+        if (!get_config('profilefield_relateduser', 'version')) {
+            $this->markTestSkipped('profilefield_relateduser not installed');
+        }
+
         /** @var \profilefield_relateduser_generator $relatedgenerator */
         $relatedgenerator = $this->getDataGenerator()->get_plugin_generator('profilefield_relateduser');
 
@@ -173,6 +179,10 @@ final class base_test extends \advanced_testcase {
     }
 
     public function test_get_relateduser() {
+        if (!get_config('profilefield_relateduser', 'version')) {
+            $this->markTestSkipped('profilefield_relateduser not installed');
+        }
+
         /** @var \profilefield_relateduser_generator $relatedgenerator */
         $relatedgenerator = $this->getDataGenerator()->get_plugin_generator('profilefield_relateduser');
 
