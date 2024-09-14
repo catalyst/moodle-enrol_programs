@@ -225,5 +225,8 @@ final class course_reset {
 
         $cache3 = \cache::make('availability_grade', 'scores');
         $cache3->delete($user->id);
+
+        $hook = new \enrol_programs\hook\course_completions_purged($user->id, $programid);
+        \core\hook\manager::get_instance()->dispatch($hook);
     }
 }
