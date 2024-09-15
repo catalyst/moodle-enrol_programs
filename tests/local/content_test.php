@@ -791,6 +791,42 @@ final class content_test extends \advanced_testcase {
         $this->assertItemCloned($top1->get_children()[1], $top4->get_children()[0]);
     }
 
+    public function test_content_import_duplicates() {
+        /** @var \enrol_programs_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
+
+        $program1 = $generator->create_program(['fullname' => 'hokus']);
+        $program2 = $generator->create_program(['fullname' => 'pokus']);
+        $program3 = $generator->create_program(['fullname' => 'abraka']);
+
+        $course1 = $this->getDataGenerator()->create_course();
+        $course2 = $this->getDataGenerator()->create_course();
+        $course3 = $this->getDataGenerator()->create_course();
+        $course4 = $this->getDataGenerator()->create_course();
+        $course5 = $this->getDataGenerator()->create_course();
+
+        $top1 = top::load($program1->id);
+        $top1->update_set($top1, ['fullname' => $top1->get_fullname(), 'sequencetype' => set::SEQUENCE_TYPE_ALLINORDER]);
+        $item1x0 = $top1->append_course($top1, $course1->id);
+        $item1x1 = $top1->append_set($top1, ['fullname' => 'Nice set', 'sequencetype' => set::SEQUENCE_TYPE_ATLEAST, 'minprerequisites' => 1]);
+        $item1x1x0 = $top1->append_set($item1x1, ['fullname' => 'Other set', 'sequencetype' => set::SEQUENCE_TYPE_ALLINORDER]);
+        $item1x1x1 = $top1->append_course($item1x1, $course2->id);
+        $item1x1x2 = $top1->append_set($item1x1, ['fullname' => 'Third set', 'sequencetype' => set::SEQUENCE_TYPE_MINPOINTS, 'points' => 2, 'minpoints' => 4, 'completiondelay' => DAYSECS]);
+        $item1x1x2x0 = $top1->append_course($item1x1x2, $course3->id, ['points' => 3, 'completiondelay' => DAYSECS * 2]);
+        $item1x1x2x1 = $top1->append_course($item1x1x2, $course4->id);
+        $item1x1x2x3 = $top1->append_course($item1x1x2, $course5->id);
+
+        $top2 = top::load($program2->id);
+        $top2->content_import((object)['id' => $program2->id,'fromprogram' => $program1->id]);
+        $top2 = top::load($program2->id);
+        $top2->content_import((object)['id' => $program2->id,'fromprogram' => $program1->id]);
+        $top2 = top::load($program2->id);
+        $this->assertCount(3, $top2->get_children());
+        $this->assertItemCloned($top1->get_children()[0], $top2->get_children()[0]);
+        $this->assertItemCloned($top1->get_children()[1], $top2->get_children()[1]);
+        $this->assertItemCloned($top1->get_children()[1], $top2->get_children()[2]);
+    }
+
     public function test_content_import_training() {
         /** @var \enrol_programs_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');

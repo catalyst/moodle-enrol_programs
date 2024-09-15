@@ -823,6 +823,16 @@ final class top extends set {
                 if (!$DB->record_exists('course', ['id' => $item->get_courseid()])) {
                     return;
                 }
+                if ($newparent === $top) {
+                    // Prevent duplicate course at the top level.
+                    foreach ($top->get_children() as $tch) {
+                        if ($tch instanceof course) {
+                            if ($tch->get_courseid() == $item->get_courseid()) {
+                                return;
+                            }
+                        }
+                    }
+                }
                 $top->append_course($newparent, $item->get_courseid(), [
                     'points' => $item->get_points(),
                     'completiondelay' => $item->get_completiondelay(),
