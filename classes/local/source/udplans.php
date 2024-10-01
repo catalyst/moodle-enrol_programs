@@ -278,7 +278,7 @@ final class udplans extends base {
             $userselect = "AND pl.userid = :userid";
             $params['userid'] = $userid;
         }
-        $sql = "SELECT pl.*, ps.id AS sourceid, i.timedue AS itemtimedue
+        $sql = "SELECT pl.*, ps.id AS sourceid, i.timedue AS itemtimedue, f.programschedule
                   FROM {tool_udplans_plans} pl
                   JOIN {user} u ON u.id = pl.userid AND u.deleted = 0 AND u.confirmed = 1
                   JOIN {tool_udplans_frameworks} f ON f.id = pl.frameworkid
@@ -303,11 +303,16 @@ final class udplans extends base {
                 // User must have multiple plans, this is not the first one.
                 continue;
             }
-            $dateoverrides = [
-                'timestart' => $plan->timestart,
-                'timedue' => $timedue,
-                'timeend' => $plan->timeend,
-            ];
+            $framework = $DB->get_record('tool_udplans_frameworks', ['id' => $plan->frameworkid]);
+            if ($framework->programschedule) {
+                $dateoverrides = [];
+            } else {
+                $dateoverrides = [
+                    'timestart' => $plan->timestart,
+                    'timedue' => $timedue,
+                    'timeend' => $plan->timeend,
+                ];
+            }
             self::allocate_user($program, $source, $plan->userid, [], $dateoverrides, $plan->id);
             \enrol_programs\local\allocation::fix_user_enrolments($program->id, $plan->userid);
             \enrol_programs\local\notification_manager::trigger_notifications($program->id, $plan->userid);
@@ -349,7 +354,7 @@ final class udplans extends base {
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_sources} ps ON ps.id = pa.sourceid AND ps.type = 'udplans'
                   JOIN {tool_udplans_plans} pl ON pl.id = pa.sourceinstanceid AND pl.userid = pa.userid AND pl.archived = 0
-                  JOIN {tool_udplans_frameworks} f ON f.id = pl.frameworkid AND f.archived = 0
+                  JOIN {tool_udplans_frameworks} f ON f.id = pl.frameworkid AND f.archived = 0 AND f.programschedule = 0
                   JOIN {tool_udplans_items} pi ON pi.planid = pl.id AND pi.itemtype = 'program' AND pi.instanceid = pa.programid
                  WHERE (
                             (pa.archived = 1)
