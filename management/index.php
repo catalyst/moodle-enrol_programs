@@ -30,6 +30,7 @@
 /** @var stdClass $COURSE */
 
 use enrol_programs\local\management;
+use local_openlms\output\extra_menu\dropdown;
 
 require('../../../config.php');
 
@@ -87,6 +88,22 @@ $dialogformoutput = $PAGE->get_renderer('local_openlms', 'dialog_form');
 
 echo $OUTPUT->header();
 
+$dropdown = new dropdown(get_string('extra_menu_management_index', 'enrol_programs'));
+if (!$archived && has_capability('enrol/programs:edit', $context)) {
+    $addurl = new moodle_url('/enrol/programs/management/program_add.php', ['contextid' => $context->id]);
+    $addlink = new local_openlms\output\dialog_form\link($addurl, get_string('addprogram', 'enrol_programs'));
+    $addlink->set_after_submit($addlink::AFTER_SUBMIT_REDIRECT);
+    $dropdown->add_dialog_form($addlink);
+}
+if (has_capability('enrol/programs:export', $context)) {
+    $url = new moodle_url('/enrol/programs/management/export.php', ['contextid' => $contextid, 'archived' => $archived]);
+    $dropdown->add_item(get_string('export', 'enrol_programs'), $url);
+}
+if (!$archived && has_capability('enrol/programs:upload', $context)) {
+    $url = new moodle_url('/enrol/programs/management/upload.php', ['contextid' => $contextid]);
+    $dropdown->add_item(get_string('upload', 'enrol_programs'), $url);
+}
+
 // Allow category switching.
 
 $contextoptions = management::get_used_contexts_menu($context);
@@ -105,15 +122,11 @@ $tabs[] = new tabobject('active', $taburl, get_string('programsactive', 'enrol_p
 $tabs[] = new tabobject('archived', new moodle_url($taburl, ['archived' => 1]), get_string('programsarchived', 'enrol_programs'));
 echo $OUTPUT->render(new \tabtree($tabs, ($archived ? 'archived' : 'active')));
 
-if (!$archived && has_capability('enrol/programs:edit', $context)) {
-    $addurl = new moodle_url('/enrol/programs/management/program_add.php', ['contextid' => $context->id]);
-    $addbutton = new local_openlms\output\dialog_form\button($addurl, get_string('addprogram', 'enrol_programs'));
-    $addbutton->set_after_submit($addbutton::AFTER_SUBMIT_REDIRECT);
-    $button = $dialogformoutput->render($addbutton);
-    echo '<div class="buttons float-right">';
-    echo $button;
-    echo '</div>';
+echo '<div class="buttons float-right">';
+if ($dropdown->has_items()) {
+    echo $OUTPUT->render($dropdown);
 }
+echo '</div>';
 
 // Add search form.
 $data = [

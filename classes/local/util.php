@@ -218,9 +218,10 @@ final class util {
      * Returns preprocessed data.json user allocation file contents.
      *
      * @param int $draftid
+     * @param bool $associative
      * @return array|null
      */
-    public static function get_uploaded_data(int $draftid): ?array {
+    public static function get_uploaded_data(int $draftid, bool $associative = true): ?array {
         global $USER;
 
         if (!$draftid) {
@@ -234,7 +235,7 @@ final class util {
         if (!$file) {
             return null;
         }
-        $data = json_decode($file->get_content(), true);
+        $data = json_decode($file->get_content(), $associative);
         if (!is_array($data)) {
             return null;
         }

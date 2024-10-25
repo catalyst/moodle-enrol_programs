@@ -59,7 +59,8 @@ Feature: General program management tests
     Given I log in as "manager1"
     And I am on all programs management page
 
-    When I press "Add program"
+    When I click on "Programs actions" "link"
+    And I click on "Add program" "link"
     And the following fields match these values:
       | Program name  |             |
       | ID number     |             |
@@ -84,7 +85,8 @@ Feature: General program management tests
     Given I log in as "manager1"
     And I am on all programs management page
 
-    When I press "Add program"
+    When I click on "Programs actions" "link"
+    And I click on "Add program" "link"
     And the following fields match these values:
       | Program name  |             |
       | ID number     |             |
@@ -119,7 +121,8 @@ Feature: General program management tests
   Scenario: Manager may update basic general settings of an existing program
     Given I log in as "manager1"
     And I am on all programs management page
-    And I press "Add program"
+    And I click on "Programs actions" "link"
+    And I click on "Add program" "link"
     And I set the following fields to these values:
       | Program name  | Program 001 |
       | ID number     | PR01        |
@@ -136,11 +139,33 @@ Feature: General program management tests
     And I should see "No" in the "Course groups:" definition list item
     And I should see "No" in the "Archived:" definition list item
 
+  @javascript
+  Scenario: Manager may delete program
+    Given I log in as "manager1"
+    And I am on all programs management page
+    And I click on "Programs actions" "link"
+    And I click on "Add program" "link"
+    And I set the following fields to these values:
+      | Program name  | Program 001 |
+      | ID number     | PR01        |
+    And I press dialog form button "Add program"
+    And I press "Edit"
+    And I set the following fields to these values:
+      | Archived  | 1 |
+    And I press dialog form button "Update program"
+    And I should see "Yes" in the "Archived:" definition list item
+
+    When I click on "Program actions" "link"
+    And I click on "Delete program" "link"
+    And I press dialog form button "Delete program"
+    Then I should see "No programs found"
+
   @javascript @_file_upload
   Scenario: Manager may update all general settings of an existing program
     Given I log in as "manager1"
     And I am on all programs management page
-    And I press "Add program"
+    And I click on "Programs actions" "link"
+    And I click on "Add program" "link"
     And I set the following fields to these values:
       | Program name  | Program 002 |
       | ID number     | PR02        |
@@ -183,7 +208,8 @@ Feature: General program management tests
       | Test field   | testfield  | Short text |
     When I log in as "editor1"
     And I am on all programs management page
-    And I press "Add program"
+    And I click on "Programs actions" "link"
+    And I click on "Add program" "link"
     And I expand all fieldsets
     And I set the following fields to these values:
       | Program name       | Program 007       |

@@ -43,7 +43,8 @@ Feature: Program allocation management tests
     Given I log in as "manager1"
     And I am on all programs management page
 
-    And I press "Add program"
+    And I click on "Programs actions" "link"
+    And I click on "Add program" "link"
     And I set the following fields to these values:
       | Program name  | Program 001 |
       | ID number     | PR01        |

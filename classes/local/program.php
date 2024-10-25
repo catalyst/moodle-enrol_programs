@@ -123,10 +123,74 @@ final class program {
             $data->timeallocationend = null;
         }
 
-        // NOTE: allocation has complex format, we can implement it here later.
-        $data->startdatejson = util::json_encode(['type' => 'allocation']);
-        $data->duedatejson = util::json_encode(['type' => 'notset']);
-        $data->enddatejson = util::json_encode(['type' => 'notset']);
+        if (isset($data->startdate)) {
+            $data->startdate = (array)$data->startdate;
+            $types = self::get_program_startdate_types();
+            if (!isset($types[$data->startdate['type']])) {
+                throw new \invalid_parameter_exception('Invalid start type');
+            }
+            $json = ['type' => $data->startdate['type']];
+            if ($data->startdate['type'] === 'date') {
+                if (empty($data->startdate['date']) || !is_number($data->startdate['date'])) {
+                    throw new \invalid_parameter_exception('invalid start date');
+                }
+                $json['date'] = (int)$data->startdate['date'];
+            } else if ($data->startdate['type'] === 'delay') {
+                if (!self::validate_delay_value($data->startdate['delay'] ?? '')) {
+                    throw new \invalid_parameter_exception('invalid start delay');
+                }
+                $json['delay'] = $data->startdate['delay'];
+            }
+        } else {
+            $json = ['type' => 'allocation'];
+        }
+        $data->startdatejson = util::json_encode($json);
+
+        if (isset($data->duedate)) {
+            $data->duedate = (array)$data->duedate;
+            $types = self::get_program_duedate_types();
+            if (!isset($types[$data->duedate['type']])) {
+                throw new \invalid_parameter_exception('Invalid due type');
+            }
+            $json = ['type' => $data->duedate['type']];
+            if ($data->duedate['type'] === 'date') {
+                if (empty($data->duedate['date']) || !is_number($data->duedate['date'])) {
+                    throw new \invalid_parameter_exception('invalid due date');
+                }
+                $json['date'] = (int)$data->duedate['date'];
+            } else if ($data->duedate['type'] === 'delay') {
+                if (!self::validate_delay_value($data->duedate['delay'] ?? '')) {
+                    throw new \invalid_parameter_exception('invalid due delay');
+                }
+                $json['delay'] = $data->duedate['delay'];
+            }
+        } else {
+            $json = ['type' => 'notset'];
+        }
+        $data->duedatejson = util::json_encode($json);
+
+        if (isset($data->enddate)) {
+            $data->enddate = (array)$data->enddate;
+            $types = self::get_program_enddate_types();
+            if (!isset($types[$data->enddate['type']])) {
+                throw new \invalid_parameter_exception('Invalid end type');
+            }
+            $json = ['type' => $data->enddate['type']];
+            if ($data->enddate['type'] === 'date') {
+                if (empty($data->enddate['date']) || !is_number($data->enddate['date'])) {
+                    throw new \invalid_parameter_exception('invalid end date');
+                }
+                $json['date'] = (int)$data->enddate['date'];
+            } else if ($data->enddate['type'] === 'delay') {
+                if (!self::validate_delay_value($data->enddate['delay'] ?? '')) {
+                    throw new \invalid_parameter_exception('invalid end delay');
+                }
+                $json['delay'] = $data->enddate['delay'];
+            }
+        } else {
+            $json = ['type' => 'notset'];
+        }
+        $data->enddatejson = util::json_encode($json);
 
         $data->timecreated = time();
         $data->id = $DB->insert_record('enrol_programs_programs', $data);
@@ -615,6 +679,22 @@ final class program {
     }
 
     /**
+     * Validate value of delay setting .
+     * @param string $string
+     * @return bool
+     */
+    protected static function validate_delay_value(string $string): bool {
+        if (preg_match('/^P[1-9][0-9]*M$/', $string)) {
+            return true;
+        } else if (preg_match('/^P[1-9][0-9]*D$/', $string)) {
+            return true;
+        } else if (preg_match('/^PT[1-9][0-9]*H$/', $string)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Update program scheduling.
      *
      * @param stdClass $data
@@ -740,9 +820,6 @@ final class program {
         $DB->delete_records('enrol_programs_certs_issues', ['programid' => $program->id]);
         $DB->delete_records('enrol_programs_certs', ['programid' => $program->id]);
 
-        // Delete enrolment instances.
-        allocation::fix_enrol_instances($program->id);
-
         // Program details last.
         \core_tag_tag::set_item_tags('enrol_programs', 'program', $program->id, $context, null);
         $fs = get_file_storage();
@@ -757,6 +834,9 @@ final class program {
         $handler->delete_instance($program->id);
 
         $trans->allow_commit();
+
+        // Delete enrolment instances.
+        allocation::fix_enrol_instances($program->id);
 
         calendar::delete_program_events($program->id);
 

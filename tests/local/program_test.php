@@ -93,6 +93,28 @@ final class program_test extends \advanced_testcase {
         $this->assertSame('{"type":"notset"}', $program->duedatejson);
         $this->assertSame('{"type":"notset"}', $program->enddatejson);
         $this->assertTimeCurrent($program->timecreated);
+
+        $category = $this->getDataGenerator()->create_category([]);
+        $catcontext = \context_coursecat::instance($category->id);
+        $data = (object)[
+            'fullname' => 'Yet another program',
+            'idnumber' => 'SP3',
+            'contextid' => $catcontext->id,
+            'startdate' => ['type' => 'date', 'date' => strtotime('1 Feb 2030 00:00 GMT')],
+            'duedate' => ['type' => 'delay', 'delay' => 'P1D'],
+            'enddate' => (object)['type' => 'delay', 'delay' => 'P2M'],
+        ];
+
+        $this->setCurrentTimeStart();
+        $program = program::add_program($data);
+        $this->assertInstanceOf('stdClass', $program);
+        $this->assertSame((string)$catcontext->id, $program->contextid);
+        $this->assertSame($data->fullname, $program->fullname);
+        $this->assertSame($data->idnumber, $program->idnumber);
+        $this->assertSame('{"type":"date","date":1896134400}', $program->startdatejson);
+        $this->assertSame('{"type":"delay","delay":"P1D"}', $program->duedatejson);
+        $this->assertSame('{"type":"delay","delay":"P2M"}', $program->enddatejson);
+        $this->assertTimeCurrent($program->timecreated);
     }
 
     public function test_update_program_general() {

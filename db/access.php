@@ -202,6 +202,27 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    // Export programs - settings and structure.
+    'enrol/programs:export' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+            'tenantmanager' => CAP_ALLOW,
+        ],
+    ],
+
+    // Upload programs - settings and structure.
+    'enrol/programs:upload' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+            'tenantmanager' => CAP_ALLOW,
+        ],
+    ],
+
     'enrol/programs:configurecustomfields' => [
         'riskbitmask' => RISK_CONFIG | RISK_DATALOSS,
         'captype' => 'write',

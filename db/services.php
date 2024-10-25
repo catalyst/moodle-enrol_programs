@@ -61,6 +61,13 @@ $functions = [
         'ajax' => true,
         'loginrequired' => true,
     ],
+    'enrol_programs_form_export_programids' => [
+        'classname' => \enrol_programs\external\form_export_programids::class,
+        'description' => 'Return list of candidate programs for export.',
+        'type' => 'read',
+        'ajax' => true,
+        'loginrequired' => true,
+    ],
     'enrol_programs_get_programs' => [
         'classname' => enrol_programs\external\get_programs::class,
         'description' => 'Return list of programs that match the search parameters.',

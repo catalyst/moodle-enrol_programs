@@ -30,6 +30,7 @@
 /** @var stdClass $COURSE */
 
 use enrol_programs\local\management;
+use local_openlms\output\extra_menu\dropdown;
 
 require('../../../config.php');
 require_once($CFG->dirroot . '/lib/formslib.php');
@@ -57,13 +58,24 @@ echo $OUTPUT->header();
 
 echo $managementoutput->render_management_program_tabs($program, 'general');
 
-$buttons = [];
+$dropdown = new dropdown(get_string('extra_menu_management_program_general', 'enrol_programs'));
 if ($program->archived && has_capability('enrol/programs:delete', $context)) {
     $url = new moodle_url('/enrol/programs/management/program_delete.php', ['id' => $program->id]);
-    $deletebutton = new local_openlms\output\dialog_form\button($url, get_string('deleteprogram', 'enrol_programs'));
-    $deletebutton->set_after_submit($deletebutton::AFTER_SUBMIT_REDIRECT);
-    $buttons[] = $dialogformoutput->render($deletebutton);
+    $link = new local_openlms\output\dialog_form\link($url, get_string('deleteprogram', 'enrol_programs'));
+    $link->set_after_submit($link::AFTER_SUBMIT_REDIRECT);
+    $dropdown->add_dialog_form($link);
 }
+if (has_capability('enrol/programs:export', $context)) {
+    $url = new moodle_url('/enrol/programs/management/export.php', ['id' => $program->id]);
+    $dropdown->add_item(get_string('export', 'enrol_programs'), $url);
+}
+if ($dropdown->has_items()) {
+    echo '<div class="float-right">';
+    echo $OUTPUT->render($dropdown);
+    echo '</div>';
+}
+
+$buttons = [];
 if (has_capability('enrol/programs:edit', $context)) {
     $url = new moodle_url('/enrol/programs/management/program_update.php', ['id' => $program->id]);
     $editbutton = new local_openlms\output\dialog_form\button($url, get_string('edit'));

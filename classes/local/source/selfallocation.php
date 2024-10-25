@@ -261,7 +261,7 @@ final class selfallocation extends base {
         if (isset($formdata->selfallocation_key)
             && trim($formdata->selfallocation_key) !== '') {
 
-            $data['key'] = $formdata->selfallocation_key;
+            $data['key'] = (string)$formdata->selfallocation_key;
         }
         if (isset($formdata->selfallocation_allowsignup)) {
             $data['allowsignup'] = (int)(bool)$formdata->selfallocation_allowsignup;
