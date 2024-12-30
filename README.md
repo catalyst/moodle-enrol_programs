@@ -1,3 +1,8 @@
+# Catalyst Fork
+This is a fork of Open LMS's `enrol_programs` plugin for Moodle 4.5. It is based off the upstreams `MOODLE_403_STABLE` branch as the upstream does not officially support 4.5 yet.
+
+Additionally, this fork has a few bug fixes that have not yet been merged into the upstream.
+
 # Programs for Moodle
 
 ## Overview
