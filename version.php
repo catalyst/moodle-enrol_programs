@@ -28,11 +28,11 @@ defined('MOODLE_INTERNAL') || die();
 /** @var stdClass $plugin */
 
 $plugin->version   = 2024091403;
-$plugin->requires  = 2023100902.00; // 4.3.2
+$plugin->requires  = 2024100700; // 4.5.0
 $plugin->component = 'enrol_programs';
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = 'v3.3.0';
-$plugin->supported = [403, 403];
+$plugin->supported = [405, 405];
 
 $plugin->dependencies = [
     'local_openlms' => 2024091401,
