@@ -166,6 +166,52 @@ final class selfallocation_test extends \advanced_testcase {
         $this->assertFalse(selfallocation::can_user_request($program1, $source1a, $user2->id));
     }
 
+    /**
+     * Test the behaviour of get_allocated_actions() method.
+     *
+     * @covers ::get_allocated_actions
+     */
+    public function test_get_allocated_actions() {
+        global $DB;
+
+        /** @var \enrol_programs_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
+
+        // Create program and get selfallocation source record.
+        $program1 = $generator->create_program(['sources' => ['manual' => [], 'selfallocation' => []], 'public' => 1]);
+        $program2 = $generator->create_program(['sources' => ['manual' => [], 'selfallocation' => []], 'public' => 1]);
+        $params = ['programid' => $program1->id, 'type' => 'selfallocation'];
+        $sourcea1 = $DB->get_record('enrol_programs_sources', $params, '*', MUST_EXIST);
+        $params = ['programid' => $program1->id, 'type' => 'manual'];
+        $sourcem1 = $DB->get_record('enrol_programs_sources', $params, '*', MUST_EXIST);
+        $params = ['programid' => $program2->id, 'type' => 'selfallocation'];
+        $sourcea2 = $DB->get_record('enrol_programs_sources', $params, '*', MUST_EXIST);
+
+        // Create user and self allocate them up to the program.
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+        $allocation = selfallocation::signup($program1->id, $sourcea1->id);
+
+        // Get allocated actions for this allocation and asert it is as expected.
+        $actions = selfallocation::get_allocated_actions($sourcea1, $allocation);
+        $expectedtitle = get_string('source_selfallocation_deallocate', 'enrol_programs');
+        $expectedurl = new \moodle_url('/enrol/programs/my/source_selfallocation_deallocate.php', ['sourceid' => $sourcea1->id]);
+        $this->assertCount(1, $actions);
+        $this->assertStringContainsString($expectedtitle, $actions[0]);
+        $this->assertStringContainsString($expectedurl->out(), $actions[0]);
+
+        // Check that a missmatched source id is handled correctly.
+        $actions = selfallocation::get_allocated_actions($sourcea2, $allocation);
+        $this->assertCount(0, $actions);
+
+        // Check that an incorrect source type is handled correctly.
+        selfallocation::deallocate_user($program1, $sourcea1, $allocation);
+        manual::allocate_users($program1->id, $sourcem1->id, [$user->id]);
+        $allocation = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id]);
+        $actions = selfallocation::get_allocated_actions($sourcem1, $allocation);
+        $this->assertCount(0, $actions);
+    }
+
     public function test_signup() {
         global $DB;
 
