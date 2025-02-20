@@ -103,6 +103,12 @@ EOT;
             . (isset($allocation->timecompleted) ? userdate($allocation->timecompleted) : $strnotset) . '</dd>';
         $result .= '</dl>';
 
+        $actions = $sourceclass::get_allocated_actions($source, $allocation);
+
+        if ($actions) {
+            $result .= \html_writer::div(implode(' ', $actions), 'buttons mb-5');
+        }
+
         return $result;
     }
 

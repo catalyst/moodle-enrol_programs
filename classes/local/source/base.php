@@ -169,6 +169,19 @@ abstract class base {
     }
 
     /**
+     * Returns list of actions available on My program page.
+     *
+     * NOTE: This is intended mainly for students.
+     *
+     * @param stdClass $source
+     * @param stdClass $allocation
+     * @return string[]
+     */
+    public static function get_allocated_actions(\stdClass $source, \stdClass $allocation): array {
+        return [];
+    }
+
+    /**
      * Are the date overrides valid for a new program allocation in near future?
      *
      * NOTE: This is intended for validation of external date such as upload of allocations.
