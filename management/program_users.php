@@ -222,9 +222,7 @@ foreach ($allocations as $allocation) {
     username_load_fields_from_object($user, $allocation, 'user', $userfieldsapi::for_userpic()->get_required_fields());
     $userurl = new moodle_url('/enrol/programs/management/user_allocation.php', ['id' => $allocation->id]);
     $fullnametext = fullname($user);
-    $userpicture = $OUTPUT->user_picture($user, ['alttext' => $fullnametext]);
-    $fullname = html_writer::link($userurl, $fullnametext);
-    $row[] = $userpicture . $fullname;
+    $row[] = html_writer::link($userurl, $fullnametext);
 
     $row[] = userdate($allocation->timestart, $dateformat);
     if ($allocation->timedue) {

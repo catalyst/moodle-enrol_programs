@@ -21,6 +21,7 @@ use enrol_programs\local\program;
 use tool_certify\local\certification;
 use tool_certify\local\assignment;
 use tool_certify\local\period;
+use enrol_programs\local\course_reset;
 use stdClass;
 
 /**
@@ -138,41 +139,6 @@ final class certify_test extends \advanced_testcase {
         $this->assertStringContainsString('Active', $result);
         $this->assertStringContainsString('>Certification 1<', $result);
         $this->assertStringContainsString('Certification 3', $result);
-    }
-
-    public function test_purge_courses() {
-        $this->setAdminUser();
-
-        $modules = \core_plugin_manager::instance()->get_plugins_of_type('mod');
-        if (!$modules['bigbluebuttonbn']->is_enabled()) {
-            \core\plugininfo\mod::enable_plugin('bigbluebuttonbn', true);
-        }
-
-        $course1 = $this->getDataGenerator()->create_course();
-        $course2 = $this->getDataGenerator()->create_course();
-        $user1 = $this->getDataGenerator()->create_user();
-        $user2 = $this->getDataGenerator()->create_user();
-
-        $params = ['course' => $course1->id];
-        $this->getDataGenerator()->create_module('assign', $params, []);
-        $this->getDataGenerator()->create_module('bigbluebuttonbn', $params, []);
-        $this->getDataGenerator()->create_module('chat', $params, []);
-        $this->getDataGenerator()->create_module('choice', $params, []);
-        $this->getDataGenerator()->create_module('data', $params, []);
-        if (get_config('mod_facetoface', 'version')) {
-            $this->getDataGenerator()->create_module('facetoface', $params, []);
-        }
-        $this->getDataGenerator()->create_module('feedback', $params, []);
-        $this->getDataGenerator()->create_module('forum', $params, []);
-        $this->getDataGenerator()->create_module('glossary', $params, []);
-        $this->getDataGenerator()->create_module('lesson', $params, []);
-        $this->getDataGenerator()->create_module('quiz', $params, []);
-        $this->getDataGenerator()->create_module('scorm', $params, []);
-        $this->getDataGenerator()->create_module('survey', $params, []);
-        $this->getDataGenerator()->create_module('wiki', $params, []);
-        $this->getDataGenerator()->create_module('workshop', $params, []);
-
-        certify::purge_courses([$course1->id, $course2->id], $user1->id);
     }
 
     public function test_sync_certifications_allocate() {
@@ -355,8 +321,9 @@ final class certify_test extends \advanced_testcase {
         /** @var \enrol_programs_generator $programgenerator */
         $programgenerator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
 
-        $program1 = $programgenerator->create_program(['sources' => 'certify', 'archived' => 0]);
+        $program1 = $programgenerator->create_program(['sources' => ['certify' => [], 'manual' => []], 'archived' => 0]);
         $program1source = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'certify']);
+        $program1sourcemanual = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'manual']);
         $top1 = program::load_content($program1->id);
         $program2 = $programgenerator->create_program(['sources' => 'certify', 'archived' => 0]);
         $program2source = $DB->get_record('enrol_programs_sources', ['programid' => $program2->id, 'type' => 'certify']);
@@ -419,6 +386,12 @@ final class certify_test extends \advanced_testcase {
             'timewindowdue' => null,
             'timewindowend' => null,
         ]);
+        \enrol_programs\local\source\manual::allocate_users($program1->id, $program1sourcemanual->id, [$user7->id]);
+        manual::assign_users($certification1->id, $source1->id, [$user7->id], [
+            'timewindowstart' => $now + DAYSECS,
+            'timewindowdue' => null,
+            'timewindowend' => null,
+        ]);
         $allocation1 = $DB->get_record('enrol_programs_allocations', [
             'sourceid' => $program1source->id, 'userid' => $user1->id], '*', MUST_EXIST);
         $period1 = $DB->get_record('tool_certify_periods',
@@ -447,6 +420,9 @@ final class certify_test extends \advanced_testcase {
             ['userid' => $user6->id, 'certificationid' => $certification1->id], '*', MUST_EXIST);
         $this->assertCount(6, $DB->get_records('enrol_programs_allocations',
             ['sourceid' => $program1source->id, 'archived' => 0]));
+        $allocation7 = $DB->get_record('enrol_programs_allocations', [
+            'sourceid' => $program1sourcemanual->id, 'userid' => $user7->id], '*', MUST_EXIST);
+        $this->assertSame('0', $allocation7->archived);
 
         $period2->timewindowend = (string)($now - 10);
         $DB->update_record('tool_certify_periods', $period2);
@@ -897,7 +873,8 @@ final class certify_test extends \advanced_testcase {
     }
 
     public function test_sync_certifications_reset() {
-        global $DB;
+        global $DB, $CFG;
+
         /** @var \tool_certify_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('tool_certify');
         /** @var \enrol_programs_generator $programgenerator */
@@ -908,10 +885,22 @@ final class certify_test extends \advanced_testcase {
 
         $now = time();
 
-        $course = $this->getDataGenerator()->create_course();
+        $CFG->enablecompletion = 1;
+        $CFG->enableavailability = 1;
+
+        $course = $this->getDataGenerator()->create_course(['enablecompletion' => true]);
         $enrol = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'manual'], '*', MUST_EXIST);
-        $forum = $this->getDataGenerator()->create_module('forum', ['course' => $course->id]);
+        $forum = $this->getDataGenerator()->create_module('forum',
+            ['course' => $course->id, 'completion' => 1, 'completionview' => COMPLETION_VIEW_REQUIRED]);
         $discussion = $forumgenerator->create_discussion(['course' => $course->id, 'forum' => $forum->id, 'userid' => $admin->id]);
+        $cm = \cm_info::create(get_coursemodule_from_instance('forum', $forum->id));
+
+        $course2 = $this->getDataGenerator()->create_course(['enablecompletion' => true]);
+        $enrol2 = $DB->get_record('enrol', ['courseid' => $course2->id, 'enrol' => 'manual'], '*', MUST_EXIST);
+        $forum2 = $this->getDataGenerator()->create_module('forum',
+            ['course' => $course2->id, 'completion' => 1, 'completionview' => COMPLETION_VIEW_REQUIRED]);
+        $discussion2 = $forumgenerator->create_discussion(['course' => $course2->id, 'forum' => $forum2->id, 'userid' => $admin->id]);
+        $cm2 = \cm_info::create(get_coursemodule_from_instance('forum', $forum2->id));
 
         $user0 = $this->getDataGenerator()->create_user();
         $user1 = $this->getDataGenerator()->create_user();
@@ -938,20 +927,48 @@ final class certify_test extends \advanced_testcase {
         $mallocation3 = $programgenerator->create_program_allocation(['programid' => $program->id, 'userid' => $user3->id]);
         $post3 = $forumgenerator->create_post(['discussion' => $discussion->id, 'userid' => $user3->id]);
 
+        $completion = new \completion_info($course);
+        $completion->set_module_viewed($cm, $user0->id);
+        $ccompletion = new \completion_completion(['course' => $course->id, 'userid' => $user0->id]);
+        $ccompletion->mark_complete();
+        $completion = new \completion_info($course);
+        $completion->set_module_viewed($cm, $user1->id);
+        $ccompletion = new \completion_completion(['course' => $course->id, 'userid' => $user1->id]);
+        $ccompletion->mark_complete();
+        $completion = new \completion_info($course);
+        $completion->set_module_viewed($cm, $user2->id);
+        $ccompletion = new \completion_completion(['course' => $course->id, 'userid' => $user2->id]);
+        $ccompletion->mark_complete();
+        $completion = new \completion_info($course);
+        $completion->set_module_viewed($cm, $user3->id);
+        $ccompletion = new \completion_completion(['course' => $course->id, 'userid' => $user3->id]);
+        $ccompletion->mark_complete();
+        // Control data.
+        $completion = new \completion_info($course2);
+        $completion->set_module_viewed($cm2, $user2->id);
+        $ccompletion = new \completion_completion(['course' => $course2->id, 'userid' => $user2->id]);
+        $ccompletion->mark_complete();
+        $completion = new \completion_info($course2);
+        $completion->set_module_viewed($cm2, $user3->id);
+        $ccompletion = new \completion_completion(['course' => $course2->id, 'userid' => $user3->id]);
+        $ccompletion->mark_complete();
+        $this->getDataGenerator()->enrol_user($user2->id, $course2->id);
+        $this->getDataGenerator()->enrol_user($user3->id, $course2->id);
+
         $certification0 = $generator->create_certification(
-            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => certification::RESETTYPE_NONE]);
+            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => course_reset::RESETTYPE_NONE]);
         $source0 = $DB->get_record('tool_certify_sources',
             ['type' => 'manual', 'certificationid' => $certification0->id], '*', MUST_EXIST);
         $certification1 = $generator->create_certification(
-            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => certification::RESETTYPE_DEALLOCATE]);
+            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => course_reset::RESETTYPE_DEALLOCATE]);
         $source1 = $DB->get_record('tool_certify_sources',
             ['type' => 'manual', 'certificationid' => $certification1->id], '*', MUST_EXIST);
         $certification2 = $generator->create_certification(
-            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => certification::RESETTYPE_UNENROL]);
+            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => course_reset::RESETTYPE_STANDARD]);
         $source2 = $DB->get_record('tool_certify_sources',
             ['type' => 'manual', 'certificationid' => $certification2->id], '*', MUST_EXIST);
         $certification3 = $generator->create_certification(
-            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => certification::RESETTYPE_PURGE]);
+            ['sources' => ['manual' => []], 'programid1' => $program->id, 'periods_resettype1' => course_reset::RESETTYPE_FULL]);
         $source3 = $DB->get_record('tool_certify_sources',
             ['type' => 'manual', 'certificationid' => $certification3->id], '*', MUST_EXIST);
 
@@ -983,6 +1000,9 @@ final class certify_test extends \advanced_testcase {
         $this->assertTrue($DB->record_exists('user_enrolments', ['enrolid' => $enrol->id, 'userid' => $user0->id]));
         $post = $DB->get_record('forum_posts', ['id' => $post0->id]);
         $this->assertSame($post0->subject, $post->subject);
+        $ccompletion = new \completion_completion(['course' => $course->id, 'userid' => $user0->id]);
+        $this->assertTrue($ccompletion->is_complete());
+        $this->assertTrue($DB->record_exists('course_modules_completion', ['coursemoduleid' => $cm->id, 'userid' => $user0->id]));
 
         $this->assertFalse($DB->record_exists('enrol_programs_allocations', ['id' => $mallocation1->id]));
         $callocation1 = $DB->get_record('enrol_programs_allocations', ['userid' => $user1->id, 'programid' => $program->id]);
@@ -993,6 +1013,9 @@ final class certify_test extends \advanced_testcase {
         $this->assertTrue($DB->record_exists('user_enrolments', ['enrolid' => $enrol->id, 'userid' => $user1->id]));
         $post = $DB->get_record('forum_posts', ['id' => $post1->id]);
         $this->assertSame($post1->subject, $post->subject);
+        $ccompletion = new \completion_completion(['course' => $course->id, 'userid' => $user1->id]);
+        $this->assertTrue($ccompletion->is_complete());
+        $this->assertTrue($DB->record_exists('course_modules_completion', ['coursemoduleid' => $cm->id, 'userid' => $user1->id]));
 
         $this->assertFalse($DB->record_exists('enrol_programs_allocations', ['id' => $mallocation2->id]));
         $callocation2 = $DB->get_record('enrol_programs_allocations', ['userid' => $user2->id, 'programid' => $program->id]);
@@ -1003,6 +1026,9 @@ final class certify_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('user_enrolments', ['enrolid' => $enrol->id, 'userid' => $user2->id]));
         $post = $DB->get_record('forum_posts', ['id' => $post2->id]);
         $this->assertSame($post2->subject, $post->subject);
+        $ccompletion = new \completion_completion(['course' => $course->id, 'userid' => $user2->id]);
+        $this->assertFalse($ccompletion->is_complete());
+        $this->assertFalse($DB->record_exists('course_modules_completion', ['coursemoduleid' => $cm->id, 'userid' => $user2->id]));
 
         $this->assertFalse($DB->record_exists('enrol_programs_allocations', ['id' => $mallocation3->id]));
         $callocation3 = $DB->get_record('enrol_programs_allocations', ['userid' => $user3->id, 'programid' => $program->id]);
@@ -1013,5 +1039,18 @@ final class certify_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('user_enrolments', ['enrolid' => $enrol->id, 'userid' => $user3->id]));
         $post = $DB->get_record('forum_posts', ['id' => $post3->id]);
         $this->assertSame('', $post->subject);
+        $ccompletion = new \completion_completion(['course' => $course->id, 'userid' => $user2->id]);
+        $this->assertFalse($ccompletion->is_complete());
+        $this->assertFalse($DB->record_exists('course_modules_completion', ['coursemoduleid' => $cm->id, 'userid' => $user3->id]));
+
+        // Control data.
+        $this->assertTrue($DB->record_exists('user_enrolments', ['enrolid' => $enrol2->id, 'userid' => $user2->id]));
+        $ccompletion = new \completion_completion(['course' => $course2->id, 'userid' => $user2->id]);
+        $this->assertTrue($ccompletion->is_complete());
+        $this->assertTrue($DB->record_exists('course_modules_completion', ['coursemoduleid' => $cm2->id, 'userid' => $user2->id]));
+        $this->assertTrue($DB->record_exists('user_enrolments', ['enrolid' => $enrol2->id, 'userid' => $user3->id]));
+        $ccompletion = new \completion_completion(['course' => $course2->id, 'userid' => $user3->id]);
+        $this->assertTrue($ccompletion->is_complete());
+        $this->assertTrue($DB->record_exists('course_modules_completion', ['coursemoduleid' => $cm2->id, 'userid' => $user3->id]));
     }
 }

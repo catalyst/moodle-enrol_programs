@@ -43,15 +43,24 @@ class cron extends \core\task\scheduled_task {
             return;
         }
 
-        $trace = new \null_progress_trace();
+        $trace = new \text_progress_trace();
 
-        \enrol_programs\local\allocation::fix_enrol_instances(null);
+        $trace->output('allocation::fix_allocation_sources');
         \enrol_programs\local\allocation::fix_allocation_sources(null, null);
-        \enrol_programs\local\allocation::fix_user_enrolments(null, null);
-        \enrol_programs\local\calendar::fix_program_events(null);
 
+        $trace->output('allocation::fix_enrol_instances');
+        \enrol_programs\local\allocation::fix_enrol_instances(null);
+
+        $trace->output('allocation::fix_user_enrolments');
+        \enrol_programs\local\allocation::fix_user_enrolments(null, null, $trace);
+
+        $trace->output('calendar::fix_program_events');
+        \enrol_programs\local\calendar::fix_program_events(null, $trace);
+
+        $trace->output('notification_manager::trigger_notifications');
         \enrol_programs\local\notification_manager::trigger_notifications(null, null);
 
+        $trace->output('manual::cleanup_uploaded_data');
         \enrol_programs\local\source\manual::cleanup_uploaded_data();
 
         $trace->finished();

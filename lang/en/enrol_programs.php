@@ -41,6 +41,7 @@ $string['allprograms'] = 'All programs';
 $string['appenditem'] = 'Append item';
 $string['appendinto'] = 'Append into item';
 $string['archived'] = 'Archived';
+$string['benefitname'] = '{$a}: Program allocation';
 $string['calendarprogramend'] = '{$a} ends';
 $string['calendarprogramdue'] = '{$a} is due';
 $string['calendarprogramstart'] = '{$a} starts';
@@ -231,6 +232,9 @@ $string['privacy:metadata:field:explanation'] = 'Explanation';
 $string['privacy:metadata:field:completionsjson'] = 'Information about completion';
 $string['privacy:metadata:field:evidencesjson'] = 'Information about completion evidence';
 
+$string['privacy:metadata:table:enrol_programs_src_commholds'] = 'Commerce allocation reservations';
+$string['privacy:metadata:field:quantity'] = 'Quantity';
+
 $string['program'] = 'Program';
 $string['programautofix'] = 'Auto repair program';
 $string['programdue'] = 'Program due';
@@ -280,6 +284,11 @@ $string['public'] = 'Public';
 $string['public_help'] = 'Public programs are visible to all users.
 
 Visibility status does not affect already allocated programs.';
+$string['purchaseaccess'] = 'Purchase access';
+$string['resettype_deallocate'] = 'Program de-allocation only';
+$string['resettype_full'] = 'Full course purge';
+$string['resettype_none'] = 'None';
+$string['resettype_standard'] = 'Standard course purge';
 $string['sequencetype'] = 'Completion type';
 $string['sequencetype_allinorder'] = 'All in order';
 $string['sequencetype_allinanyorder'] = 'All in any order';
@@ -320,6 +329,13 @@ $string['source_cohort'] = 'Automatic cohort allocation';
 $string['source_cohort_allownew'] = 'Allow cohort allocation';
 $string['source_cohort_allownew_desc'] = 'Allow adding new _cohort auto allocation_ sources to programs';
 $string['source_cohort_cohortstoallocate'] = 'Allocate cohorts';
+$string['source_ecommerce'] = 'E-Commerce allocation';
+$string['source_ecommerce_allownew'] = 'Allow e-commerce allocation';
+$string['source_ecommerce_allownew_desc'] = 'Allow adding new e-commerce auto allocation sources to programs';;
+$string['source_ecommerce_allowsignup'] = 'Allow new allocations';
+$string['source_ecommerce_cohortmembershiprequirement'] = 'Users must be a member of one of the following cohorts: {$a}';
+$string['source_ecommerce_maxusers'] = 'Max users';
+$string['source_ecommerce_nocapacity'] = 'There is no remaining capacity on this program';
 $string['source_manual'] = 'Manual allocation';
 $string['source_manual_allocateusers'] = 'Allocate users';
 $string['source_manual_csvfile'] = 'CSV file';
