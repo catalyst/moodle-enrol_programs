@@ -32,4 +32,7 @@ function xmldb_enrol_programs_install() {
     $enabled[] = 'programs';
     set_config('enrol_plugins_enabled', implode(',', $enabled));
     core_plugin_manager::reset_caches();
+
+    // Disable commerce by default, the defaults may not added during upgrade.
+    set_config('source_ecommerce_allownew', 0, 'enrol_programs');
 }

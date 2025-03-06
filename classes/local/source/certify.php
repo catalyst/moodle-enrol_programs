@@ -17,6 +17,7 @@
 namespace enrol_programs\local\source;
 
 use tool_certify\local\certification;
+use enrol_programs\local\course_reset;
 use stdClass;
 
 /**
@@ -116,68 +117,6 @@ final class certify extends base {
     }
 
     /**
-     * Purge course data using privacy API.
-     *
-     * @param int[] $courseids
-     * @param int $userid
-     * @return void
-     */
-    public static function purge_courses(array $courseids, int $userid): void {
-        global $DB;
-
-        $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
-
-        $modcontextids = [];
-        $cmids = [];
-        foreach ($courseids as $courseid) {
-            $mods = get_course_mods($courseid);
-            if (!$mods) {
-                continue;
-            }
-            foreach ($mods as $cm) {
-                $modcontext = \context_module::instance($cm->id, IGNORE_MISSING);
-                if (!$modcontext) {
-                    continue;
-                }
-                $cmids[$courseid][] = $cm->id;
-                $modcontextids[$cm->modname][] = $modcontext->id;
-            }
-        }
-
-        // Use all activity privacy providers.
-        foreach (array_keys(\core_component::get_plugin_list('mod')) as $name) {
-            if (!isset($modcontextids[$name])) {
-                continue;
-            }
-            $list = new \core_privacy\local\request\approved_contextlist($user, 'tool_certify', $modcontextids[$name]);
-            $privacyclass = 'mod_' . $name . '\\privacy\provider';
-            if (!class_exists($privacyclass)) {
-                continue;
-            }
-            // Why is there no interface with this method in privacy API?
-            if (!method_exists($privacyclass, 'delete_data_for_user')) {
-                continue;
-            }
-            try {
-                $privacyclass::delete_data_for_user($list);
-            } catch (\Throwable $ex) {
-                debugging("Exception detected in $privacyclass::delete_data_for_user(): " . $ex->getMessage(),
-                    DEBUG_DEVELOPER, $ex->getTrace());
-            }
-        }
-
-        // Finally delete all types of completions.
-        foreach ($courseids as $courseid) {
-            if (isset($cmids[$courseid])) {
-                foreach ($cmids[$courseid] as $cmid) {
-                    \core_completion\privacy\provider::delete_completion($user, null, $cmid);
-                }
-            }
-            \core_completion\privacy\provider::delete_completion($user, $courseid, null);
-        }
-    }
-
-    /**
      * Sync certification periods with program allocations.
      *
      * @param int|null $certificationid
@@ -187,8 +126,13 @@ final class certify extends base {
     public static function sync_certifications(?int $certificationid, ?int $userid): void {
         global $DB;
 
+        if (defined('TOTARA_PROGRAM_MIGRATION') && TOTARA_PROGRAM_MIGRATION) {
+            // Enrolment sync will be done via cron later for performance reasons.
+            return;
+        }
+
         if (!PHPUNIT_TEST && !$userid && $DB->is_transaction_started()) {
-            debugging('assignment::fix_program_allocations() is not supposed to be used in transactions without userid', DEBUG_DEVELOPER);
+            debugging('assignment::sync_certifications() is not supposed to be used in transactions without userid', DEBUG_DEVELOPER);
         }
 
         $coursceclasses = \enrol_programs\local\allocation::get_source_classes();
@@ -208,13 +152,13 @@ final class certify extends base {
         } else {
             $certificationselect = '';
         }
-        $sql = "SELECT pa.*
+        $sql = "SELECT pa.id, pa.programid, pa.userid
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
              LEFT JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
              LEFT JOIN {tool_certify_assignments} ca ON ca.certificationid = cp.certificationid AND ca.userid = cp.userid
              LEFT JOIN {tool_certify_certifications} c ON c.id = cp.certificationid
-                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify'
+                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify' AND ps.id = pa.sourceid
                  WHERE pa.archived = 0
                        AND (
                             cp.id IS NULL
@@ -250,13 +194,13 @@ final class certify extends base {
         } else {
             $certificationselect = '';
         }
-        $sql = "SELECT pa.*
+        $sql = "SELECT pa.id, pa.programid, pa.userid
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
                   JOIN {tool_certify_assignments} ca ON ca.certificationid = cp.certificationid AND ca.userid = cp.userid
                   JOIN {tool_certify_certifications} c ON c.id = cp.certificationid
-                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify'
+                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify' AND ps.id = pa.sourceid
                  WHERE pa.archived = 1
                        AND cp.timerevoked IS NULL AND ca.archived = 0 AND c.archived = 0 AND p.archived = 0
                        AND (cp.timewindowend IS NULL OR cp.timewindowend > :now1)
@@ -295,13 +239,13 @@ final class certify extends base {
         } else {
             $certificationselect = '';
         }
-        $sql = "SELECT pa.*
+        $sql = "SELECT pa.id, pa.programid, pa.userid
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
                   JOIN {tool_certify_assignments} ca ON ca.certificationid = cp.certificationid AND ca.userid = cp.userid
                   JOIN {tool_certify_certifications} c ON c.id = cp.certificationid
-                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify'
+                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify' AND ps.id = pa.sourceid
                  WHERE pa.archived = 0 AND p.archived = 0
                        AND (
                            (pa.timestart <> cp.timewindowstart)
@@ -373,6 +317,7 @@ final class certify extends base {
 
             $program = $DB->get_record('enrol_programs_programs', ['id' => $period->programid], '*', MUST_EXIST);
             $allocation = $DB->get_record('enrol_programs_allocations', ['userid' => $period->userid, 'programid' => $period->programid]);
+            $user = $DB->get_record('user', ['id' => $period->userid, 'deleted' => 0, 'confirmed' => 1], '*', MUST_EXIST);
 
             if ($period->first) {
                 $resettype = $settings->resettype1;
@@ -380,58 +325,30 @@ final class certify extends base {
                 $resettype = $settings->resettype2;
             }
 
-            if ($resettype == certification::RESETTYPE_NONE && $allocation) {
-                // Do not retry allocation.
-                $DB->set_field('tool_certify_periods', 'allocationid', 0, ['id' => $period->id]);
-                continue;
-            }
-
-            if ($resettype >= certification::RESETTYPE_DEALLOCATE && $allocation) {
-                $delsource = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid], '*', MUST_EXIST);
-                /** @var \enrol_programs\local\source\base $coursceclass */
-                $coursceclass = $coursceclasses[$delsource->type];
-                $coursceclass::deallocate_user($program, $delsource, $allocation, true);
-            }
-
-            if ($resettype >= certification::RESETTYPE_UNENROL) {
-                // Force deleting of course enrolments - even if protected by enrol plugins!
-                $sql = "SELECT DISTINCT ue.*
-                          FROM {enrol_programs_items} i
-                          JOIN {course} c ON c.id = i.courseid
-                          JOIN {enrol} e ON e.courseid = c.id   
-                          JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                         WHERE i.programid = :programid AND ue.userid = :userid
-                      ORDER BY ue.id ASC";
-                $ues = $DB->get_records_sql($sql, ['programid' => $program->id, 'userid' => $period->userid]);
-                foreach ($ues as $ue) {
-                    $instance = $DB->get_record('enrol', ['id' => $ue->enrolid], '*', MUST_EXIST);
-                    $enrolplugin = enrol_get_plugin($instance->enrol);
-                    if (!$enrolplugin) {
-                        $instance->enrol = 'manual'; // Hack to work around missing enrol plugins.
-                        $enrolplugin = enrol_get_plugin('manual');
-                    }
-                    $enrolplugin->unenrol_user($instance, $ue->userid);
+            if ($resettype == course_reset::RESETTYPE_NONE) {
+                if ($allocation) {
+                    // Do not retry allocation.
+                    $DB->set_field('tool_certify_periods', 'allocationid', 0, ['id' => $period->id]);
+                    continue;
                 }
-            }
-
-            if ($resettype >= certification::RESETTYPE_PURGE) {
-                $sql = "SELECT DISTINCT c.id
-                          FROM {enrol_programs_items} i
-                          JOIN {course} c ON c.id = i.courseid
-                         WHERE i.programid = :programid
-                      ORDER BY c.id ASC";
-                $courseids = $DB->get_fieldset_sql($sql, ['programid' => $program->id]);
-                if ($courseids) {
-                    self::purge_courses($courseids, $userid);
+            } else {
+                // Remove all previous allocations.
+                if ($allocation) {
+                    $delsource = $DB->get_record('enrol_programs_sources', ['id' => $allocation->sourceid], '*', MUST_EXIST);
+                    /** @var \enrol_programs\local\source\base $coursceclass */
+                    $coursceclass = $coursceclasses[$delsource->type];
+                    $coursceclass::deallocate_user($program, $delsource, $allocation);
                 }
-            }
 
-            $allocation = $DB->get_record('enrol_programs_allocations', ['userid' => $period->userid, 'programid' => $period->programid]);
-            if ($allocation) {
-                // Something is wrong, probably some automatic allocation source messing this up, oh well.
-                debugging("Failed resetting allocation for certification period $period->id", DEBUG_DEVELOPER);
-                $DB->set_field('tool_certify_periods', 'allocationid', 0, ['id' => $period->id]);
-                continue;
+                course_reset::reset_courses($user, $resettype, $program->id);
+
+                $allocation = $DB->get_record('enrol_programs_allocations', ['userid' => $period->userid, 'programid' => $period->programid]);
+                if ($allocation) {
+                    // Something is wrong, probably some automatic allocation source messing this up, oh well.
+                    debugging("Failed resetting allocation for certification period $period->id", DEBUG_DEVELOPER);
+                    $DB->set_field('tool_certify_periods', 'allocationid', 0, ['id' => $period->id]);
+                    continue;
+                }
             }
 
             // Finally allocate user to program.
@@ -468,7 +385,7 @@ final class certify extends base {
                   JOIN {tool_certify_periods} cp ON cp.allocationid = pa.id
                   JOIN {tool_certify_assignments} ca ON ca.certificationid = cp.certificationid AND ca.userid = cp.userid
                   JOIN {tool_certify_certifications} c ON c.id = cp.certificationid
-                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify'
+                  JOIN {enrol_programs_sources} ps ON ps.programid = p.id AND ps.type = 'certify' AND ps.id = pa.sourceid
                  WHERE pa.archived = 0 AND ca.archived = 0 AND c.archived = 0 AND p.archived = 0
                        AND pa.timecompleted IS NOT NULL
                        AND cp.timecertified IS NULL AND cp.timerevoked IS NULL

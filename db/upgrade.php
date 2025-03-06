@@ -293,5 +293,50 @@ function xmldb_enrol_programs_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023081200, 'enrol', 'programs');
     }
 
+    if ($oldversion < 2023100700) {
+        $table = new xmldb_table('enrol_programs_programs');
+        $index = new xmldb_index('archived', XMLDB_INDEX_NOTUNIQUE, ['archived']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('enrol_programs_items');
+        $index = new xmldb_index('programid-courseid', XMLDB_INDEX_NOTUNIQUE, ['programid', 'courseid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Programs savepoint reached.
+        upgrade_plugin_savepoint(true, 2023100700, 'enrol', 'programs');
+    }
+
+    if ($oldversion < 2023112500) {
+        // Define table enrol_programs_src_commholds to be created.
+        $table = new xmldb_table('enrol_programs_src_commholds');
+
+        // Adding fields to table enrol_programs_src_commholds.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('quantity', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('holdkey', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('programid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table enrol_programs_src_commholds.
+        $table->add_key('id', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_key('programid', XMLDB_KEY_FOREIGN, ['programid'], 'enrol_programs_programs', ['id']);
+
+        // Adding indexes to table enrol_programs_src_commholds.
+        $table->add_index('holdkey', XMLDB_INDEX_NOTUNIQUE, ['holdkey']);
+
+        // Conditionally launch create table for enrol_programs_src_commholds.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Programs savepoint reached.
+        upgrade_plugin_savepoint(true, 2023112500, 'enrol', 'programs');
+    }
+
     return true;
 }
