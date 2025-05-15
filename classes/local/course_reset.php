@@ -227,6 +227,6 @@ final class course_reset {
         $cache3->delete($user->id);
 
         $hook = new \enrol_programs\hook\course_completions_purged($user->id, $programid);
-        \core\hook\manager::get_instance()->dispatch($hook);
+        \core\di::get(\core\hook\manager::class)->dispatch($hook);
     }
 }

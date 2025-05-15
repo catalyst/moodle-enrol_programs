@@ -26,18 +26,18 @@
 $callbacks = [
     [
         'hook' => \local_navmenu\hook\item_classes::class,
-        'callback' => \enrol_programs\callback\local_navmenu::class . '::item_classes',
+        'callback' => [\enrol_programs\callback\local_navmenu::class, 'item_classes'],
     ],
     [
         'hook' => \customfield_training\hook\framework_usage::class,
-        'callback' => \enrol_programs\callback\customfield_training::class . '::framework_usage',
+        'callback' => [\enrol_programs\callback\customfield_training::class, 'framework_usage'],
     ],
     [
         'hook' => \customfield_training\hook\completion_updated::class,
-        'callback' => \enrol_programs\callback\customfield_training::class . '::completion_updated',
+        'callback' => [\enrol_programs\callback\customfield_training::class, 'completion_updated'],
     ],
     [
         'hook' => \local_reportbuilder\hook\report_sources::class,
-        'callback' => \enrol_programs\callback\local_reportbuilder::class . '::report_sources',
+        'callback' => [\enrol_programs\callback\local_reportbuilder::class, 'report_sources'],
     ],
 ];
