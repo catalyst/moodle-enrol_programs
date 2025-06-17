@@ -29,6 +29,7 @@
 /** @var stdClass $CFG */
 /** @var stdClass $COURSE */
 
+use enrol_programs\hook\extend_all_management_dropdown;
 use enrol_programs\local\management;
 use local_openlms\output\extra_menu\dropdown;
 
@@ -103,6 +104,10 @@ if (!$archived && has_capability('enrol/programs:upload', $context)) {
     $url = new moodle_url('/enrol/programs/management/upload.php', ['contextid' => $contextid]);
     $dropdown->add_item(get_string('upload', 'enrol_programs'), $url);
 }
+
+// Allow additional dropdown menu items from other plugins.
+$hook = new extend_all_management_dropdown($dropdown, $context);
+\core\di::get(\core\hook\manager::class)->dispatch($hook);
 
 // Allow category switching.
 
