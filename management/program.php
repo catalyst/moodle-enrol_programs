@@ -29,6 +29,7 @@
 /** @var stdClass $CFG */
 /** @var stdClass $COURSE */
 
+use enrol_programs\hook\extend_program_management_dropdown;
 use enrol_programs\local\management;
 use local_openlms\output\extra_menu\dropdown;
 
@@ -69,6 +70,11 @@ if (has_capability('enrol/programs:export', $context)) {
     $url = new moodle_url('/enrol/programs/management/export.php', ['id' => $program->id]);
     $dropdown->add_item(get_string('export', 'enrol_programs'), $url);
 }
+
+// Allow additional dropdown menu items from other plugins.
+$hook = new extend_program_management_dropdown($dropdown, $context, $program);
+\core\di::get(\core\hook\manager::class)->dispatch($hook);
+
 if ($dropdown->has_items()) {
     echo '<div class="float-end">';
     echo $OUTPUT->render($dropdown);
