@@ -261,6 +261,8 @@ final class top extends set {
         program::make_snapshot($item->programid, 'item_append');
         $trans->allow_commit();
 
+        \core_cache\helper::purge_by_event('enrol_programs/changesincourseitems');
+
         // Do not use transactions for enrolments, we can always fix them later.
         allocation::fix_enrol_instances($this->programid);
         allocation::fix_user_enrolments($this->programid, null);
@@ -785,6 +787,8 @@ final class top extends set {
         program::make_snapshot($this->programid, 'item_delete');
 
         $trans->allow_commit();
+
+        \core_cache\helper::purge_by_event('enrol_programs/changesincourseitems');
 
         // Do not use transactions for enrolments, we can always fix them later.
         allocation::fix_enrol_instances($this->programid);
