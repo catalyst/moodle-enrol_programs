@@ -374,6 +374,8 @@ abstract class base {
             $DB->insert_record('enrol_programs_sources', $fromsource);
         }
 
+        \core_cache\helper::purge_by_event('enrol_programs/changesinprogramsources');
+
         return $DB->get_record('enrol_programs_sources',
             ['programid' => $targetprogramid, 'type' => static::get_type()], '*', MUST_EXIST);
     }
@@ -501,6 +503,8 @@ abstract class base {
         $sourceclass::after_update($oldsource, $data, $source);
 
         \enrol_programs\local\program::make_snapshot($data->programid, 'update_source');
+
+        \core_cache\helper::purge_by_event('enrol_programs/changesinprogramsources');
 
         \enrol_programs\local\allocation::fix_allocation_sources($program->id, null);
         \enrol_programs\local\allocation::fix_enrol_instances($program->id);
