@@ -27,7 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 /** @var stdClass $plugin */
 
-$plugin->version   = 2024103100.01;
+$plugin->version   = 2024103100.02;
 $plugin->requires  = 2024091700.00; // 4.5.0
 $plugin->component = 'enrol_programs';
 $plugin->release   = 'v4.0.1';

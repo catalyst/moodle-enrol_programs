@@ -189,6 +189,35 @@ final class selfallocation extends base {
     }
 
     /**
+     * Returns list of actions available on My program page.
+     *
+     * NOTE: This is intended mainly for students.
+     *
+     * @param stdClass $source
+     * @param stdClass $allocation
+     * @return string[]
+     */
+    public static function get_allocated_actions(\stdClass $source, \stdClass $allocation): array {
+        global $USER, $DB, $PAGE;
+
+        if ($source->id != $allocation->sourceid || $source->type !== 'selfallocation') {
+            // Something isn't right, return here.
+            return [];
+        }
+
+        $url = new \moodle_url('/enrol/programs/my/source_selfallocation_deallocate.php', ['sourceid' => $source->id]);
+        $title = get_string('source_selfallocation_deallocate', 'enrol_programs');
+        $button = new \local_openlms\output\dialog_form\button($url, $title);
+        $button->set_after_submit($button::AFTER_SUBMIT_REDIRECT);
+
+        /** @var \local_openlms\output\dialog_form\renderer $dialogformoutput */
+        $dialogformoutput = $PAGE->get_renderer('local_openlms', 'dialog_form');
+        $button = $dialogformoutput->render($button);
+
+        return [$button];
+    }
+
+    /**
      * Self-allocate current user to program.
      *
      * @param int $programid
