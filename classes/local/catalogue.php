@@ -204,7 +204,7 @@ final class catalogue {
 
             $tagsdiv = '';
             if ($CFG->usetags) {
-                $tags = \core_tag_tag::get_item_tags('enrol_programs', 'program', $program->id);
+                $tags = \core_tag_tag::get_item_tags('enrol_programs', 'enrol_programs_programs', $program->id);
                 if ($tags) {
                     $tagsdiv = $OUTPUT->tag_list($tags, '', 'program-tags');
                 }
@@ -405,7 +405,7 @@ EOT;
 
         $sql = "SELECT DISTINCT t.id, t.name
                   FROM {tag} t
-                  JOIN {tag_instance} tt ON tt.itemtype = 'program' AND tt.tagid = t.id AND tt.component = 'enrol_programs'
+                  JOIN {tag_instance} tt ON tt.itemtype = 'enrol_programs_programs' AND tt.tagid = t.id AND tt.component = 'enrol_programs'
                   JOIN {enrol_programs_programs} p ON p.id = tt.itemid
              LEFT JOIN {enrol_programs_allocations} pa ON pa.programid = p.id AND pa.userid = :userid1 AND pa.archived = 0
                  WHERE p.archived = 0
@@ -440,7 +440,7 @@ EOT;
 
         $sql = "SELECT p.*
                   FROM {enrol_programs_programs} p
-                  JOIN {tag_instance} tt ON tt.itemid = p.id AND tt.itemtype = 'program' AND tt.tagid = :tagid AND tt.component = 'enrol_programs'
+                  JOIN {tag_instance} tt ON tt.itemid = p.id AND tt.itemtype = 'enrol_programs_programs' AND tt.tagid = :tagid AND tt.component = 'enrol_programs'
              LEFT JOIN {enrol_programs_allocations} pa ON pa.programid = p.id AND pa.userid = :userid1 AND pa.archived = 0
                  WHERE p.archived = 0
                        AND (p.public = 1 OR pa.id IS NOT NULL OR EXISTS (

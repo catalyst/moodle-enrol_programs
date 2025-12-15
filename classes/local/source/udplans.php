@@ -282,7 +282,7 @@ final class udplans extends base {
                   FROM {tool_udplans_plans} pl
                   JOIN {user} u ON u.id = pl.userid AND u.deleted = 0 AND u.confirmed = 1
                   JOIN {tool_udplans_frameworks} f ON f.id = pl.frameworkid
-                  JOIN {tool_udplans_items} i ON i.planid = pl.id AND i.itemtype = 'program'
+                  JOIN {tool_udplans_items} i ON i.planid = pl.id AND i.itemtype = 'enrol_programs_programs'
                   JOIN {enrol_programs_programs} p ON p.id = i.instanceid
                   JOIN {enrol_programs_sources} ps ON ps.type = 'udplans' AND ps.programid = p.id
                   JOIN {enrol_programs_frameworks} pf ON pf.frameworkid = f.id AND pf.sourceid = ps.id
@@ -330,7 +330,7 @@ final class udplans extends base {
                   FROM {enrol_programs_allocations} pa
                   JOIN {enrol_programs_sources} ps ON ps.id = pa.sourceid AND ps.type = 'udplans'
              LEFT JOIN {tool_udplans_plans} pl ON pl.id = pa.sourceinstanceid AND pl.userid = pa.userid
-             LEFT JOIN {tool_udplans_items} pi ON pi.planid = pl.id AND pi.itemtype = 'program' AND pi.instanceid = pa.programid
+             LEFT JOIN {tool_udplans_items} pi ON pi.planid = pl.id AND pi.itemtype = 'enrol_programs_programs' AND pi.instanceid = pa.programid
              LEFT JOIN {tool_udplans_frameworks} f ON f.id = pl.frameworkid
                  WHERE pa.archived = 0
                        AND (f.id IS NULL OR pl.id IS NULL OR pi.id IS NULL OR pl.archived = 1 OR f.archived = 1)
@@ -355,7 +355,7 @@ final class udplans extends base {
                   JOIN {enrol_programs_sources} ps ON ps.id = pa.sourceid AND ps.type = 'udplans'
                   JOIN {tool_udplans_plans} pl ON pl.id = pa.sourceinstanceid AND pl.userid = pa.userid AND pl.archived = 0
                   JOIN {tool_udplans_frameworks} f ON f.id = pl.frameworkid AND f.archived = 0 AND f.programschedule = 0
-                  JOIN {tool_udplans_items} pi ON pi.planid = pl.id AND pi.itemtype = 'program' AND pi.instanceid = pa.programid
+                  JOIN {tool_udplans_items} pi ON pi.planid = pl.id AND pi.itemtype = 'enrol_programs_programs' AND pi.instanceid = pa.programid
                  WHERE (
                             (pa.archived = 1)
                             OR (pl.timestart <> pa.timestart)
