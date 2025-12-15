@@ -82,7 +82,7 @@ final class allocations extends rb_base_source {
         $this->add_program_context_table_to_joinlist($joinlist, 'program', 'contextid');
         $this->add_program_source_table_to_joinlist($joinlist, 'base', 'sourceid', 'INNER');
         $this->add_course_category_table_to_joinlist($joinlist, 'context', 'instanceid');
-        $this->add_tag_tables_to_joinlist('enrol_programs', 'program', $joinlist, 'base', 'programid');
+        $this->add_tag_tables_to_joinlist('enrol_programs', 'enrol_programs_programs', $joinlist, 'base', 'programid');
 
         return $joinlist;
     }

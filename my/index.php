@@ -122,7 +122,7 @@ foreach ($programs as $program) {
     $detailurl = new moodle_url('/enrol/programs/my/program.php', ['id' => $program->id]);
     $fullname = html_writer::link($detailurl, $fullname);
     if ($CFG->usetags) {
-        $tags = core_tag_tag::get_item_tags('enrol_programs', 'program', $program->id);
+        $tags = core_tag_tag::get_item_tags('enrol_programs', 'enrol_programs_programs', $program->id);
         if ($tags) {
             $fullname .= '<br />' . $OUTPUT->tag_list($tags, '', 'program-tags');
         }

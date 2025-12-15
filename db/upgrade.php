@@ -390,5 +390,18 @@ function xmldb_enrol_programs_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024071100, 'enrol', 'programs');
     }
 
+    if ($oldversion < 2024103100.03) {
+        // Fix incorrect itemtype for program tags.
+        // The tag cleanup task expects itemtype to match the table name,
+        // but programs were using 'program' instead of 'enrol_programs_programs'.
+        $DB->execute("UPDATE {tag_instance}
+                        SET itemtype = 'enrol_programs_programs'
+                    WHERE itemtype = 'program'
+                        AND component = 'enrol_programs'");
+
+        // Programs savepoint reached.
+        upgrade_plugin_savepoint(true, 2024103100.03, 'enrol', 'programs');
+    }
+
     return true;
 }

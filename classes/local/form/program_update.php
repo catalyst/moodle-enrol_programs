@@ -48,7 +48,7 @@ final class program_update extends \local_openlms\dialog_form {
         $mform->addHelpButton('creategroups', 'creategroups', 'enrol_programs');
 
         if ($CFG->usetags) {
-            $mform->addElement('tags', 'tags', get_string('tags'), ['itemtype' => 'program', 'component' => 'enrol_programs']);
+            $mform->addElement('tags', 'tags', get_string('tags'), ['itemtype' => 'enrol_programs_programs', 'component' => 'enrol_programs']);
         }
 
         $options = \enrol_programs\local\program::get_image_filemanager_options();
