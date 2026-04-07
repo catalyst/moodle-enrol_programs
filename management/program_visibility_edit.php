@@ -53,7 +53,7 @@ management::setup_program_page($currenturl, $context, $program);
 
 $current = new stdClass();
 $current->id = $program->id;
-$current->public = $program->public;
+$current->pub = $program->pub;
 $current->cohorts = array_keys(management::fetch_current_cohorts_menu($program->id));
 
 $form = new \enrol_programs\local\form\program_visibility_edit(null, ['data' => $current, 'context' => $context]);

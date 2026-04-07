@@ -47,7 +47,7 @@ final class upload {
                 'description' => $rawprogram->description ?? '',
                 'descriptionformat' => $rawprogram->descriptionformat ?? FORMAT_HTML,
                 'archived' => 0,
-                'public' => $rawprogram->public ?? 0,
+                'pub' => $rawprogram->pub ?? 0,
                 'creategroups' => $rawprogram->creategroups ?? 0,
                 'timeallocationstart' => self::parse_date($rawprogram->allocationstart ?? null),
                 'timeallocationend' => self::parse_date($rawprogram->allocationend ?? null),
@@ -174,7 +174,7 @@ final class upload {
             'fullname',
             'category',
             'description',
-            'public',
+            'pub',
             'contents',
             'creategroups',
             'allocationstart',
@@ -324,7 +324,7 @@ final class upload {
                 $fullname,
                 $cat,
                 clean_text(shorten_text($description, 30)),
-                $yesno[$program->public ?? 0],
+                $yesno[$program->pub ?? 0],
                 $contents,
                 $yesno[$program->creategroups ?? 0],
                 $program->allocationstart ?? '',
@@ -760,7 +760,7 @@ final class upload {
                     continue;
                 }
                 $value = $row[$ci];
-                if (in_array($colname, ['descriptionformat', 'public', 'creategroups'])) {
+                if (in_array($colname, ['descriptionformat', 'pub', 'creategroups'])) {
                     $value = intval($value);
                 } else if (in_array($colname, ['allocationstart', 'allocationend'])) {
                     if ($value === '') {

@@ -54,7 +54,7 @@ final class approval_test extends \advanced_testcase {
         /** @var \enrol_programs_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
 
-        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'public' => 1]);
+        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'pub' => 1]);
         $source1m = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'manual'], '*', MUST_EXIST);
         $source1a = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'approval'], '*', MUST_EXIST);
 
@@ -113,19 +113,19 @@ final class approval_test extends \advanced_testcase {
         // Must be visible.
 
         $program1 = program::update_program_visibility((object)['id' => $program1->id,
-            'public' => 1]);
+            'pub' => 1]);
         $this->assertTrue(approval::can_user_request($program1, $source1a, $user1->id));
 
         $program1 = program::update_program_visibility((object)['id' => $program1->id,
-            'public' => 0, 'cohorts' => [$cohort1->id]]);
+            'pub' => 0, 'cohorts' => [$cohort1->id]]);
         $this->assertTrue(approval::can_user_request($program1, $source1a, $user1->id));
 
         $program1 = program::update_program_visibility((object)['id' => $program1->id,
-            'public' => 0, 'cohorts' => []]);
+            'pub' => 0, 'cohorts' => []]);
         $this->assertFalse(approval::can_user_request($program1, $source1a, $user1->id));
 
         $program1 = program::update_program_visibility((object)['id' => $program1->id,
-            'public' => 1, 'cohorts' => [$cohort1->id]]);
+            'pub' => 1, 'cohorts' => [$cohort1->id]]);
         $this->assertTrue(approval::can_user_request($program1, $source1a, $user1->id));
 
         // Allocated already.
@@ -164,7 +164,7 @@ final class approval_test extends \advanced_testcase {
         /** @var \enrol_programs_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
 
-        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'public' => 1]);
+        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'pub' => 1]);
         $source1m = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'manual'], '*', MUST_EXIST);
         $source1a = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'approval'], '*', MUST_EXIST);
 
@@ -190,7 +190,7 @@ final class approval_test extends \advanced_testcase {
         /** @var \enrol_programs_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
 
-        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'public' => 1]);
+        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'pub' => 1]);
         $source1m = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'manual'], '*', MUST_EXIST);
         $source1a = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'approval'], '*', MUST_EXIST);
 
@@ -217,7 +217,7 @@ final class approval_test extends \advanced_testcase {
         /** @var \enrol_programs_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
 
-        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'public' => 1]);
+        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'pub' => 1]);
         $source1m = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'manual'], '*', MUST_EXIST);
         $source1a = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'approval'], '*', MUST_EXIST);
 
@@ -246,7 +246,7 @@ final class approval_test extends \advanced_testcase {
         /** @var \enrol_programs_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('enrol_programs');
 
-        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'public' => 1]);
+        $program1 = $generator->create_program(['sources' => ['manual' => [], 'approval' => []], 'pub' => 1]);
         $source1m = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'manual'], '*', MUST_EXIST);
         $source1a = $DB->get_record('enrol_programs_sources', ['programid' => $program1->id, 'type' => 'approval'], '*', MUST_EXIST);
 

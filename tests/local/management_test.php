@@ -287,12 +287,12 @@ final class management_test extends \advanced_testcase {
 
         program::update_program_visibility((object)[
             'id' => $program1->id,
-            'public' => 0,
+            'pub' => 0,
             'cohorts' => [$cohort1->id, $cohort2->id]
         ]);
         program::update_program_visibility((object)[
             'id' => $program2->id,
-            'public' => 1,
+            'pub' => 1,
             'cohorts' => [$cohort3->id]
         ]);
 

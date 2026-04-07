@@ -58,7 +58,7 @@ final class get_programs_test extends \advanced_testcase {
             'idnumber' => 'p1',
             'description' => 'some desc 1',
             'descriptionformat' => FORMAT_MARKDOWN,
-            'public' => 1,
+            'pub' => 1,
             'archived' => 0,
             'contextid' => $syscontext->id,
             'sources' => ['manual' => []],
@@ -69,7 +69,7 @@ final class get_programs_test extends \advanced_testcase {
             'idnumber' => 'p2',
             'description' => '<b>some desc 2</b>',
             'descriptionformat' => FORMAT_HTML,
-            'public' => 0,
+            'pub' => 0,
             'archived' => 0,
             'contextid' => $catcontext1->id,
             'sources' => ['manual' => [], 'cohort' => []],
@@ -78,7 +78,7 @@ final class get_programs_test extends \advanced_testcase {
         $program3 = $generator->create_program([
             'fullname' => 'Prog3',
             'idnumber' => 'p3',
-            'public' => 1,
+            'pub' => 1,
             'archived' => 1,
             'contextid' => $syscontext->id,
             'sources' => ['manual' => []]
@@ -99,7 +99,7 @@ final class get_programs_test extends \advanced_testcase {
         $this->assertSame($program1->description, $result->description);
         $this->assertSame((int)$program1->descriptionformat, $result->descriptionformat);
         $this->assertSame('[]', $result->presentationjson);
-        $this->assertSame(true, $result->public);
+        $this->assertSame(true, $result->pub);
         $this->assertSame(false, $result->archived);
         $this->assertSame(false, $result->creategroups);
         $this->assertSame(null, $result->timeallocationstart);
@@ -121,7 +121,7 @@ final class get_programs_test extends \advanced_testcase {
         $this->assertSame($program2->description, $result->description);
         $this->assertSame((int)$program2->descriptionformat, $result->descriptionformat);
         $this->assertSame('[]', $result->presentationjson);
-        $this->assertSame(false, $result->public);
+        $this->assertSame(false, $result->pub);
         $this->assertSame(false, $result->archived);
         $this->assertSame(false, $result->creategroups);
         $this->assertSame(null, $result->timeallocationstart);
@@ -143,7 +143,7 @@ final class get_programs_test extends \advanced_testcase {
         $this->assertSame($program3->description, $result->description);
         $this->assertSame((int)$program3->descriptionformat, $result->descriptionformat);
         $this->assertSame('[]', $result->presentationjson);
-        $this->assertSame(true, $result->public);
+        $this->assertSame(true, $result->pub);
         $this->assertSame(true, $result->archived);
         $this->assertSame(false, $result->creategroups);
         $this->assertSame(null, $result->timeallocationstart);
@@ -176,7 +176,7 @@ final class get_programs_test extends \advanced_testcase {
         $this->assertEquals($program1->id, $results[0]['id']);
         $this->assertEquals($program3->id, $results[1]['id']);
 
-        $response = get_programs::execute([['field' => 'public', 'value' => 1]]);
+        $response = get_programs::execute([['field' => 'pub', 'value' => 1]]);
         $results = get_programs::clean_returnvalue(get_programs::execute_returns(), $response);
         $this->assertCount(2, $results);
         $this->assertEquals($program1->id, $results[0]['id']);
@@ -188,21 +188,21 @@ final class get_programs_test extends \advanced_testcase {
         $this->assertEquals($program1->id, $results[0]['id']);
         $this->assertEquals($program2->id, $results[1]['id']);
 
-        $response = get_programs::execute([['field' => 'id', 'value' => $program1->id], ['field' => 'public', 'value' => 1]]);
+        $response = get_programs::execute([['field' => 'id', 'value' => $program1->id], ['field' => 'pub', 'value' => 1]]);
         $results = get_programs::clean_returnvalue(get_programs::execute_returns(), $response);
         $this->assertCount(1, $results);
         $this->assertEquals($program1->id, $results[0]['id']);
 
-        $response = get_programs::execute([['field' => 'id', 'value' => $program1->id], ['field' => 'public', 'value' => true]]);
+        $response = get_programs::execute([['field' => 'id', 'value' => $program1->id], ['field' => 'pub', 'value' => true]]);
         $results = get_programs::clean_returnvalue(get_programs::execute_returns(), $response);
         $this->assertCount(1, $results);
         $this->assertEquals($program1->id, $results[0]['id']);
 
-        $response = get_programs::execute([['field' => 'id', 'value' => $program1->id], ['field' => 'public', 'value' => 0]]);
+        $response = get_programs::execute([['field' => 'id', 'value' => $program1->id], ['field' => 'pub', 'value' => 0]]);
         $results = get_programs::clean_returnvalue(get_programs::execute_returns(), $response);
         $this->assertCount(0, $results);
 
-        $response = get_programs::execute([['field' => 'id', 'value' => $program1->id], ['field' => 'public', 'value' => false]]);
+        $response = get_programs::execute([['field' => 'id', 'value' => $program1->id], ['field' => 'pub', 'value' => false]]);
         $results = get_programs::clean_returnvalue(get_programs::execute_returns(), $response);
         $this->assertCount(0, $results);
 
@@ -280,13 +280,13 @@ final class get_programs_test extends \advanced_testcase {
         ]);
         $program2 = $generator->create_program([
             'fullname' => 'Prog 2',
-            'public' => 1,
+            'pub' => 1,
             'contextid' => $tenantcontext2->id,
             'sources' => ['manual' => []]
         ]);
         $program3 = $generator->create_program([
             'fullname' => 'Prog 3',
-            'public' => 0,
+            'pub' => 0,
             'contextid' => $tenantsubcontext2->id,
             'sources' => ['manual' => []]
         ]);
@@ -313,7 +313,7 @@ final class get_programs_test extends \advanced_testcase {
         $this->assertEquals($program2->id, $results[0]['id']);
         $this->assertEquals($program3->id, $results[1]['id']);
 
-        $response = get_programs::execute([['field' => 'tenantid', 'value' => $tenant2->id], ['field' => 'public', 'value' => 1]]);
+        $response = get_programs::execute([['field' => 'tenantid', 'value' => $tenant2->id], ['field' => 'pub', 'value' => 1]]);
         $results = get_programs::clean_returnvalue(get_programs::execute_returns(), $response);
         $this->assertCount(1, $results);
         $this->assertEquals($program2->id, $results[0]['id']);

@@ -80,7 +80,7 @@ final class form_item_append_frameworkid extends \local_openlms\external\form_au
             }
         }
 
-        $sql = "SELECT f.id, f.name, f.idnumber, f.archived, f.contextid, f.public
+        $sql = "SELECT f.id, f.name, f.idnumber, f.archived, f.contextid, f.pub
                   FROM {customfield_training_frameworks} f
                   JOIN {context} c ON c.id = f.contextid
                  WHERE f.archived = 0
@@ -95,7 +95,7 @@ final class form_item_append_frameworkid extends \local_openlms\external\form_au
                     continue;
                 }
             }
-            if (!$framework->public) {
+            if (!$framework->pub) {
                 $context = \context::instance_by_id($framework->contextid);
                 if (!has_capability('customfield/training:viewframeworks', $context)) {
                     continue;
@@ -148,7 +148,7 @@ final class form_item_append_frameworkid extends \local_openlms\external\form_au
             return get_string('error');
         }
 
-        if ($framework->public) {
+        if ($framework->pub) {
             return null;
         }
 
