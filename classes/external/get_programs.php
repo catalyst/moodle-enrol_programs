@@ -43,7 +43,7 @@ final class get_programs extends external_api {
                 new external_single_structure(
                     [
                         'field' => new external_value(PARAM_ALPHANUM, 'The name of the field to be searched by list of'
-                            . ' acceptable fields is : id, contextid, fullname, idnumber, public, archived, tenantid'),
+                            . ' acceptable fields is : id, contextid, fullname, idnumber, pub, archived, tenantid'),
                         'value' => new external_value(PARAM_RAW, 'Value of the field to be searched, NULL allowed only for tenantid')
                     ]), 'Program search parameters'
             )
@@ -61,7 +61,7 @@ final class get_programs extends external_api {
         $fieldvalues = self::validate_parameters(self::execute_parameters(),
             ['fieldvalues' => $fieldvalues])['fieldvalues'];
 
-        $allowedfieldlist = ['id', 'contextid', 'fullname', 'idnumber', 'public', 'archived', 'tenantid'];
+        $allowedfieldlist = ['id', 'contextid', 'fullname', 'idnumber', 'pub', 'archived', 'tenantid'];
         $params = [];
         $where = [];
         $tenantjoin = '';
@@ -110,7 +110,7 @@ final class get_programs extends external_api {
                 $sources = $DB->get_records_menu('enrol_programs_sources',
                     ['programid' => $program->id], 'type ASC', 'type');
                 $program->sources = array_keys($sources);
-                if ($program->public) {
+                if ($program->pub) {
                     $program->cohortids = [];
                 } else {
                     $cohorts = $DB->get_records_menu('enrol_programs_cohorts',
@@ -139,7 +139,7 @@ final class get_programs extends external_api {
                 'description' => new external_value(PARAM_RAW, 'Program description text (in original text format)'),
                 'descriptionformat' => new external_value(PARAM_INT, 'Program description text format'),
                 'presentationjson' => new external_value(PARAM_RAW, 'Presentation json (not stable internal API data)'),
-                'public' => new external_value(PARAM_BOOL, 'Public flag'),
+                'pub' => new external_value(PARAM_BOOL, 'Public flag'),
                 'archived' => new external_value(PARAM_BOOL, 'Archived flag (archived problems do not change)'),
                 'creategroups' => new external_value(PARAM_BOOL, 'Create course groups flag'),
                 'timeallocationstart' => new external_value(PARAM_INT, 'Allocation start date'),

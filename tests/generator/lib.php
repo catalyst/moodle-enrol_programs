@@ -112,7 +112,7 @@ class enrol_programs_generator extends component_generator_base {
                 }
 
             }
-            \enrol_programs\local\program::update_program_visibility((object)['id' => $program->id, 'public' => $program->public, 'cohorts' => $cohortids]);
+            \enrol_programs\local\program::update_program_visibility((object)['id' => $program->id, 'pub' => $program->pub, 'cohorts' => $cohortids]);
         }
 
         foreach ($sources as $source => $data) {

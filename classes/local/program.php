@@ -132,7 +132,7 @@ final class program {
         $data->presentationjson = util::json_encode([]);
         unset($data->presentation);
 
-        $data->public = isset($data->public) ? (int)(bool)$data->public : 0;
+        $data->pub = isset($data->pub) ? (int)(bool)$data->pub : 0;
         $data->archived = isset($data->archived) ? (int)(bool)$data->archived : 0;
         $data->creategroups = isset($data->creategroups) ? (int)(bool)$data->creategroups : 0;
         if (empty($data->timeallocationstart)) {
@@ -439,7 +439,7 @@ final class program {
         global $DB;
 
         if ((isset($data->cohorts) && !is_array($data->cohorts))
-            || empty($data->id) || !isset($data->public)) {
+            || empty($data->id) || !isset($data->pub)) {
 
             throw new \coding_exception('Invalid data');
         }
@@ -448,8 +448,8 @@ final class program {
 
         $oldprogram = $DB->get_record('enrol_programs_programs', ['id' => $data->id], '*', MUST_EXIST);
 
-        if ($oldprogram->public != $data->public) {
-            $DB->set_field('enrol_programs_programs', 'public', (int)(bool)$data->public, ['id' => $data->id]);
+        if ($oldprogram->pub != $data->pub) {
+            $DB->set_field('enrol_programs_programs', 'pub', (int)(bool)$data->pub, ['id' => $data->id]);
         }
 
         if (isset($data->cohorts)) {

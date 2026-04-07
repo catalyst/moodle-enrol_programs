@@ -403,5 +403,18 @@ function xmldb_enrol_programs_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024103100.03, 'enrol', 'programs');
     }
 
+    if ($oldversion < 2024103100.04) {
+
+        // Rename field public on table enrol_programs_programs to pub.
+        $table = new xmldb_table('enrol_programs_programs');
+        $field = new xmldb_field('public', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'presentationjson');
+
+        // Launch rename field pub.
+        $dbman->rename_field($table, $field, 'pub');
+
+        // Programs savepoint reached.
+        upgrade_plugin_savepoint(true, 2024103100.04, 'enrol', 'programs');
+    }
+
     return true;
 }

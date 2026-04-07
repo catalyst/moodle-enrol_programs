@@ -147,7 +147,7 @@ class renderer extends \plugin_renderer_base {
 
         $result .= '<dl class="row">';
         $result .= '<dt class="col-3">' . get_string('public', 'enrol_programs') . ':</dt><dd class="col-9">'
-            . ($program->public ? get_string('yes') : get_string('no')) . '</dd>';
+            . ($program->pub ? get_string('yes') : get_string('no')) . '</dd>';
         $result .= '<dt class="col-3">' . get_string('cohorts', 'enrol_programs') . ':</dt><dd class="col-9">';
         $cohorts = management::fetch_current_cohorts_menu($program->id);
         if ($cohorts) {

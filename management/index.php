@@ -216,7 +216,7 @@ foreach ($programsinfo['programs'] as $program) {
         $allocationcount = html_writer::link($detailurl, $allocationcount);
     }
     $row[] = $allocationcount;
-    $public = ($program->public ? get_string('yes') : get_string('no'));
+    $public = ($program->pub ? get_string('yes') : get_string('no'));
     if (has_capability('enrol/programs:view', $pcontext)) {
         $detailurl = new moodle_url('/enrol/programs/management/program_visibility.php', ['id' => $program->id]);
         $public = html_writer::link($detailurl, $public);

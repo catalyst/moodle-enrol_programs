@@ -74,7 +74,7 @@ final class program_updated_test extends \advanced_testcase {
         $this->setAdminUser();
         $program = program::add_program($data);
 
-        $data = (object)['id' => $program->id, 'public' => 1];
+        $data = (object)['id' => $program->id, 'pub' => 1];
         $sink = $this->redirectEvents();
         $program = program::update_program_visibility($data);
         $events = $sink->get_events();

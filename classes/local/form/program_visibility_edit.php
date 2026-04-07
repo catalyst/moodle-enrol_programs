@@ -32,9 +32,9 @@ final class program_visibility_edit extends \local_openlms\dialog_form {
         $data = $this->_customdata['data'];
         $context = $this->_customdata['context'];
 
-        $mform->addElement('select', 'public', get_string('public', 'enrol_programs'), [0 => get_string('no'), 1 => get_string('yes')]);
-        $mform->setDefault('public', $data->public);
-        $mform->addHelpButton('public', 'public', 'enrol_programs');
+        $mform->addElement('select', 'pub', get_string('public', 'enrol_programs'), [0 => get_string('no'), 1 => get_string('yes')]);
+        $mform->setDefault('pub', $data->pub);
+        $mform->addHelpButton('pub', 'public', 'enrol_programs');
 
         $options = ['contextid' => $context->id, 'multiple' => true];
         /** @var \MoodleQuickForm_cohort $cohortsel */

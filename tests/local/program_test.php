@@ -49,7 +49,7 @@ final class program_test extends \advanced_testcase {
         $this->assertSame('', $program->description);
         $this->assertSame('1', $program->descriptionformat);
         $this->assertSame('[]', $program->presentationjson);
-        $this->assertSame('0', $program->public);
+        $this->assertSame('0', $program->pub);
         $this->assertSame('0', $program->archived);
         $this->assertSame('0', $program->creategroups);
         $this->assertSame(null, $program->timeallocationstart);
@@ -68,7 +68,7 @@ final class program_test extends \advanced_testcase {
             'description' => 'Some desc',
             'descriptionformat' => '2',
             'presentation' => ['some' => 'test'],
-            'public' => '1',
+            'pub' => '1',
             'archived' => '1',
             'creategroups' => '1',
             'timeallocationstart' => (string)(time() - 60 * 60 * 24),
@@ -84,7 +84,7 @@ final class program_test extends \advanced_testcase {
         $this->assertSame($data->description, $program->description);
         $this->assertSame($data->descriptionformat, $program->descriptionformat);
         $this->assertSame('[]', $program->presentationjson);
-        $this->assertSame($data->public, $program->public);
+        $this->assertSame($data->pub, $program->pub);
         $this->assertSame($data->archived, $program->archived);
         $this->assertSame($data->creategroups, $program->creategroups);
         $this->assertSame($data->timeallocationstart, $program->timeallocationstart);
@@ -142,7 +142,7 @@ final class program_test extends \advanced_testcase {
             'description' => 'Some desc',
             'descriptionformat' => '2',
             'presentation' => ['some' => 'test'],
-            'public' => '1',
+            'pub' => '1',
             'cohorts' => [$cohort1->id, $cohort2->id],
             'archived' => '1',
             'creategroups' => '1',
@@ -158,7 +158,7 @@ final class program_test extends \advanced_testcase {
         $this->assertSame($data->description, $program->description);
         $this->assertSame($data->descriptionformat, $program->descriptionformat);
         $this->assertSame('[]', $program->presentationjson);
-        $this->assertSame('0', $program->public);
+        $this->assertSame('0', $program->pub);
         $this->assertSame($data->archived, $program->archived);
         $this->assertSame($data->creategroups, $program->creategroups);
         $this->assertSame(null, $program->timeallocationstart);
@@ -197,7 +197,7 @@ final class program_test extends \advanced_testcase {
             'description' => 'Some desc',
             'descriptionformat' => '2',
             'presentation' => ['some' => 'test'],
-            'public' => '1',
+            'pub' => '1',
             'cohorts' => [$cohort1->id, $cohort2->id],
             'archived' => '1',
             'creategroups' => '1',
@@ -213,7 +213,7 @@ final class program_test extends \advanced_testcase {
         $this->assertSame($oldprogram->description, $program->description);
         $this->assertSame($oldprogram->descriptionformat, $program->descriptionformat);
         $this->assertSame('[]', $program->presentationjson);
-        $this->assertSame('1', $program->public);
+        $this->assertSame('1', $program->pub);
         $this->assertSame('0', $program->archived);
         $this->assertSame('0', $program->creategroups);
         $this->assertSame(null, $program->timeallocationstart);
@@ -252,7 +252,7 @@ final class program_test extends \advanced_testcase {
             'description' => 'Some desc',
             'descriptionformat' => '2',
             'presentation' => ['some' => 'test'],
-            'public' => '1',
+            'pub' => '1',
             'cohorts' => [$cohort1->id, $cohort2->id],
             'archived' => '1',
             'creategroups' => '1',
@@ -268,7 +268,7 @@ final class program_test extends \advanced_testcase {
         $this->assertSame($oldprogram->description, $program->description);
         $this->assertSame($oldprogram->descriptionformat, $program->descriptionformat);
         $this->assertSame('[]', $program->presentationjson);
-        $this->assertSame($oldprogram->public, $program->public);
+        $this->assertSame($oldprogram->pub, $program->pub);
         $this->assertSame($oldprogram->archived, $program->archived);
         $this->assertSame($oldprogram->creategroups, $program->creategroups);
         $this->assertSame($data->timeallocationstart, $program->timeallocationstart);
@@ -308,7 +308,7 @@ final class program_test extends \advanced_testcase {
             'description' => 'Some desc',
             'descriptionformat' => '2',
             'presentation' => ['some' => 'test'],
-            'public' => '1',
+            'pub' => '1',
             'cohorts' => [$cohort1->id, $cohort2->id],
             'archived' => '1',
             'creategroups' => '1',
