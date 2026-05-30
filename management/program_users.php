@@ -110,7 +110,7 @@ if ($sort === 'start') {
     $orderby = 'lastname' . $orderby . ',  firstname' . $orderby;
 } else {
     // Use first name, last name for now.
-    $orderby = $allusernamefields[0] . $orderby . ', ' . $allusernamefields[0] . $orderby;
+    $orderby = $allusernamefields[0] . $orderby . ', ' . $allusernamefields[1] . $orderby;
 }
 
 $usersearch = '';
