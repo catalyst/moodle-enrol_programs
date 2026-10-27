@@ -81,7 +81,7 @@ final class due_relateduser extends base {
                   JOIN {enrol_programs_sources} s ON s.id = pa.sourceid
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {local_openlms_notifications} n
-                       ON n.component = 'enrol_programs' AND n.notificationtype = 'due_relateduser' AND n.instanceid = p.id AND n.enabled = 1
+                       ON n.component = 'enrol_programs' AND n.notificationtype = 'due_relateduser' AND n.instanceid = p.id
                   JOIN {relatedusersrecursive} rur ON rur.fieldid = :fieldid AND rur.child = pa.userid AND rur.depth = 1
                   JOIN {user} ru ON ru.id = rur.parent AND ru.deleted = 0 AND ru.suspended = 0 AND ru.confirmed = 1
              LEFT JOIN {local_openlms_user_notified} un
