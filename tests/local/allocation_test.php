@@ -557,13 +557,25 @@ final class allocation_test extends \advanced_testcase {
         $allocation1 = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user1->id], '*', MUST_EXIST);
         $allocation2 = $DB->get_record('enrol_programs_allocations', ['programid' => $program1->id, 'userid' => $user2->id], '*', MUST_EXIST);
 
-        // Test resetting allocation also removes existing notifications.
-        $notification = $generator->create_program_notification([
+        // Test resetting allocation also removes existing notifications except for allocation notifications.
+        $notification1 = $generator->create_program_notification([
+            'notificationtype' => \enrol_programs\local\notification\allocation::get_notificationtype(),
+            'programid' => $program1->id,
+        ]);
+        $notification2 = $generator->create_program_notification([
             'notificationtype' => \enrol_programs\local\notification\completion::get_notificationtype(),
             'programid' => $program1->id,
         ]);
         $DB->insert_record('local_openlms_user_notified', (object) [
-            'notificationid' => $notification->id,
+            'notificationid' => $notification1->id,
+            'userid' => $user1->id,
+            'otherid1' => $allocation1->id,
+            'otherid2' => null,
+            'timenotified' => $now,
+            'messageid' => null,
+        ]);
+        $DB->insert_record('local_openlms_user_notified', (object) [
+            'notificationid' => $notification2->id,
             'userid' => $user1->id,
             'otherid1' => $allocation1->id,
             'otherid2' => null,
@@ -578,8 +590,12 @@ final class allocation_test extends \advanced_testcase {
         ];
         $allocation1x = allocation::reset($data);
         $this->assertSame((array)$allocation1, (array)$allocation1x);
+        $this->assertTrue($DB->record_exists('local_openlms_user_notified', [
+            'notificationid' => $notification1->id,
+            'userid' => $user1->id,
+        ]));
         $this->assertFalse($DB->record_exists('local_openlms_user_notified', [
-            'notificationid' => $notification->id,
+            'notificationid' => $notification2->id,
             'userid' => $user1->id,
         ]));
 

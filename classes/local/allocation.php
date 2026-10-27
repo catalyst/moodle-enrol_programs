@@ -1084,7 +1084,7 @@ final class allocation {
         // Delete any existing notifications for this allocation.
         $notifications = notification_manager::get_all_types();
         foreach ($notifications as $type => $notification) {
-            if ($notification instanceof \enrol_programs\local\notification\allocation) {
+            if ($notification === \enrol_programs\local\notification\allocation::class) {
                 // We do not want to reset the allocation notification as we are resetting not reallocating.
                 continue;
             }
