@@ -1081,6 +1081,16 @@ final class allocation {
 
         $allocation = self::make_snapshot($record->id, 'allocation_reset');
 
+        // Delete any existing notifications for this allocation.
+        $notifications = notification_manager::get_all_types();
+        foreach ($notifications as $type => $notification) {
+            if ($notification === \enrol_programs\local\notification\allocation::class) {
+                // We do not want to reset the allocation notification as we are resetting not reallocating.
+                continue;
+            }
+            $notification::delete_allocation_notifications($allocation);
+        }
+
         $trans->allow_commit();
 
         self::fix_allocation_sources($allocation->programid, $allocation->userid);

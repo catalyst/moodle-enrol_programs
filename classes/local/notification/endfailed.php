@@ -71,7 +71,7 @@ final class endfailed extends base {
                   JOIN {enrol_programs_sources} s ON s.id = pa.sourceid
                   JOIN {enrol_programs_programs} p ON p.id = pa.programid
                   JOIN {local_openlms_notifications} n
-                       ON n.component = 'enrol_programs' AND n.notificationtype = 'endfailed' AND n.instanceid = p.id AND n.enabled = 1
+                       ON n.component = 'enrol_programs' AND n.notificationtype = 'endfailed' AND n.instanceid = p.id
              LEFT JOIN {local_openlms_user_notified} un
                        ON un.notificationid = n.id AND un.userid = pa.userid AND un.otherid1 = pa.id
                  WHERE un.id IS NULL AND p.archived = 0 AND pa.archived = 0

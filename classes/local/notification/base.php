@@ -184,7 +184,22 @@ abstract class base extends \local_openlms\notification\notificationtype {
             'component' => static::get_component(),
             'notificationtype' => static::get_notificationtype(),
         ]);
-        if (!$notification || !$notification->enabled) {
+        if (!$notification) {
+            return;
+        }
+
+        if (!$notification->enabled) {
+            // This notification is disabled, but we still want to mark the user as notified
+            // to avoid sending notifications in the future if the notification is enabled again.
+            $record = new stdClass();
+            $record->notificationid = $notification->id;
+            $record->userid = $user->id;
+            $record->otherid1 = $allocation->id;
+            $record->otherid2 = null;
+            $record->timenotified = time();
+            $record->messageid = null;
+            $record->id = $DB->insert_record('local_openlms_user_notified', $record);
+
             return;
         }
 
@@ -254,7 +269,22 @@ abstract class base extends \local_openlms\notification\notificationtype {
             'component' => static::get_component(),
             'notificationtype' => static::get_notificationtype(),
         ]);
-        if (!$notification || !$notification->enabled) {
+        if (!$notification) {
+            return;
+        }
+
+        if (!$notification->enabled) {
+            // This notification is disabled, but we still want to mark the user as notified
+            // to avoid sending notifications in the future if the notification is enabled again.
+            $record = new stdClass();
+            $record->notificationid = $notification->id;
+            $record->userid = $relateduser->id;
+            $record->otherid1 = $allocation->id;
+            $record->otherid2 = null;
+            $record->timenotified = time();
+            $record->messageid = null;
+            $record->id = $DB->insert_record('local_openlms_user_notified', $record);
+
             return;
         }
 
